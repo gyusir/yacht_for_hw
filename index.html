@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yacht Dice</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Yacht Dice</h1>
+    <button id="theme-toggle" aria-label="Toggle theme">
+      <span class="icon-sun">&#9728;</span>
+      <span class="icon-moon">&#9790;</span>
+    </button>
+  </header>
+
+  <!-- Screen: Name Entry -->
+  <section id="screen-name" class="screen active">
+    <div class="card">
+      <h2>Welcome</h2>
+      <p>Enter your name to get started.</p>
+      <input type="text" id="player-name" placeholder="Your name" maxlength="12" autocomplete="off">
+      <button id="btn-continue" class="btn-primary" disabled>Continue</button>
+    </div>
+  </section>
+
+  <!-- Screen: Lobby -->
+  <section id="screen-lobby" class="screen">
+    <div class="card">
+      <h2>Lobby</h2>
+      <p>Create a new room or join an existing one.</p>
+      <div class="lobby-actions">
+        <button id="btn-create" class="btn-primary">Create Room</button>
+        <div class="divider"><span>or</span></div>
+        <div class="join-section">
+          <input type="text" id="room-code-input" placeholder="Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <button id="btn-join" class="btn-secondary" disabled>Join</button>
+        </div>
+      </div>
+      <p id="lobby-error" class="error-text" hidden></p>
+    </div>
+  </section>
+
+  <!-- Screen: Waiting Room -->
+  <section id="screen-waiting" class="screen">
+    <div class="card">
+      <h2>Waiting Room</h2>
+      <div class="room-code-display">
+        <p>Share this code with your friend:</p>
+        <div class="code-box">
+          <span id="display-room-code"></span>
+          <button id="btn-copy-code" class="btn-icon" title="Copy code">&#128203;</button>
+        </div>
+      </div>
+      <div id="mode-select" class="mode-select">
+        <p>Select game mode:</p>
+        <div class="mode-options">
+          <label class="mode-option">
+            <input type="radio" name="mode" value="yacht" checked>
+            <span class="mode-label">Yacht</span>
+            <span class="mode-desc">12 categories, classic rules</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="yahtzee">
+            <span class="mode-label">Yahtzee</span>
+            <span class="mode-desc">13 categories, bonus scoring</span>
+          </label>
+        </div>
+      </div>
+      <div class="waiting-spinner">
+        <div class="spinner"></div>
+        <p>Waiting for opponent...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screen: Game -->
+  <section id="screen-game" class="screen">
+    <div class="game-layout">
+      <!-- Game Info Bar -->
+      <div id="game-info" class="game-info">
+        <span id="turn-indicator" class="turn-indicator"></span>
+        <span id="roll-counter" class="roll-counter">Rolls: 0 / 3</span>
+      </div>
+
+      <!-- Dice Area -->
+      <div id="dice-area" class="dice-area">
+        <div class="die" data-index="0"></div>
+        <div class="die" data-index="1"></div>
+        <div class="die" data-index="2"></div>
+        <div class="die" data-index="3"></div>
+        <div class="die" data-index="4"></div>
+      </div>
+
+      <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll Dice</button>
+
+      <!-- Scorecard -->
+      <div id="scorecard" class="scorecard"></div>
+    </div>
+  </section>
+
+  <!-- Screen: Game Over -->
+  <section id="screen-gameover" class="screen">
+    <div class="card gameover-card">
+      <h2 id="winner-text"></h2>
+      <div id="final-scores" class="final-scores"></div>
+      <button id="btn-new-game" class="btn-primary">New Game</button>
+    </div>
+  </section>
+
+  <!-- Overlay: Disconnection -->
+  <div id="overlay-disconnect" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="spinner"></div>
+      <p>Opponent disconnected. Waiting for reconnection...</p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Game Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/dice.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/lobby.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
