@@ -161,6 +161,8 @@
   });
 
   // --- Emote System ---
+  var QUICK_EMOTES = ['😎', '🔥', '💀', '😏', '👑'];
+
   var EMOTES = [
     '😎 gg ez',
     '🥱 하품 나온다~',
@@ -182,20 +184,38 @@
 
   var emoteToggle = document.getElementById('btn-emote-toggle');
   var emotePicker = document.getElementById('emote-picker');
+  var emoteQuick = document.getElementById('emote-quick');
   var emoteCooldown = false;
 
-  // Build emote buttons
+  function sendEmoteWithCooldown(msg) {
+    if (emoteCooldown) return;
+    Game.sendEmote(msg);
+    emotePicker.classList.add('hidden');
+    emoteCooldown = true;
+    setTimeout(function () { emoteCooldown = false; }, 2000);
+  }
+
+  // Build quick emote buttons
+  for (var i = 0; i < QUICK_EMOTES.length; i++) {
+    (function (msg) {
+      var btn = document.createElement('button');
+      btn.className = 'emote-quick-btn';
+      btn.textContent = msg;
+      btn.addEventListener('click', function () {
+        sendEmoteWithCooldown(msg);
+      });
+      emoteQuick.appendChild(btn);
+    })(QUICK_EMOTES[i]);
+  }
+
+  // Build full emote picker
   for (var i = 0; i < EMOTES.length; i++) {
     (function (msg) {
       var btn = document.createElement('button');
       btn.className = 'emote-btn';
       btn.textContent = msg;
       btn.addEventListener('click', function () {
-        if (emoteCooldown) return;
-        Game.sendEmote(msg);
-        emotePicker.classList.add('hidden');
-        emoteCooldown = true;
-        setTimeout(function () { emoteCooldown = false; }, 2000);
+        sendEmoteWithCooldown(msg);
       });
       emotePicker.appendChild(btn);
     })(EMOTES[i]);

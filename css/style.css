@@ -511,6 +511,33 @@ input[type="text"]::placeholder {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
+  gap: 8px;
+}
+
+.emote-quick {
+  display: flex;
+  gap: 6px;
+}
+
+.emote-quick-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.emote-quick-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.emote-quick-btn:active {
+  transform: scale(0.93);
 }
 
 .btn-emote-toggle {
