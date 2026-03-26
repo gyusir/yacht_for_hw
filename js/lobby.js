@@ -29,6 +29,14 @@
   }
 
   function getOrCreateUid() {
+    // Use Firebase Auth uid if signed in
+    var Auth = window.YachtGame.Auth;
+    if (Auth && Auth.isSignedIn()) {
+      var firebaseUid = Auth.getPlayerUid();
+      sessionStorage.setItem('yacht-uid', firebaseUid);
+      return firebaseUid;
+    }
+    // Guest fallback
     var uid = sessionStorage.getItem('yacht-uid');
     if (!uid) {
       uid = generateUid();

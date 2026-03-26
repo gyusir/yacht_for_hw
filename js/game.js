@@ -67,6 +67,8 @@
         p1.scores, p2.scores,
         gameMode, room.winner, localPlayerKey
       );
+      // Save game history for signed-in users
+      saveGameHistory(room);
       return;
     }
 
@@ -228,6 +230,34 @@
     roomRef.update(updates);
   }
 
+  var historySaved = false;
+  function saveGameHistory(room) {
+    if (historySaved) return;
+    var Auth = window.YachtGame.Auth;
+    if (!Auth || !Auth.isSignedIn()) return;
+    historySaved = true;
+
+    var Scoring = window.YachtGame.Scoring;
+    var myData = room.players[localPlayerKey];
+    var oppData = room.players[opponentKey];
+    var myTotal = Scoring.totalScore(myData.scores, gameMode, myData.scores.yahtzeeBonus);
+    var oppTotal = Scoring.totalScore(oppData.scores, gameMode, oppData.scores.yahtzeeBonus);
+
+    var result;
+    if (room.winner === localPlayerKey) result = 'win';
+    else if (room.winner === 'tie') result = 'tie';
+    else result = 'loss';
+
+    window.YachtGame.History.saveResult(Auth.getPlayerUid(), {
+      mode: gameMode,
+      opponentName: oppData.name,
+      myScore: myTotal,
+      oppScore: oppTotal,
+      result: result,
+      roomCode: roomCode
+    });
+  }
+
   function sendEmote(msg) {
     if (!roomRef || !lastRoomData) return;
     var myName = lastRoomData.players[localPlayerKey].name;
@@ -267,6 +297,7 @@
     isRolling = false;
     emoteListener = null;
     lastSeenEmoteTs = 0;
+    historySaved = false;
   }
 
   window.YachtGame.Game = {

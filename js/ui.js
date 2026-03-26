@@ -271,6 +271,46 @@
     document.getElementById('overlay-rules').classList.add('hidden');
   }
 
+  // History / Stats rendering
+  function renderHistory(stats, games) {
+    var summaryEl = document.getElementById('stats-summary');
+    var listEl = document.getElementById('history-list');
+
+    // Stats summary
+    var winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
+    var html = '<div class="stats-grid">';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.totalGames + '</div><div class="stat-label">Games</div></div>';
+    html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">Wins</div></div>';
+    html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">Losses</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">Ties</div></div>';
+    html += '<div class="stat-card" style="grid-column: span 2;"><div class="stat-value">' + winRate + '%</div><div class="stat-label">Win Rate</div></div>';
+    html += '</div>';
+    summaryEl.innerHTML = html;
+
+    // Game history list
+    if (games.length === 0) {
+      listEl.innerHTML = '<p class="no-history">No games played yet.</p>';
+      return;
+    }
+
+    var listHtml = '<table class="history-table"><thead><tr><th>Date</th><th>Mode</th><th>Opponent</th><th>Score</th><th>Result</th></tr></thead><tbody>';
+    for (var i = 0; i < games.length; i++) {
+      var g = games[i];
+      var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
+      var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : 'result-tie');
+      var resultText = g.result === 'win' ? 'W' : (g.result === 'loss' ? 'L' : 'T');
+      listHtml += '<tr>';
+      listHtml += '<td>' + dateStr + '</td>';
+      listHtml += '<td>' + escapeHtml(g.mode || '-') + '</td>';
+      listHtml += '<td>' + escapeHtml(g.opponentName || '-') + '</td>';
+      listHtml += '<td>' + g.myScore + ' - ' + g.oppScore + '</td>';
+      listHtml += '<td class="' + resultClass + '">' + resultText + '</td>';
+      listHtml += '</tr>';
+    }
+    listHtml += '</tbody></table>';
+    listEl.innerHTML = listHtml;
+  }
+
   window.YachtGame.UI = {
     showScreen: showScreen,
     initTheme: initTheme,
@@ -284,6 +324,7 @@
     renderGameOver: renderGameOver,
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,
-    showEmoteBubble: showEmoteBubble
+    showEmoteBubble: showEmoteBubble,
+    renderHistory: renderHistory
   };
 })();

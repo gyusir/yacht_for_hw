@@ -245,6 +245,194 @@ input[type="text"]::placeholder {
   color: var(--accent);
 }
 
+/* ===== Google Sign-In ===== */
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: #fff;
+  color: #444;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-google:hover {
+  background: #f7f7f7;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] .btn-google {
+  background: #2a2a4a;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .btn-google:hover {
+  background: #333358;
+}
+
+.google-icon {
+  flex-shrink: 0;
+}
+
+.guest-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 0;
+  text-decoration: underline;
+}
+
+.btn-text:hover {
+  color: var(--accent-hover);
+}
+
+/* Signed-in profile */
+.signed-in-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  margin-top: 16px;
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-display-name {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signed-in-profile .btn-primary {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ===== Stats Button ===== */
+.btn-stats {
+  display: block;
+  margin: 12px auto 0;
+  font-size: 0.9rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-stats:hover {
+  text-decoration: underline;
+}
+
+/* ===== Stats & History ===== */
+.stats-summary {
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.stat-card {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.stat-win .stat-value {
+  color: var(--success);
+}
+
+.stat-loss .stat-value {
+  color: var(--danger);
+}
+
+.history-title {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.history-table th,
+.history-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.result-win { color: var(--success); font-weight: 700; }
+.result-loss { color: var(--danger); font-weight: 700; }
+.result-tie { color: var(--text-muted); font-weight: 600; }
+
+.no-history {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 24px 0;
+}
+
 /* ===== Lobby ===== */
 .lobby-actions {
   display: flex;

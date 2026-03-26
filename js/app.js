@@ -6,6 +6,8 @@
   var Lobby = window.YachtGame.Lobby;
   var Game = window.YachtGame.Game;
   var Dice = window.YachtGame.Dice;
+  var Auth = window.YachtGame.Auth;
+  var History = window.YachtGame.History;
 
   // Initialize theme
   UI.initTheme();
@@ -20,8 +22,14 @@
 
   // --- DOM Elements ---
   var themeToggle = document.getElementById('theme-toggle');
+  var btnGoogleSignin = document.getElementById('btn-google-signin');
   var nameInput = document.getElementById('player-name');
-  var btnContinue = document.getElementById('btn-continue');
+  var btnGuest = document.getElementById('btn-guest');
+  var signedInProfile = document.getElementById('signed-in-profile');
+  var userAvatar = document.getElementById('user-avatar');
+  var userDisplayName = document.getElementById('user-display-name');
+  var btnSignout = document.getElementById('btn-signout');
+  var btnContinueSigned = document.getElementById('btn-continue-signed');
   var btnCreate = document.getElementById('btn-create');
   var roomCodeInput = document.getElementById('room-code-input');
   var btnJoin = document.getElementById('btn-join');
@@ -31,9 +39,10 @@
   var btnRoll = document.getElementById('btn-roll');
   var btnNewGame = document.getElementById('btn-new-game');
   var modeRadios = document.querySelectorAll('input[name="mode"]');
-
   var btnRule = document.getElementById('btn-rule');
   var btnLeave = document.getElementById('btn-leave');
+  var btnMyStats = document.getElementById('btn-my-stats');
+  var btnBackLobby = document.getElementById('btn-back-lobby');
 
   var playerName = '';
 
@@ -42,20 +51,79 @@
     UI.toggleTheme();
   });
 
-  // --- Name Screen ---
+  // --- Auth: show/hide login UI based on auth state ---
+  function showLoginScreen(user) {
+    if (user) {
+      // User is signed in
+      btnGoogleSignin.hidden = true;
+      document.querySelector('.guest-section').hidden = true;
+      document.querySelector('#screen-login .divider').hidden = true;
+      signedInProfile.hidden = false;
+      userDisplayName.textContent = user.displayName || 'Player';
+      if (user.photoURL) {
+        userAvatar.src = user.photoURL;
+        userAvatar.hidden = false;
+      } else {
+        userAvatar.hidden = true;
+      }
+    } else {
+      // Not signed in
+      btnGoogleSignin.hidden = false;
+      document.querySelector('.guest-section').hidden = false;
+      document.querySelector('#screen-login .divider').hidden = false;
+      signedInProfile.hidden = true;
+    }
+  }
+
+  // Listen for auth state changes
+  Auth.onAuthStateChanged(function (user) {
+    showLoginScreen(user);
+    // Show My Stats button in lobby if signed in
+    if (btnMyStats) {
+      btnMyStats.hidden = !user;
+    }
+  });
+
+  // Google Sign-In
+  btnGoogleSignin.addEventListener('click', function () {
+    btnGoogleSignin.disabled = true;
+    Auth.signInWithGoogle(function (error, user) {
+      btnGoogleSignin.disabled = false;
+      if (error) {
+        UI.showToast('Sign-in failed: ' + (error.message || 'Unknown error'));
+      }
+    });
+  });
+
+  // Sign Out
+  btnSignout.addEventListener('click', function () {
+    Auth.signOut(function () {
+      UI.showScreen('screen-login');
+      UI.showToast('Signed out');
+    });
+  });
+
+  // Continue (signed in)
+  btnContinueSigned.addEventListener('click', function () {
+    playerName = Auth.getPlayerName();
+    UI.showScreen('screen-lobby');
+  });
+
+  // --- Guest Flow ---
   nameInput.addEventListener('input', function () {
-    btnContinue.disabled = nameInput.value.trim().length === 0;
+    btnGuest.disabled = nameInput.value.trim().length === 0;
   });
 
   nameInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && nameInput.value.trim().length > 0) {
-      btnContinue.click();
+      btnGuest.click();
     }
   });
 
-  btnContinue.addEventListener('click', function () {
+  btnGuest.addEventListener('click', function () {
     playerName = nameInput.value.trim();
     if (!playerName) return;
+    Auth.setGuest(playerName);
     UI.showScreen('screen-lobby');
   });
 
@@ -133,7 +201,6 @@
         UI.showToast('Code copied!');
       });
     } else {
-      // Fallback
       var textArea = document.createElement('textarea');
       textArea.value = code;
       document.body.appendChild(textArea);
@@ -158,6 +225,23 @@
     if (confirm('정말 나가시겠습니까? 상대방의 승리로 처리됩니다.')) {
       Game.leaveGame();
     }
+  });
+
+  // --- My Stats ---
+  btnMyStats.addEventListener('click', function () {
+    var uid = Auth.getPlayerUid();
+    if (!uid) return;
+
+    History.loadStats(uid, function (stats) {
+      History.loadHistory(uid, 20, function (games) {
+        UI.renderHistory(stats, games);
+        UI.showScreen('screen-history');
+      });
+    });
+  });
+
+  btnBackLobby.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
   });
 
   // --- Emote System ---
@@ -260,11 +344,10 @@
   // --- Reconnection on page load ---
   Lobby.tryReconnect(function (session) {
     if (session && session.status === 'playing') {
-      playerName = 'Reconnected';
+      playerName = Auth.isSignedIn() ? Auth.getPlayerName() : 'Reconnected';
       Game.init(session.roomCode, session.playerKey);
       UI.showToast('Reconnected to game!');
     } else if (session && session.status === 'waiting') {
-      // Reconnected to waiting room
       displayRoomCode.textContent = session.roomCode;
       UI.showScreen('screen-waiting');
       Lobby.listenForOpponent(session.roomCode, function (player2) {
