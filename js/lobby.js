@@ -240,6 +240,15 @@
     database.ref('rooms/' + roomCode + '/gameMode').set(gameMode);
   }
 
+  function cancelRoom(roomCode) {
+    if (!roomCode) return;
+    var database = getDb();
+    // Remove the room and stop listening
+    database.ref('rooms/' + roomCode + '/players/player2').off();
+    database.ref('rooms/' + roomCode).remove();
+    clearSession();
+  }
+
   window.YachtGame.Lobby = {
     generateRoomCode: generateRoomCode,
     getOrCreateUid: getOrCreateUid,
@@ -248,6 +257,7 @@
     listenForOpponent: listenForOpponent,
     tryReconnect: tryReconnect,
     clearSession: clearSession,
+    cancelRoom: cancelRoom,
     buildEmptyScores: buildEmptyScores,
     updateGameMode: updateGameMode
   };

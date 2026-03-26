@@ -43,6 +43,8 @@
   var btnLeave = document.getElementById('btn-leave');
   var btnMyStats = document.getElementById('btn-my-stats');
   var btnBackLobby = document.getElementById('btn-back-lobby');
+  var btnBackLogin = document.getElementById('btn-back-login');
+  var btnBackLobbyWaiting = document.getElementById('btn-back-lobby-waiting');
 
   var playerName = '';
 
@@ -241,6 +243,16 @@
   });
 
   btnBackLobby.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
+  });
+
+  btnBackLogin.addEventListener('click', function () {
+    UI.showScreen('screen-login');
+  });
+
+  btnBackLobbyWaiting.addEventListener('click', function () {
+    var code = displayRoomCode.textContent;
+    Lobby.cancelRoom(code);
     UI.showScreen('screen-lobby');
   });
 
