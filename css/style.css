@@ -912,12 +912,6 @@ input[type="text"]::placeholder {
   font-weight: 800;
   background: var(--accent-light);
   border-radius: 4px;
-  animation: lastScoreFlash 0.5s ease;
-}
-
-@keyframes lastScoreFlash {
-  0% { background: var(--accent); color: #fff; }
-  100% { background: var(--accent-light); }
 }
 
 .scorecard .section-header {
