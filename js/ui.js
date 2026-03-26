@@ -12,6 +12,12 @@
     }
     var target = document.getElementById(screenId);
     if (target) target.classList.add('active');
+
+    if (screenId === 'screen-game') {
+      document.body.classList.add('in-game');
+    } else {
+      document.body.classList.remove('in-game');
+    }
   }
 
   // Theme toggle
@@ -100,8 +106,8 @@
 
     var html = '<table>';
     html += '<thead><tr>';
-    html += '<th>' + escapeHtml(myName || 'You') + '</th>';
     html += '<th>Category</th>';
+    html += '<th>' + escapeHtml(myName || 'You') + '</th>';
     html += '<th>' + escapeHtml(oppName || 'Opponent') + '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
@@ -120,8 +126,8 @@
       var myBonus = Scoring.upperBonus(myScores);
       var oppBonus = Scoring.upperBonus(oppScores);
       html += '<tr class="bonus-row">';
-      html += '<td class="score-cell mine">' + myUpperSum + '/63' + (myBonus ? ' +35' : '') + '</td>';
       html += '<td class="category-name">Bonus</td>';
+      html += '<td class="score-cell mine">' + myUpperSum + '/63' + (myBonus ? ' +35' : '') + '</td>';
       html += '<td class="score-cell opponent">' + oppUpperSum + '/63' + (oppBonus ? ' +35' : '') + '</td>';
       html += '</tr>';
     }
@@ -138,8 +144,8 @@
       var myYB = myScores.yahtzeeBonus || 0;
       var oppYB = oppScores.yahtzeeBonus || 0;
       html += '<tr class="bonus-row">';
-      html += '<td class="score-cell mine">' + (myYB > 0 ? '+' + myYB : '-') + '</td>';
       html += '<td class="category-name">Yahtzee Bonus</td>';
+      html += '<td class="score-cell mine">' + (myYB > 0 ? '+' + myYB : '-') + '</td>';
       html += '<td class="score-cell opponent">' + (oppYB > 0 ? '+' + oppYB : '-') + '</td>';
       html += '</tr>';
     }
@@ -148,8 +154,8 @@
     var myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
     var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
     html += '<tr class="total-row">';
-    html += '<td class="score-cell mine">' + myTotal + '</td>';
     html += '<td class="category-name">Total</td>';
+    html += '<td class="score-cell mine">' + myTotal + '</td>';
     html += '<td class="score-cell opponent">' + oppTotal + '</td>';
     html += '</tr>';
 
@@ -179,6 +185,8 @@
     var oppVal = oppScores[category];
     var html = '<tr>';
 
+    html += '<td class="category-name">' + displayName + '</td>';
+
     // My score cell
     if (myVal !== null && myVal !== undefined) {
       html += '<td class="score-cell mine filled">' + myVal + '</td>';
@@ -187,8 +195,6 @@
     } else {
       html += '<td class="score-cell">-</td>';
     }
-
-    html += '<td class="category-name">' + displayName + '</td>';
 
     // Opponent score cell
     if (oppVal !== null && oppVal !== undefined) {
@@ -236,6 +242,35 @@
     return div.innerHTML;
   }
 
+  // Emote bubble
+  var emoteBubbleTimer = null;
+  function showEmoteBubble(senderName, msg) {
+    var bubble = document.getElementById('emote-bubble');
+    bubble.innerHTML = '<div class="emote-sender">' + escapeHtml(senderName) + '</div>' + escapeHtml(msg);
+    bubble.classList.remove('hidden');
+    bubble.style.animation = 'none';
+    bubble.offsetHeight; // reflow
+    bubble.style.animation = '';
+    clearTimeout(emoteBubbleTimer);
+    emoteBubbleTimer = setTimeout(function () {
+      bubble.classList.add('hidden');
+    }, 2500);
+  }
+
+  // Rules overlay
+  function showRulesOverlay(gameMode) {
+    var overlay = document.getElementById('overlay-rules');
+    var yachtRules = document.getElementById('rules-yacht');
+    var yahtzeeRules = document.getElementById('rules-yahtzee');
+    yachtRules.hidden = gameMode !== 'yacht';
+    yahtzeeRules.hidden = gameMode !== 'yahtzee';
+    overlay.classList.remove('hidden');
+  }
+
+  function hideRulesOverlay() {
+    document.getElementById('overlay-rules').classList.add('hidden');
+  }
+
   window.YachtGame.UI = {
     showScreen: showScreen,
     initTheme: initTheme,
@@ -246,6 +281,9 @@
     updateRollCounter: updateRollCounter,
     setRollButtonEnabled: setRollButtonEnabled,
     renderScorecard: renderScorecard,
-    renderGameOver: renderGameOver
+    renderGameOver: renderGameOver,
+    showRulesOverlay: showRulesOverlay,
+    hideRulesOverlay: hideRulesOverlay,
+    showEmoteBubble: showEmoteBubble
   };
 })();

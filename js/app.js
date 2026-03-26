@@ -10,6 +10,14 @@
   // Initialize theme
   UI.initTheme();
 
+  // --- Warn before closing tab during active game ---
+  window.addEventListener('beforeunload', function (e) {
+    if (document.body.classList.contains('in-game')) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   // --- DOM Elements ---
   var themeToggle = document.getElementById('theme-toggle');
   var nameInput = document.getElementById('player-name');
@@ -23,6 +31,9 @@
   var btnRoll = document.getElementById('btn-roll');
   var btnNewGame = document.getElementById('btn-new-game');
   var modeRadios = document.querySelectorAll('input[name="mode"]');
+
+  var btnRule = document.getElementById('btn-rule');
+  var btnLeave = document.getElementById('btn-leave');
 
   var playerName = '';
 
@@ -130,6 +141,74 @@
       document.execCommand('copy');
       document.body.removeChild(textArea);
       UI.showToast('Code copied!');
+    }
+  });
+
+  // --- Rule & Leave Buttons ---
+  btnRule.addEventListener('mouseenter', function () {
+    var mode = Game.getGameMode();
+    if (mode) UI.showRulesOverlay(mode);
+  });
+
+  btnRule.addEventListener('mouseleave', function () {
+    UI.hideRulesOverlay();
+  });
+
+  btnLeave.addEventListener('click', function () {
+    if (confirm('정말 나가시겠습니까? 상대방의 승리로 처리됩니다.')) {
+      Game.leaveGame();
+    }
+  });
+
+  // --- Emote System ---
+  var EMOTES = [
+    '😎 gg ez',
+    '🥱 하품 나온다~',
+    '🔥 실화냐?',
+    '😏 그게 최선?',
+    '💀 RIP',
+    '🤡 어이없네ㅋㅋ',
+    '🍀 운 좋았을 뿐~',
+    '😱 헐 대박',
+    '🐢 좀 빨리~',
+    '👋 Nice try!',
+    '🎯 계획대로',
+    '😭 봐줘요...',
+    '🧊 쿨하게 가자',
+    '💩 이게 뭐야',
+    '👑 왕이 납신다',
+    '🤔 Hmm...'
+  ];
+
+  var emoteToggle = document.getElementById('btn-emote-toggle');
+  var emotePicker = document.getElementById('emote-picker');
+  var emoteCooldown = false;
+
+  // Build emote buttons
+  for (var i = 0; i < EMOTES.length; i++) {
+    (function (msg) {
+      var btn = document.createElement('button');
+      btn.className = 'emote-btn';
+      btn.textContent = msg;
+      btn.addEventListener('click', function () {
+        if (emoteCooldown) return;
+        Game.sendEmote(msg);
+        emotePicker.classList.add('hidden');
+        emoteCooldown = true;
+        setTimeout(function () { emoteCooldown = false; }, 2000);
+      });
+      emotePicker.appendChild(btn);
+    })(EMOTES[i]);
+  }
+
+  emoteToggle.addEventListener('click', function () {
+    emotePicker.classList.toggle('hidden');
+  });
+
+  // Close picker when clicking outside
+  document.addEventListener('click', function (e) {
+    if (!emoteToggle.contains(e.target) && !emotePicker.contains(e.target)) {
+      emotePicker.classList.add('hidden');
     }
   });
 

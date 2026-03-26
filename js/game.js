@@ -12,6 +12,8 @@
   var roomListener = null;
   var lastRoomData = null;
   var isRolling = false;
+  var emoteListener = null;
+  var lastSeenEmoteTs = 0;
 
   function init(code, playerKey) {
     roomCode = code;
@@ -21,6 +23,17 @@
 
     // Listen for room changes
     roomListener = roomRef.on('value', onRoomUpdate);
+
+    // Listen for opponent emotes
+    var emoteRef = roomRef.child('emotes/' + opponentKey);
+    emoteListener = emoteRef.on('value', function (snap) {
+      if (!snap.exists()) return;
+      var data = snap.val();
+      if (data.ts && data.ts > lastSeenEmoteTs) {
+        lastSeenEmoteTs = data.ts;
+        window.YachtGame.UI.showEmoteBubble(data.name, data.msg);
+      }
+    });
   }
 
   function onRoomUpdate(snapshot) {
@@ -215,9 +228,35 @@
     roomRef.update(updates);
   }
 
+  function sendEmote(msg) {
+    if (!roomRef || !lastRoomData) return;
+    var myName = lastRoomData.players[localPlayerKey].name;
+    roomRef.child('emotes/' + localPlayerKey).set({
+      msg: msg,
+      name: myName,
+      ts: firebase.database.ServerValue.TIMESTAMP
+    });
+  }
+
+  function leaveGame() {
+    if (roomRef && lastRoomData && lastRoomData.status === 'playing') {
+      roomRef.update({ status: 'finished', winner: opponentKey });
+    }
+    destroy();
+    window.YachtGame.Lobby.clearSession();
+    window.YachtGame.UI.showScreen('screen-lobby');
+  }
+
+  function getGameMode() {
+    return gameMode;
+  }
+
   function destroy() {
     if (roomRef && roomListener) {
       roomRef.off('value', roomListener);
+    }
+    if (roomRef && emoteListener) {
+      roomRef.child('emotes/' + opponentKey).off('value', emoteListener);
     }
     roomRef = null;
     roomCode = null;
@@ -226,6 +265,8 @@
     gameMode = null;
     lastRoomData = null;
     isRolling = false;
+    emoteListener = null;
+    lastSeenEmoteTs = 0;
   }
 
   window.YachtGame.Game = {
@@ -233,6 +274,9 @@
     rollDice: rollDice,
     toggleHold: toggleHold,
     selectCategory: selectCategory,
+    sendEmote: sendEmote,
+    leaveGame: leaveGame,
+    getGameMode: getGameMode,
     destroy: destroy
   };
 })();

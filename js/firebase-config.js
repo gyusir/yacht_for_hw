@@ -10,13 +10,14 @@
 window.YachtGame = window.YachtGame || {};
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB3mDt-PW6AtI-WV1p9XRyGP8qwwmqw-JE",
+  authDomain: "yacht-ff0c8.firebaseapp.com",
+  databaseURL: "https://yacht-ff0c8-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "yacht-ff0c8",
+  storageBucket: "yacht-ff0c8.firebasestorage.app",
+  messagingSenderId: "101843337935",
+  appId: "1:101843337935:web:536268f5230b18e9eeadba",
+  measurementId: "G-DGSSY39SFG"
 };
 
 firebase.initializeApp(firebaseConfig);

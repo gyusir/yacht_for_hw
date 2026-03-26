@@ -9,10 +9,14 @@
 <body>
   <header>
     <h1>Yacht Dice</h1>
-    <button id="theme-toggle" aria-label="Toggle theme">
-      <span class="icon-sun">&#9728;</span>
-      <span class="icon-moon">&#9790;</span>
-    </button>
+    <div class="header-controls">
+      <button id="btn-rule" class="btn-icon game-only" title="규칙">Rule</button>
+      <button id="btn-leave" class="btn-icon btn-leave game-only" title="나가기">&#10005;</button>
+      <button id="theme-toggle" aria-label="Toggle theme">
+        <span class="icon-sun">&#9728;</span>
+        <span class="icon-moon">&#9790;</span>
+      </button>
+    </div>
   </header>
 
   <!-- Screen: Name Entry -->
@@ -22,6 +26,7 @@
       <p>Enter your name to get started.</p>
       <input type="text" id="player-name" placeholder="Your name" maxlength="12" autocomplete="off">
       <button id="btn-continue" class="btn-primary" disabled>Continue</button>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -39,6 +44,7 @@
         </div>
       </div>
       <p id="lobby-error" class="error-text" hidden></p>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -72,6 +78,7 @@
         <div class="spinner"></div>
         <p>Waiting for opponent...</p>
       </div>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -95,8 +102,18 @@
 
       <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll Dice</button>
 
+      <!-- Emote Bar -->
+      <div id="emote-bar" class="emote-bar">
+        <button class="btn-emote-toggle" id="btn-emote-toggle">💬</button>
+        <div class="emote-picker hidden" id="emote-picker"></div>
+      </div>
+
+      <!-- Received Emote Bubble -->
+      <div id="emote-bubble" class="emote-bubble hidden"></div>
+
       <!-- Scorecard -->
       <div id="scorecard" class="scorecard"></div>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -106,6 +123,7 @@
       <h2 id="winner-text"></h2>
       <div id="final-scores" class="final-scores"></div>
       <button id="btn-new-game" class="btn-primary">New Game</button>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -114,6 +132,46 @@
     <div class="overlay-content">
       <div class="spinner"></div>
       <p>Opponent disconnected. Waiting for reconnection...</p>
+    </div>
+  </div>
+
+  <!-- Overlay: Rules -->
+  <div id="overlay-rules" class="overlay hidden">
+    <div class="overlay-content rules-content">
+      <div id="rules-yacht" class="rules-body" hidden>
+        <h3>Yacht 규칙</h3>
+        <table>
+          <thead><tr><th>카테고리</th><th>점수</th></tr></thead>
+          <tbody>
+            <tr><td>Ones ~ Sixes</td><td>해당 숫자의 합</td></tr>
+            <tr><td>Four of a Kind</td><td>같은 숫자 4개의 합</td></tr>
+            <tr><td>Full House</td><td>3+2 조합 시 전체 합</td></tr>
+            <tr><td>Small Straight</td><td>1-2-3-4-5 → 30점</td></tr>
+            <tr><td>Large Straight</td><td>2-3-4-5-6 → 30점</td></tr>
+            <tr><td>Choice</td><td>주사위 전체 합</td></tr>
+            <tr><td>Yacht</td><td>5개 동일 → 50점</td></tr>
+          </tbody>
+        </table>
+        <p class="rules-note">매 턴 최대 3회 굴림. 주사위를 클릭하여 고정/해제.</p>
+      </div>
+      <div id="rules-yahtzee" class="rules-body" hidden>
+        <h3>Yahtzee 규칙</h3>
+        <table>
+          <thead><tr><th>카테고리</th><th>점수</th></tr></thead>
+          <tbody>
+            <tr><td>Ones ~ Sixes</td><td>해당 숫자의 합</td></tr>
+            <tr><td>Three of a Kind</td><td>3개 이상 동일 → 전체 합</td></tr>
+            <tr><td>Four of a Kind</td><td>4개 이상 동일 → 전체 합</td></tr>
+            <tr><td>Full House</td><td>3+2 조합 → 25점</td></tr>
+            <tr><td>Small Straight</td><td>4연속 → 30점</td></tr>
+            <tr><td>Large Straight</td><td>5연속 → 40점</td></tr>
+            <tr><td>Yahtzee</td><td>5개 동일 → 50점</td></tr>
+            <tr><td>Chance</td><td>주사위 전체 합</td></tr>
+          </tbody>
+        </table>
+        <p class="rules-note">상단 합계 ≥ 63 → 보너스 +35점<br>추가 Yahtzee당 보너스 +100점</p>
+        <p class="rules-note">매 턴 최대 3회 굴림. 주사위를 클릭하여 고정/해제.</p>
+      </div>
     </div>
   </div>
 
