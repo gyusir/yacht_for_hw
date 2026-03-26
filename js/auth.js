@@ -23,9 +23,32 @@
       });
       if (callback) callback(null, currentUser);
     }).catch(function (error) {
+      console.error('Google sign-in error:', error.code, error.message);
+      // Popup blocked or failed — fall back to redirect
+      if (error.code === 'auth/popup-blocked' ||
+          error.code === 'auth/popup-closed-by-user' ||
+          error.code === 'auth/cancelled-popup-request') {
+        auth.signInWithRedirect(provider);
+        return;
+      }
       if (callback) callback(error, null);
     });
   }
+
+  // Handle redirect result (fallback from popup blocked)
+  window.YachtGame.auth.getRedirectResult().then(function (result) {
+    if (result.user) {
+      currentUser = result.user;
+      isGuest = false;
+      var db = window.YachtGame.db;
+      db.ref('users/' + currentUser.uid).update({
+        displayName: currentUser.displayName,
+        photoURL: currentUser.photoURL || null
+      });
+    }
+  }).catch(function (error) {
+    console.error('Redirect sign-in error:', error.code, error.message);
+  });
 
   function signOut(callback) {
     window.YachtGame.auth.signOut().then(function () {

@@ -111,7 +111,9 @@
       isMyTurn && room.rollCount > 0,
       localPlayerKey,
       room.players.player1.name,
-      room.players.player2.name
+      room.players.player2.name,
+      room.players[localPlayerKey].lastCategory || null,
+      (room.players[opponentKey] && room.players[opponentKey].lastCategory) || null
     );
   }
 
@@ -182,6 +184,7 @@
     // Check for Yahtzee bonus
     var updates = {};
     updates['players/' + localPlayerKey + '/scores/' + category] = score;
+    updates['players/' + localPlayerKey + '/lastCategory'] = category;
 
     if (gameMode === 'yahtzee') {
       var hasYahtzee = true;

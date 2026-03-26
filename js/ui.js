@@ -86,7 +86,7 @@
   }
 
   // Scorecard rendering
-  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name) {
+  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat) {
     var container = document.getElementById('scorecard');
     var Scoring = window.YachtGame.Scoring;
     var categories = Scoring.getCategories(gameMode);
@@ -108,7 +108,7 @@
     html += '<thead><tr>';
     html += '<th>Category</th>';
     html += '<th>' + escapeHtml(myName || 'You') + '</th>';
-    html += '<th>' + escapeHtml(oppName || 'Opponent') + '</th>';
+    html += '<th class="opponent-header">' + escapeHtml(oppName || 'Opponent') + '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
 
@@ -116,7 +116,7 @@
     html += '<tr class="section-header"><td colspan="3">Upper Section</td></tr>';
 
     for (var i = 0; i < upperCats.length; i++) {
-      html += renderCategoryRow(upperCats[i], myScores, oppScores, previews, isMyTurn, gameMode);
+      html += renderCategoryRow(upperCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat);
     }
 
     // Upper bonus row (Yahtzee only)
@@ -136,7 +136,7 @@
     html += '<tr class="section-header"><td colspan="3">Lower Section</td></tr>';
 
     for (var i = 0; i < lowerCats.length; i++) {
-      html += renderCategoryRow(lowerCats[i], myScores, oppScores, previews, isMyTurn, gameMode);
+      html += renderCategoryRow(lowerCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat);
     }
 
     // Yahtzee bonus row
@@ -178,18 +178,20 @@
     }
   }
 
-  function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode) {
+  function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat) {
     var Scoring = window.YachtGame.Scoring;
     var displayName = Scoring.getDisplayName(category);
     var myVal = myScores[category];
     var oppVal = oppScores[category];
+    var isMyLast = category === myLastCat;
+    var isOppLast = category === oppLastCat;
     var html = '<tr>';
 
     html += '<td class="category-name">' + displayName + '</td>';
 
     // My score cell
     if (myVal !== null && myVal !== undefined) {
-      html += '<td class="score-cell mine filled">' + myVal + '</td>';
+      html += '<td class="score-cell mine filled' + (isMyLast ? ' last-scored' : '') + '">' + myVal + '</td>';
     } else if (isMyTurn && previews[category] !== undefined) {
       html += '<td class="score-cell preview" data-category="' + category + '">' + previews[category] + '</td>';
     } else {
@@ -198,7 +200,7 @@
 
     // Opponent score cell
     if (oppVal !== null && oppVal !== undefined) {
-      html += '<td class="score-cell opponent filled">' + oppVal + '</td>';
+      html += '<td class="score-cell opponent filled' + (isOppLast ? ' last-scored' : '') + '">' + oppVal + '</td>';
     } else {
       html += '<td class="score-cell">-</td>';
     }
@@ -246,8 +248,19 @@
   var emoteBubbleTimer = null;
   function showEmoteBubble(senderName, msg) {
     var bubble = document.getElementById('emote-bubble');
-    bubble.innerHTML = '<div class="emote-sender">' + escapeHtml(senderName) + '</div>' + escapeHtml(msg);
+    bubble.innerHTML = escapeHtml(msg);
     bubble.classList.remove('hidden');
+
+    // Position above opponent header in scorecard
+    var anchor = document.querySelector('.opponent-header');
+    if (anchor) {
+      var rect = anchor.getBoundingClientRect();
+      bubble.style.position = 'absolute';
+      bubble.style.left = (rect.left + rect.width / 2) + 'px';
+      bubble.style.top = (rect.top + window.scrollY - 8) + 'px';
+      bubble.style.transform = 'translate(-50%, -100%)';
+    }
+
     bubble.style.animation = 'none';
     bubble.offsetHeight; // reflow
     bubble.style.animation = '';

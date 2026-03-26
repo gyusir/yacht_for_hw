@@ -245,7 +245,13 @@
   });
 
   // --- Emote System ---
-  var QUICK_EMOTES = ['😎', '🔥', '💀', '😏', '👑'];
+  var QUICK_EMOTES = [
+    { emoji: '😎', msg: '😎 gg ez' },
+    { emoji: '🔥', msg: '🔥 실화냐?' },
+    { emoji: '💀', msg: '💀 RIP' },
+    { emoji: '😏', msg: '😏 그게 최선?' },
+    { emoji: '👑', msg: '👑 왕이 납신다' }
+  ];
 
   var EMOTES = [
     '😎 gg ez',
@@ -281,12 +287,12 @@
 
   // Build quick emote buttons
   for (var i = 0; i < QUICK_EMOTES.length; i++) {
-    (function (msg) {
+    (function (item) {
       var btn = document.createElement('button');
       btn.className = 'emote-quick-btn';
-      btn.textContent = msg;
+      btn.textContent = item.emoji;
       btn.addEventListener('click', function () {
-        sendEmoteWithCooldown(msg);
+        sendEmoteWithCooldown(item.msg);
       });
       emoteQuick.appendChild(btn);
     })(QUICK_EMOTES[i]);
