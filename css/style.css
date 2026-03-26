@@ -582,6 +582,14 @@ input[type="text"]::placeholder {
 .game-layout {
   max-width: 640px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
+.bottom-controls {
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .game-info {
@@ -626,8 +634,8 @@ input[type="text"]::placeholder {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
-  padding: 20px 0;
+  margin-bottom: 8px;
+  padding: 12px 0;
 }
 
 .die {
@@ -690,7 +698,7 @@ input[type="text"]::placeholder {
 }
 
 .btn-roll {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 /* ===== Emote System ===== */

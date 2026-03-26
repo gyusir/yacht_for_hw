@@ -118,29 +118,33 @@
         <span id="roll-counter" class="roll-counter">Rolls: 0 / 3</span>
       </div>
 
-      <!-- Dice Area -->
-      <div id="dice-area" class="dice-area">
-        <div class="die" data-index="0"></div>
-        <div class="die" data-index="1"></div>
-        <div class="die" data-index="2"></div>
-        <div class="die" data-index="3"></div>
-        <div class="die" data-index="4"></div>
-      </div>
-
-      <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll Dice</button>
-
-      <!-- Emote Bar -->
-      <div id="emote-bar" class="emote-bar">
-        <div class="emote-quick" id="emote-quick"></div>
-        <button class="btn-emote-toggle" id="btn-emote-toggle">💬</button>
-        <div class="emote-picker hidden" id="emote-picker"></div>
-      </div>
-
       <!-- Received Emote Bubble -->
       <div id="emote-bubble" class="emote-bubble hidden"></div>
 
       <!-- Scorecard -->
       <div id="scorecard" class="scorecard"></div>
+
+      <!-- Bottom Controls: Dice + Roll + Emote -->
+      <div class="bottom-controls">
+        <!-- Dice Area -->
+        <div id="dice-area" class="dice-area">
+          <div class="die" data-index="0"></div>
+          <div class="die" data-index="1"></div>
+          <div class="die" data-index="2"></div>
+          <div class="die" data-index="3"></div>
+          <div class="die" data-index="4"></div>
+        </div>
+
+        <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll Dice</button>
+
+        <!-- Emote Bar -->
+        <div id="emote-bar" class="emote-bar">
+          <div class="emote-quick" id="emote-quick"></div>
+          <button class="btn-emote-toggle" id="btn-emote-toggle">💬</button>
+          <div class="emote-picker hidden" id="emote-picker"></div>
+        </div>
+      </div>
+
       <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
