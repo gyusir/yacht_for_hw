@@ -80,7 +80,7 @@
             scores: buildEmptyScores(gameMode)
           }
         },
-        winner: null
+        winner: ''
       };
 
       roomRef.set(roomData, function (error) {
@@ -226,12 +226,9 @@
   }
 
   function buildEmptyScores(gameMode) {
-    var Scoring = window.YachtGame.Scoring;
-    var categories = Scoring.getCategories(gameMode);
-    var scores = {};
-    for (var i = 0; i < categories.length; i++) {
-      scores[categories[i]] = null;
-    }
+    // Note: Firebase strips null values, so unfilled categories simply won't exist.
+    // We use an _init flag to ensure the scores object itself persists in Firebase.
+    var scores = { _init: true };
     if (gameMode === 'yahtzee') {
       scores.yahtzeeBonus = 0;
     }

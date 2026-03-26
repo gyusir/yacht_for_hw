@@ -47,11 +47,16 @@
     var Dice = window.YachtGame.Dice;
     var Scoring = window.YachtGame.Scoring;
 
-    var myData = room.players[localPlayerKey];
-    var oppData = room.players[opponentKey];
+    var myData = room.players ? room.players[localPlayerKey] : null;
+    var oppData = room.players ? room.players[opponentKey] : null;
+
+    // Wait until both players are present before rendering game
+    if (!myData || !oppData) {
+      return;
+    }
 
     // Handle disconnection
-    if (oppData && oppData.connected === false && room.status === 'playing') {
+    if (oppData.connected === false && room.status === 'playing') {
       UI.showDisconnectOverlay(true);
     } else {
       UI.showDisconnectOverlay(false);
@@ -64,7 +69,7 @@
       var p2 = room.players.player2;
       UI.renderGameOver(
         p1.name, p2.name,
-        p1.scores, p2.scores,
+        p1.scores || {}, p2.scores || {},
         gameMode, room.winner, localPlayerKey
       );
       // Save game history for signed-in users
@@ -80,7 +85,7 @@
     var isMyTurn = room.currentTurn === localPlayerKey;
 
     // Update turn indicator
-    UI.updateTurnIndicator(isMyTurn, oppData ? oppData.name : 'Opponent');
+    UI.updateTurnIndicator(isMyTurn, oppData.name || 'Opponent');
 
     // Update roll counter
     UI.updateRollCounter(room.rollCount || 0);
@@ -104,16 +109,16 @@
     // Render scorecard
     var currentDice = Dice.getDiceValues(diceState);
     UI.renderScorecard(
-      room.players.player1.scores || {},
-      room.players.player2.scores || {},
+      (room.players.player1 && room.players.player1.scores) || {},
+      (room.players.player2 && room.players.player2.scores) || {},
       gameMode,
       currentDice,
       isMyTurn && room.rollCount > 0,
       localPlayerKey,
-      room.players.player1.name,
-      room.players.player2.name,
-      room.players[localPlayerKey].lastCategory || null,
-      (room.players[opponentKey] && room.players[opponentKey].lastCategory) || null
+      (room.players.player1 && room.players.player1.name) || 'Player 1',
+      (room.players.player2 && room.players.player2.name) || 'Player 2',
+      myData.lastCategory || null,
+      oppData.lastCategory || null
     );
   }
 
@@ -243,8 +248,10 @@
     var Scoring = window.YachtGame.Scoring;
     var myData = room.players[localPlayerKey];
     var oppData = room.players[opponentKey];
-    var myTotal = Scoring.totalScore(myData.scores, gameMode, myData.scores.yahtzeeBonus);
-    var oppTotal = Scoring.totalScore(oppData.scores, gameMode, oppData.scores.yahtzeeBonus);
+    var myScores = myData.scores || {};
+    var oppScores = oppData.scores || {};
+    var myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
+    var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
 
     var result;
     if (room.winner === localPlayerKey) result = 'win';
