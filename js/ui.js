@@ -107,7 +107,7 @@
     var html = '<table>';
     html += '<thead><tr>';
     html += '<th>Category</th>';
-    html += '<th>' + escapeHtml(myName || 'You') + '</th>';
+    html += '<th class="my-header">' + escapeHtml(myName || 'You') + '</th>';
     html += '<th class="opponent-header">' + escapeHtml(oppName || 'Opponent') + '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
@@ -244,15 +244,17 @@
     return div.innerHTML;
   }
 
-  // Emote bubble
-  var emoteBubbleTimer = null;
-  function showEmoteBubble(senderName, msg) {
-    var bubble = document.getElementById('emote-bubble');
+  // Emote bubbles
+  var emoteBubbleTimers = { mine: null, opp: null };
+  function showEmoteBubble(target, msg) {
+    var bubbleId = target === 'mine' ? 'emote-bubble-mine' : 'emote-bubble-opp';
+    var anchorClass = target === 'mine' ? '.my-header' : '.opponent-header';
+    var bubble = document.getElementById(bubbleId);
+
     bubble.innerHTML = escapeHtml(msg);
     bubble.classList.remove('hidden');
 
-    // Position above opponent header in scorecard
-    var anchor = document.querySelector('.opponent-header');
+    var anchor = document.querySelector(anchorClass);
     if (anchor) {
       var rect = anchor.getBoundingClientRect();
       bubble.style.position = 'absolute';
@@ -262,10 +264,10 @@
     }
 
     bubble.style.animation = 'none';
-    bubble.offsetHeight; // reflow
+    bubble.offsetHeight;
     bubble.style.animation = '';
-    clearTimeout(emoteBubbleTimer);
-    emoteBubbleTimer = setTimeout(function () {
+    clearTimeout(emoteBubbleTimers[target]);
+    emoteBubbleTimers[target] = setTimeout(function () {
       bubble.classList.add('hidden');
     }, 2500);
   }

@@ -31,7 +31,7 @@
       var data = snap.val();
       if (data.ts && data.ts > lastSeenEmoteTs) {
         lastSeenEmoteTs = data.ts;
-        window.YachtGame.UI.showEmoteBubble(data.name, data.msg);
+        window.YachtGame.UI.showEmoteBubble('opp', data.msg);
       }
     });
   }
@@ -263,6 +263,8 @@
 
   function sendEmote(msg) {
     if (!roomRef || !lastRoomData) return;
+    // Show on my own header immediately
+    window.YachtGame.UI.showEmoteBubble('mine', msg);
     var myName = lastRoomData.players[localPlayerKey].name;
     roomRef.child('emotes/' + localPlayerKey).set({
       msg: msg,
