@@ -592,50 +592,20 @@ input[type="text"]::placeholder {
   padding-top: 12px;
 }
 
-.game-info {
+/* ===== Dice + Roll Row ===== */
+.dice-roll-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.turn-indicator {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.turn-indicator.my-turn {
-  color: var(--accent);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.turn-indicator.opponent-turn {
-  color: var(--text-muted);
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.roll-counter {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-/* ===== Dice ===== */
 .dice-area {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-  padding: 12px 0;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .die {
@@ -698,7 +668,21 @@ input[type="text"]::placeholder {
 }
 
 .btn-roll {
-  margin-bottom: 8px;
+  min-width: 90px;
+  height: clamp(52px, 13vw, 72px);
+  padding: 0 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.btn-roll:disabled {
+  background: var(--border);
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 1;
 }
 
 /* ===== Dice Skins ===== */
@@ -1178,18 +1162,8 @@ input[type="text"]::placeholder {
   border-radius: 4px;
 }
 
-.scorecard .section-header {
+.scorecard .lower-row td {
   background: var(--accent-light);
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.scorecard .section-header td {
-  padding: 6px 12px;
-  text-align: left;
 }
 
 .scorecard .bonus-row td {
@@ -1381,8 +1355,13 @@ input[type="text"]::placeholder {
   }
 
   .dice-area {
-    gap: 8px;
-    padding: 12px 0;
+    gap: 6px;
+  }
+
+  .btn-roll {
+    min-width: 70px;
+    padding: 0 10px;
+    font-size: 0.75rem;
   }
 
   .scorecard th,

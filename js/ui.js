@@ -61,22 +61,13 @@
     }
   }
 
-  // Turn indicator
-  function updateTurnIndicator(isMyTurn, opponentName) {
-    var el = document.getElementById('turn-indicator');
-    if (isMyTurn) {
-      el.textContent = 'Your Turn';
-      el.className = 'turn-indicator my-turn';
-    } else {
-      el.textContent = (opponentName || 'Opponent') + "'s Turn";
-      el.className = 'turn-indicator opponent-turn';
-    }
-  }
+  // Turn indicator (no-op, turn is shown via roll button dimming)
+  function updateTurnIndicator(isMyTurn, opponentName) {}
 
-  // Roll counter
+  // Roll counter — updates roll button text
   function updateRollCounter(count) {
-    var el = document.getElementById('roll-counter');
-    el.textContent = 'Rolls: ' + count + ' / 3';
+    var btn = document.getElementById('btn-roll');
+    btn.textContent = 'Roll (' + count + '/3)';
   }
 
   // Roll button state
@@ -112,11 +103,9 @@
     html += '</tr></thead>';
     html += '<tbody>';
 
-    // Upper section header
-    html += '<tr class="section-header"><td colspan="3">Upper Section</td></tr>';
-
+    // Upper categories
     for (var i = 0; i < upperCats.length; i++) {
-      html += renderCategoryRow(upperCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat);
+      html += renderCategoryRow(upperCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, '');
     }
 
     // Upper bonus row (Yahtzee only)
@@ -132,11 +121,9 @@
       html += '</tr>';
     }
 
-    // Lower section header
-    html += '<tr class="section-header"><td colspan="3">Lower Section</td></tr>';
-
+    // Lower categories (with lower-row class for background distinction)
     for (var i = 0; i < lowerCats.length; i++) {
-      html += renderCategoryRow(lowerCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat);
+      html += renderCategoryRow(lowerCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, 'lower-row');
     }
 
     // Yahtzee bonus row
@@ -178,14 +165,14 @@
     }
   }
 
-  function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat) {
+  function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, rowClass) {
     var Scoring = window.YachtGame.Scoring;
     var displayName = Scoring.getDisplayName(category);
     var myVal = myScores[category];
     var oppVal = oppScores[category];
     var isMyLast = category === myLastCat;
     var isOppLast = category === oppLastCat;
-    var html = '<tr>';
+    var html = '<tr' + (rowClass ? ' class="' + rowClass + '"' : '') + '>';
 
     html += '<td class="category-name">' + displayName + '</td>';
 

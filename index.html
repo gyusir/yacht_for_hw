@@ -121,12 +121,6 @@
   <!-- Screen: Game -->
   <section id="screen-game" class="screen">
     <div class="game-layout">
-      <!-- Game Info Bar -->
-      <div id="game-info" class="game-info">
-        <span id="turn-indicator" class="turn-indicator"></span>
-        <span id="roll-counter" class="roll-counter">Rolls: 0 / 3</span>
-      </div>
-
       <!-- Emote Bubbles (mine + opponent) -->
       <div id="emote-bubble-mine" class="emote-bubble hidden"></div>
       <div id="emote-bubble-opp" class="emote-bubble hidden"></div>
@@ -136,16 +130,17 @@
 
       <!-- Bottom Controls: Dice + Roll + Emote -->
       <div class="bottom-controls">
-        <!-- Dice Area -->
-        <div id="dice-area" class="dice-area">
-          <div class="die" data-index="0"></div>
-          <div class="die" data-index="1"></div>
-          <div class="die" data-index="2"></div>
-          <div class="die" data-index="3"></div>
-          <div class="die" data-index="4"></div>
+        <!-- Dice + Roll Row -->
+        <div class="dice-roll-row">
+          <div id="dice-area" class="dice-area">
+            <div class="die" data-index="0"></div>
+            <div class="die" data-index="1"></div>
+            <div class="die" data-index="2"></div>
+            <div class="die" data-index="3"></div>
+            <div class="die" data-index="4"></div>
+          </div>
+          <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll (0/3)</button>
         </div>
-
-        <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll Dice</button>
 
         <!-- Emote Bar -->
         <div id="emote-bar" class="emote-bar">
