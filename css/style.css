@@ -596,16 +596,16 @@ input[type="text"]::placeholder {
 .dice-roll-row {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .dice-area {
   display: flex;
-  justify-content: center;
   gap: 8px;
   flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .die {
@@ -668,14 +668,13 @@ input[type="text"]::placeholder {
 }
 
 .btn-roll {
-  min-width: 90px;
+  flex: 1;
   height: clamp(52px, 13vw, 72px);
   padding: 0 14px;
   font-size: 0.85rem;
   font-weight: 600;
   white-space: nowrap;
   border-radius: var(--radius-sm);
-  flex-shrink: 0;
 }
 
 .btn-roll:disabled {
@@ -1359,7 +1358,6 @@ input[type="text"]::placeholder {
   }
 
   .btn-roll {
-    min-width: 70px;
     padding: 0 10px;
     font-size: 0.75rem;
   }
