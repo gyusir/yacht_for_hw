@@ -31,6 +31,8 @@
 
   function renderDie(dieEl, value) {
     dieEl.innerHTML = '';
+    dieEl.dataset.value = value || 0;
+
     if (!value || value < 1 || value > 6) {
       // Empty die (before first roll)
       for (var i = 1; i <= 9; i++) {
@@ -40,6 +42,16 @@
         pip.style.gridColumn = GRID_POSITIONS[i].col;
         dieEl.appendChild(pip);
       }
+      return;
+    }
+
+    // Crimson skin: show calligraphy character instead of pips
+    var DiceSkins = window.YachtGame.DiceSkins;
+    if (DiceSkins && DiceSkins.getCurrentSkin() === 'crimson') {
+      var charEl = document.createElement('span');
+      charEl.className = 'crimson-char';
+      charEl.textContent = DiceSkins.getCrimsonChar(value);
+      dieEl.appendChild(charEl);
       return;
     }
 

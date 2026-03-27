@@ -8,9 +8,13 @@
   var Dice = window.YachtGame.Dice;
   var Auth = window.YachtGame.Auth;
   var History = window.YachtGame.History;
+  var DiceSkins = window.YachtGame.DiceSkins;
 
   // Initialize theme
   UI.initTheme();
+
+  // Initialize dice skin from cache
+  DiceSkins.loadSkin();
 
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
@@ -77,12 +81,35 @@
     }
   }
 
+  var skinSelector = document.getElementById('skin-selector');
+  var skinOptions = document.getElementById('skin-options');
+
+  function refreshSkinSelector() {
+    if (!Auth.isSignedIn()) {
+      if (skinSelector) skinSelector.hidden = true;
+      return;
+    }
+    var uid = Auth.getPlayerUid();
+    History.loadStats(uid, function (stats) {
+      var totalGames = (stats && stats.totalGames) || 0;
+      if (skinSelector) skinSelector.hidden = false;
+      DiceSkins.renderSkinSelector(skinOptions, totalGames);
+    });
+  }
+
   // Listen for auth state changes
   Auth.onAuthStateChanged(function (user) {
     showLoginScreen(user);
     // Show My Stats button in lobby if signed in
     if (btnMyStats) {
       btnMyStats.hidden = !user;
+    }
+    if (user) {
+      DiceSkins.loadSkin();
+      refreshSkinSelector();
+    } else {
+      if (skinSelector) skinSelector.hidden = true;
+      DiceSkins.applySkin('classic');
     }
   });
 
@@ -109,6 +136,7 @@
   btnContinueSigned.addEventListener('click', function () {
     playerName = Auth.getPlayerName();
     UI.showScreen('screen-lobby');
+    refreshSkinSelector();
   });
 
   // --- Guest Flow ---
@@ -357,6 +385,7 @@
     Lobby.clearSession();
     UI.showScreen('screen-lobby');
     lobbyError.hidden = true;
+    refreshSkinSelector();
   });
 
   // --- Reconnection on page load ---
