@@ -5,6 +5,8 @@
   window.YachtGame = window.YachtGame || {};
 
   var db = null;
+  var presenceRef = null;
+  var presenceCallback = null;
 
   function getDb() {
     if (!db) db = window.YachtGame.db;
@@ -45,7 +47,13 @@
     return uid;
   }
 
-  function createRoom(playerName, gameMode, callback) {
+  function createRoom(playerName, gameMode, callback, _retries) {
+    _retries = _retries || 0;
+    if (_retries >= 3) {
+      callback({ error: 'Failed to create room. Please try again.' });
+      return;
+    }
+
     var database = getDb();
     var code = generateRoomCode();
     var roomRef = database.ref('rooms/' + code);
@@ -53,8 +61,8 @@
     // Check if room exists
     roomRef.once('value', function (snapshot) {
       if (snapshot.exists()) {
-        // Rare collision, try again
-        createRoom(playerName, gameMode, callback);
+        // Rare collision, retry with limit
+        createRoom(playerName, gameMode, callback, _retries + 1);
         return;
       }
 
@@ -106,65 +114,61 @@
     var database = getDb();
     roomCode = roomCode.toUpperCase().trim();
     var roomRef = database.ref('rooms/' + roomCode);
+    var uid = getOrCreateUid();
 
-    roomRef.once('value', function (snapshot) {
-      if (!snapshot.exists()) {
-        callback({ error: 'Room not found.' });
+    roomRef.transaction(function (room) {
+      if (!room) return;
+      if (room.status !== 'waiting') return;
+      if (room.players && room.players.player2) return;
+
+      room.players = room.players || {};
+      room.players.player2 = {
+        name: playerName,
+        uid: uid,
+        connected: true,
+        scores: buildEmptyScores(room.gameMode),
+        diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
+      };
+      room.status = 'playing';
+      return room;
+    }, function (error, committed, snapshot) {
+      if (error) {
+        callback({ error: 'Failed to join room.' });
+        return;
+      }
+      if (!committed) {
+        callback({ error: 'Room not available.' });
         return;
       }
 
       var room = snapshot.val();
-
-      if (room.status !== 'waiting') {
-        callback({ error: 'Room is already in a game.' });
-        return;
-      }
-
-      if (room.players && room.players.player2) {
-        callback({ error: 'Room is full.' });
-        return;
-      }
-
-      var uid = getOrCreateUid();
-      var gameMode = room.gameMode;
-
-      var updates = {};
-      updates['players/player2'] = {
-        name: playerName,
-        uid: uid,
-        connected: true,
-        scores: buildEmptyScores(gameMode),
-        diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
-      };
-      updates['status'] = 'playing';
-
-      roomRef.update(updates, function (error) {
-        if (error) {
-          callback({ error: 'Failed to join room.' });
-          return;
-        }
-
-        setupPresence(roomCode, 'player2', uid);
-
-        sessionStorage.setItem('yacht-room', roomCode);
-        sessionStorage.setItem('yacht-player', 'player2');
-
-        callback({ roomCode: roomCode, playerKey: 'player2', gameMode: gameMode });
-      });
+      setupPresence(roomCode, 'player2', uid);
+      sessionStorage.setItem('yacht-room', roomCode);
+      sessionStorage.setItem('yacht-player', 'player2');
+      callback({ roomCode: roomCode, playerKey: 'player2', gameMode: room.gameMode });
     });
   }
 
   function setupPresence(roomCode, playerKey, uid) {
+    cleanupPresence();
+
     var database = getDb();
     var connRef = database.ref('rooms/' + roomCode + '/players/' + playerKey + '/connected');
-    var connectedRef = database.ref('.info/connected');
-
-    connectedRef.on('value', function (snap) {
+    presenceRef = database.ref('.info/connected');
+    presenceCallback = presenceRef.on('value', function (snap) {
       if (snap.val() === true) {
         connRef.onDisconnect().set(false);
         connRef.set(true);
       }
     });
+  }
+
+  function cleanupPresence() {
+    if (presenceRef && presenceCallback) {
+      presenceRef.off('value', presenceCallback);
+    }
+    presenceRef = null;
+    presenceCallback = null;
   }
 
   function listenForOpponent(roomCode, callback) {
@@ -223,6 +227,7 @@
   }
 
   function clearSession() {
+    cleanupPresence();
     sessionStorage.removeItem('yacht-room');
     sessionStorage.removeItem('yacht-player');
   }
@@ -248,6 +253,7 @@
     // Remove the room and stop listening
     database.ref('rooms/' + roomCode + '/players/player2').off();
     database.ref('rooms/' + roomCode).remove();
+    cleanupPresence();
     clearSession();
   }
 

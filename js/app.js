@@ -51,6 +51,7 @@
   var btnBackLobbyWaiting = document.getElementById('btn-back-lobby-waiting');
 
   var playerName = '';
+  var currentWaitingRoomCode = null;
 
   // --- Theme Toggle ---
   themeToggle.addEventListener('click', function () {
@@ -159,6 +160,15 @@
   });
 
   // --- Lobby Screen ---
+  // Mode radio listeners (registered once, use currentWaitingRoomCode)
+  for (var i = 0; i < modeRadios.length; i++) {
+    modeRadios[i].addEventListener('change', function () {
+      if (currentWaitingRoomCode) {
+        Lobby.updateGameMode(currentWaitingRoomCode, this.value);
+      }
+    });
+  }
+
   roomCodeInput.addEventListener('input', function () {
     btnJoin.disabled = roomCodeInput.value.trim().length < 6;
   });
@@ -187,14 +197,8 @@
       }
 
       displayRoomCode.textContent = result.roomCode;
+      currentWaitingRoomCode = result.roomCode;
       UI.showScreen('screen-waiting');
-
-      // Listen for mode changes while waiting
-      for (var i = 0; i < modeRadios.length; i++) {
-        modeRadios[i].addEventListener('change', function () {
-          Lobby.updateGameMode(result.roomCode, this.value);
-        });
-      }
 
       // Wait for opponent
       Lobby.listenForOpponent(result.roomCode, function (player2) {

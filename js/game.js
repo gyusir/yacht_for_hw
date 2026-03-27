@@ -12,7 +12,10 @@
   var roomListener = null;
   var lastRoomData = null;
   var isRolling = false;
+  var isWriting = false;
   var pendingCategory = null;
+  var lastTurn = null;
+  var lastRollCount = null;
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
 
@@ -85,13 +88,17 @@
 
     var isMyTurn = room.currentTurn === localPlayerKey;
 
-    // Reset pending score selection on turn change or dice re-roll
-    pendingCategory = null;
+    // Reset pending score selection only on turn change or dice re-roll
+    if (room.currentTurn !== lastTurn || (room.rollCount || 0) !== lastRollCount) {
+      pendingCategory = null;
+    }
+    lastTurn = room.currentTurn;
+    lastRollCount = room.rollCount || 0;
 
     // Apply dice skin of the current turn's player
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) {
-      var turnPlayer = room.players[room.currentTurn];
+      var turnPlayer = room.currentTurn ? room.players[room.currentTurn] : null;
       var turnSkin = (turnPlayer && turnPlayer.diceSkin) || 'classic';
       DiceSkins.applySkin(turnSkin);
     }
@@ -196,6 +203,7 @@
   }
 
   function selectCategory(category) {
+    if (isWriting) return;
     if (!lastRoomData) return;
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
@@ -207,7 +215,10 @@
     var Scoring = window.YachtGame.Scoring;
     var diceValues = [];
     for (var i = 0; i < 5; i++) {
-      diceValues.push(room.dice[i].value);
+      var d = room.dice[i];
+      var v = (d && d.value) || 0;
+      if (v < 1 || v > 6) return; // invalid dice, abort
+      diceValues.push(v);
     }
 
     var score = Scoring.calculate(diceValues, category, gameMode);
@@ -261,7 +272,10 @@
       updates['status'] = 'finished';
     }
 
-    roomRef.update(updates);
+    isWriting = true;
+    roomRef.update(updates, function () {
+      isWriting = false;
+    });
   }
 
   var historySaved = false;
@@ -333,6 +347,10 @@
     gameMode = null;
     lastRoomData = null;
     isRolling = false;
+    isWriting = false;
+    pendingCategory = null;
+    lastTurn = null;
+    lastRollCount = null;
     emoteListener = null;
     lastSeenEmoteTs = 0;
     historySaved = false;

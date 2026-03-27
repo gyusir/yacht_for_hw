@@ -882,7 +882,7 @@ input[type="text"]::placeholder {
 
 .skin-unlock-count {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   background: var(--surface);
   padding: 2px 8px;
   border-radius: 10px;
@@ -937,7 +937,7 @@ input[type="text"]::placeholder {
 
 .skin-name {
   font-size: 0.7rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .lock-overlay {
