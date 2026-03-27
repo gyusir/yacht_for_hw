@@ -1,4 +1,12 @@
 // Dice Skins: definitions, unlock logic, selection, persistence
+//
+// How to add a new skin:
+// 1. Add { id, name, unlockAt } to SKIN_DEFS below (id = kebab-case)
+// 2. If the skin has custom rendering (not standard pips), add a branch
+//    in dice.js renderDie() and in renderSkinSelector() below
+// 3. Define ALL visual styles in css/style.css only (no inline color values here)
+//    Required CSS blocks: see CLAUDE.md "Dice Skin Addition Checklist"
+// 4. Update the unlock count denominator in renderSkinSelector() below
 (function () {
   'use strict';
 

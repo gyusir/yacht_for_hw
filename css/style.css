@@ -684,7 +684,18 @@ input[type="text"]::placeholder {
 }
 
 /* ===== Dice Skins ===== */
-/* Each skin is fully defined in CSS per mode; no JS inline variable bridge needed. */
+/*
+ * All skin colors are defined here in CSS only — JS sets data-dice-skin attribute,
+ * CSS handles the rest. This ensures light↔dark theme toggle works in real time.
+ *
+ * Per-skin CSS pattern (see CLAUDE.md for full checklist):
+ *   [data-dice-skin="<id>"] .die          — light mode body
+ *   [data-dice-skin="<id>"] .pip          — light mode pips
+ *   [data-dice-skin="<id>"] .die.held     — light mode held glow
+ *   [data-theme="dark"] variants of above — dark mode overrides
+ *   .skin-preview-die[data-dice-skin="<id>"] — lobby preview (light + dark)
+ *   .skin-option.active[data-skin-id="<id>"] — selection border (light + dark)
+ */
 
 /* --- Ornate: silver metal + copper border + emerald pips --- */
 /* Light mode */
