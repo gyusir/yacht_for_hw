@@ -77,7 +77,8 @@
             name: playerName,
             uid: uid,
             connected: true,
-            scores: buildEmptyScores(gameMode)
+            scores: buildEmptyScores(gameMode),
+            diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
           }
         },
         winner: ''
@@ -132,7 +133,8 @@
         name: playerName,
         uid: uid,
         connected: true,
-        scores: buildEmptyScores(gameMode)
+        scores: buildEmptyScores(gameMode),
+        diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
       };
       updates['status'] = 'playing';
 

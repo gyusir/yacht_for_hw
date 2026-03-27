@@ -84,6 +84,14 @@
 
     var isMyTurn = room.currentTurn === localPlayerKey;
 
+    // Apply dice skin of the current turn's player
+    var DiceSkins = window.YachtGame.DiceSkins;
+    if (DiceSkins) {
+      var turnPlayer = room.players[room.currentTurn];
+      var turnSkin = (turnPlayer && turnPlayer.diceSkin) || 'classic';
+      DiceSkins.applySkin(turnSkin);
+    }
+
     // Update turn indicator
     UI.updateTurnIndicator(isMyTurn, oppData.name || 'Opponent');
 
@@ -310,6 +318,9 @@
     emoteListener = null;
     lastSeenEmoteTs = 0;
     historySaved = false;
+    // Restore player's own skin
+    var DiceSkins = window.YachtGame.DiceSkins;
+    if (DiceSkins) DiceSkins.loadSkin();
   }
 
   window.YachtGame.Game = {
