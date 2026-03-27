@@ -102,7 +102,13 @@
     }
   }
 
+  var activeTimers = [];
+
   function animateRoll(dieEls, finalDice, callback) {
+    // Clear any in-progress animation timers
+    for (var t = 0; t < activeTimers.length; t++) clearInterval(activeTimers[t]);
+    activeTimers = [];
+
     var duration = 400;
     var steps = 8;
     var interval = duration / steps;
@@ -134,6 +140,7 @@
             if (completed === dieEls.length && callback) callback();
           }
         }, interval + index * 15); // stagger each die slightly
+        activeTimers.push(timer);
       })(i);
     }
   }

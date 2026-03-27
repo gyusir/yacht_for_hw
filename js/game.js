@@ -175,7 +175,10 @@
 
     // Animate dice locally
     var dieEls = document.querySelectorAll('.die');
+    // Safety timeout: force unlock if animation callback never fires
+    var rollSafetyTimer = setTimeout(function () { isRolling = false; }, 1000);
     window.YachtGame.Dice.animateRoll(dieEls, diceState, function () {
+      clearTimeout(rollSafetyTimer);
       isRolling = false;
       // Write to Firebase after animation
       var updates = {};

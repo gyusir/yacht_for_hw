@@ -200,6 +200,8 @@
         callback(snapshot.val());
       }
     });
+
+    return function cancel() { player2Ref.off(); };
   }
 
   function tryReconnect(callback) {
@@ -226,6 +228,12 @@
       var player = room.players && room.players[playerKey];
 
       if (!player || player.uid !== uid) {
+        clearSession();
+        callback(null);
+        return;
+      }
+
+      if (room.status === 'finished') {
         clearSession();
         callback(null);
         return;
@@ -316,7 +324,7 @@
     lastCleanupTime = now;
 
     var database = getDb();
-    var cutoff = now - STALE_MS.playingAbandoned;
+    var cutoff = now - STALE_MS.finished;
 
     database.ref('rooms').orderByChild('createdAt').endAt(cutoff)
       .once('value', function (snapshot) {

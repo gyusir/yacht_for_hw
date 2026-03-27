@@ -53,6 +53,7 @@
 
   var playerName = '';
   var currentWaitingRoomCode = null;
+  var cancelOpponentListener = null;
 
   // --- Theme Toggle ---
   themeToggle.addEventListener('click', function () {
@@ -204,7 +205,8 @@
       UI.showScreen('screen-waiting');
 
       // Wait for opponent
-      Lobby.listenForOpponent(result.roomCode, function (player2) {
+      cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
+        cancelOpponentListener = null;
         UI.showToast(player2.name + ' joined!');
         Game.init(result.roomCode, result.playerKey);
       });
@@ -304,6 +306,10 @@
   });
 
   btnBackLobbyWaiting.addEventListener('click', function () {
+    if (cancelOpponentListener) {
+      cancelOpponentListener();
+      cancelOpponentListener = null;
+    }
     var code = displayRoomCode.textContent;
     Lobby.cancelRoom(code);
     UI.showScreen('screen-lobby');
@@ -424,7 +430,8 @@
     } else if (session && session.status === 'waiting') {
       displayRoomCode.textContent = session.roomCode;
       UI.showScreen('screen-waiting');
-      Lobby.listenForOpponent(session.roomCode, function (player2) {
+      cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
+        cancelOpponentListener = null;
         UI.showToast(player2.name + ' joined!');
         Game.init(session.roomCode, session.playerKey);
       });
