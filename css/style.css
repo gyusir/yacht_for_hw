@@ -684,16 +684,7 @@ input[type="text"]::placeholder {
 }
 
 /* ===== Dice Skins ===== */
-
-/* Skin variable bridge: skins set --skin-* vars, dice use them */
-[data-dice-skin]:not([data-dice-skin="classic"]) .die {
-  background: var(--skin-die-bg);
-  border-color: var(--skin-die-border);
-}
-
-[data-dice-skin]:not([data-dice-skin="classic"]) .pip {
-  background: var(--skin-pip-color);
-}
+/* Each skin is fully defined in CSS per mode; no JS inline variable bridge needed. */
 
 /* --- Ornate: silver metal + copper border + emerald pips --- */
 /* Light mode */

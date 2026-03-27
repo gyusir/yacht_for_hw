@@ -7,62 +7,12 @@
   // Skin definitions in unlock order
   // unlockAt: number of totalGames required (0 = always available)
   var SKIN_DEFS = [
-    {
-      id: 'classic',
-      name: 'Classic',
-      unlockAt: 0,
-      vars: {}
-    },
-    {
-      id: 'ornate',
-      name: 'Ornate',
-      unlockAt: 3,
-      vars: {
-        '--die-bg': 'linear-gradient(145deg, #e8e8ec, #c8c8d0, #d8d8e0)',
-        '--die-border-color': '#b87333',
-        '--pip-color': '#0d6b3a'
-      }
-    },
-    {
-      id: 'bronze',
-      name: 'Bronze',
-      unlockAt: 6,
-      vars: {
-        '--die-bg': 'linear-gradient(145deg, #3a3a42, #2a2a32, #333338)',
-        '--die-border-color': '#4a4a52',
-        '--pip-color': '#c9935a'
-      }
-    },
-    {
-      id: 'marble',
-      name: 'Marble',
-      unlockAt: 9,
-      vars: {
-        '--die-bg': 'linear-gradient(145deg, #f5f5f0, #e8e6e0, #eeedea)',
-        '--die-border-color': '#a8a8b0',
-        '--pip-color': '#1f3d7a'
-      }
-    },
-    {
-      id: 'crimson',
-      name: 'Crimson',
-      unlockAt: 12,
-      vars: {
-        '--die-bg': 'linear-gradient(145deg, #c0272d, #a01520, #b52228)',
-        '--die-border-color': '#c4917a',
-        '--pip-color': '#1a0a08'
-      }
-    },
-    {
-      id: 'hologram',
-      name: 'Hologram',
-      unlockAt: 15,
-      vars: {
-        '--die-bg': 'linear-gradient(145deg, rgba(200, 210, 230, 0.55), rgba(180, 195, 220, 0.45))',
-        '--die-border-color': 'rgba(0, 210, 230, 0.40)',
-        '--pip-color': '#008b8b'
-      }
-    }
+    { id: 'classic',   name: 'Classic',   unlockAt: 0 },
+    { id: 'ornate',    name: 'Ornate',    unlockAt: 3 },
+    { id: 'bronze',    name: 'Bronze',    unlockAt: 6 },
+    { id: 'marble',    name: 'Marble',    unlockAt: 9 },
+    { id: 'crimson',   name: 'Crimson',   unlockAt: 12 },
+    { id: 'hologram',  name: 'Hologram',  unlockAt: 15 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -96,23 +46,6 @@
 
     currentSkinId = skinId || 'classic';
     diceArea.setAttribute('data-dice-skin', currentSkinId);
-
-    // Apply CSS variable overrides as inline styles
-    var def = getSkinDef(currentSkinId);
-    // Clear previous skin inline styles
-    diceArea.style.removeProperty('--skin-die-bg');
-    diceArea.style.removeProperty('--skin-die-border');
-    diceArea.style.removeProperty('--skin-pip-color');
-
-    if (def.vars['--die-bg']) {
-      diceArea.style.setProperty('--skin-die-bg', def.vars['--die-bg']);
-    }
-    if (def.vars['--die-border-color']) {
-      diceArea.style.setProperty('--skin-die-border', def.vars['--die-border-color']);
-    }
-    if (def.vars['--pip-color']) {
-      diceArea.style.setProperty('--skin-pip-color', def.vars['--pip-color']);
-    }
   }
 
   function saveSkin(skinId) {
@@ -185,11 +118,6 @@
       miniDie.className = 'skin-preview-die';
       miniDie.setAttribute('data-dice-skin', def.id);
       miniDie.setAttribute('data-value', '5');
-
-      // Apply skin-specific inline styles for preview
-      if (def.vars['--die-bg']) miniDie.style.setProperty('--skin-die-bg', def.vars['--die-bg']);
-      if (def.vars['--die-border-color']) miniDie.style.setProperty('--skin-die-border', def.vars['--die-border-color']);
-      if (def.vars['--pip-color']) miniDie.style.setProperty('--skin-pip-color', def.vars['--pip-color']);
 
       // For crimson, show calligraphy character
       if (def.id === 'crimson') {
