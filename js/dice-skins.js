@@ -18,9 +18,9 @@
       name: 'Ornate',
       unlockAt: 3,
       vars: {
-        '--die-bg': 'linear-gradient(145deg, #c0c0c0, #e8e8e8)',
+        '--die-bg': 'linear-gradient(145deg, #e8e8ec, #c8c8d0, #d8d8e0)',
         '--die-border-color': '#b87333',
-        '--pip-color': '#0d9373'
+        '--pip-color': '#0d6b3a'
       }
     },
     {
@@ -28,9 +28,9 @@
       name: 'Bronze',
       unlockAt: 6,
       vars: {
-        '--die-bg': '#1a1a1a',
-        '--die-border-color': '#5a4a3a',
-        '--pip-color': '#a0845c'
+        '--die-bg': 'linear-gradient(145deg, #3a3a42, #2a2a32, #333338)',
+        '--die-border-color': '#4a4a52',
+        '--pip-color': '#c9935a'
       }
     },
     {
@@ -38,9 +38,9 @@
       name: 'Marble',
       unlockAt: 9,
       vars: {
-        '--die-bg': '#f0ebe6',
-        '--die-border-color': '#b0b0b8',
-        '--pip-color': '#1a3a8a'
+        '--die-bg': 'linear-gradient(145deg, #f5f5f0, #e8e6e0, #eeedea)',
+        '--die-border-color': '#a8a8b0',
+        '--pip-color': '#1f3d7a'
       }
     },
     {
@@ -48,9 +48,9 @@
       name: 'Crimson',
       unlockAt: 12,
       vars: {
-        '--die-bg': '#8b0000',
-        '--die-border-color': '#c4917b',
-        '--pip-color': '#1a0a2e'
+        '--die-bg': 'linear-gradient(145deg, #c0272d, #a01520, #b52228)',
+        '--die-border-color': '#c4917a',
+        '--pip-color': '#1a0a08'
       }
     },
     {
@@ -58,9 +58,9 @@
       name: 'Hologram',
       unlockAt: 15,
       vars: {
-        '--die-bg': 'rgba(180, 240, 255, 0.15)',
-        '--die-border-color': '#00e5ff',
-        '--pip-color': '#00e5ff'
+        '--die-bg': 'linear-gradient(145deg, rgba(200, 210, 230, 0.55), rgba(180, 195, 220, 0.45))',
+        '--die-border-color': 'rgba(0, 210, 230, 0.40)',
+        '--pip-color': '#008b8b'
       }
     }
   ];
