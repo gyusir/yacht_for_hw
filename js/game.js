@@ -242,6 +242,7 @@
     }
 
     // Switch turn and reset dice
+    updates['lastActivityAt'] = firebase.database.ServerValue.TIMESTAMP;
     updates['currentTurn'] = opponentKey;
     updates['rollCount'] = 0;
     for (var i = 0; i < 5; i++) {
@@ -339,6 +340,14 @@
     }
     if (roomRef && emoteListener) {
       roomRef.child('emotes/' + opponentKey).off('value', emoteListener);
+    }
+    // Schedule delayed cleanup for finished games
+    var codeToClean = roomCode;
+    var statusToCheck = lastRoomData && lastRoomData.status;
+    if (codeToClean && statusToCheck === 'finished') {
+      setTimeout(function () {
+        window.YachtGame.db.ref('rooms/' + codeToClean).remove();
+      }, 30000);
     }
     roomRef = null;
     roomCode = null;

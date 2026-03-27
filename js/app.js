@@ -139,6 +139,7 @@
     playerName = Auth.getPlayerName();
     UI.showScreen('screen-lobby');
     refreshSkinSelector();
+    Lobby.cleanupStaleRooms();
   });
 
   // --- Guest Flow ---
@@ -158,6 +159,7 @@
     Auth.setGuest(playerName);
     DiceSkins.applySkin('classic');
     UI.showScreen('screen-lobby');
+    Lobby.cleanupStaleRooms();
   });
 
   // --- Lobby Screen ---
@@ -409,6 +411,7 @@
     UI.showScreen('screen-lobby');
     lobbyError.hidden = true;
     refreshSkinSelector();
+    Lobby.cleanupStaleRooms();
   });
 
   // --- Reconnection on page load ---

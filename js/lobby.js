@@ -7,6 +7,14 @@
   var db = null;
   var presenceRef = null;
   var presenceCallback = null;
+  var lastCleanupTime = 0;
+
+  var STALE_MS = {
+    finished: 5 * 60 * 1000,
+    waitingDisconnected: 2 * 60 * 1000,
+    waitingStale: 30 * 60 * 1000,
+    playingAbandoned: 60 * 60 * 1000
+  };
 
   function getDb() {
     if (!db) db = window.YachtGame.db;
@@ -71,6 +79,7 @@
         gameMode: gameMode,
         status: 'waiting',
         createdAt: firebase.database.ServerValue.TIMESTAMP,
+        lastActivityAt: firebase.database.ServerValue.TIMESTAMP,
         currentTurn: 'player1',
         rollCount: 0,
         dice: {
@@ -143,6 +152,7 @@
         diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
       };
       updates['status'] = 'playing';
+      updates['lastActivityAt'] = firebase.database.ServerValue.TIMESTAMP;
 
       roomRef.update(updates, function (error) {
         if (error) {
@@ -278,11 +288,14 @@
         }
 
         var uid = getOrCreateUid();
+        var now = Date.now();
         var available = [];
         snapshot.forEach(function (child) {
           var room = child.val();
           if (!room.players || !room.players.player2) {
             if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
+            if (room.players && room.players.player1 && room.players.player1.connected === false) return;
+            if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
             available.push(child.key);
           }
         });
@@ -297,12 +310,61 @@
       });
   }
 
+  function cleanupStaleRooms() {
+    var now = Date.now();
+    if (now - lastCleanupTime < 60000) return;
+    lastCleanupTime = now;
+
+    var database = getDb();
+    var cutoff = now - STALE_MS.playingAbandoned;
+
+    database.ref('rooms').orderByChild('createdAt').endAt(cutoff)
+      .once('value', function (snapshot) {
+        if (!snapshot.exists()) return;
+
+        var deletes = {};
+        snapshot.forEach(function (child) {
+          var room = child.val();
+          var activityAge = now - (room.lastActivityAt || room.createdAt || 0);
+          var age = now - (room.createdAt || 0);
+          var shouldDelete = false;
+
+          if (room.status === 'finished') {
+            if (activityAge > STALE_MS.finished) shouldDelete = true;
+          } else if (room.status === 'waiting') {
+            var p1 = room.players && room.players.player1;
+            if (p1 && p1.connected === false && age > STALE_MS.waitingDisconnected) {
+              shouldDelete = true;
+            } else if (age > STALE_MS.waitingStale) {
+              shouldDelete = true;
+            }
+          } else if (room.status === 'playing') {
+            var p1 = room.players && room.players.player1;
+            var p2 = room.players && room.players.player2;
+            var bothOff = (p1 && p1.connected === false) && (p2 && p2.connected === false);
+            if (bothOff && activityAge > STALE_MS.playingAbandoned) {
+              shouldDelete = true;
+            }
+          }
+
+          if (shouldDelete) {
+            deletes['rooms/' + child.key] = null;
+          }
+        });
+
+        if (Object.keys(deletes).length > 0) {
+          database.ref().update(deletes);
+        }
+      });
+  }
+
   window.YachtGame.Lobby = {
     generateRoomCode: generateRoomCode,
     getOrCreateUid: getOrCreateUid,
     createRoom: createRoom,
     joinRoom: joinRoom,
     findRandomRoom: findRandomRoom,
+    cleanupStaleRooms: cleanupStaleRooms,
     listenForOpponent: listenForOpponent,
     tryReconnect: tryReconnect,
     clearSession: clearSession,
