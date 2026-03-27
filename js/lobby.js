@@ -266,11 +266,43 @@
     clearSession();
   }
 
+  function findRandomRoom(playerName, callback) {
+    var database = getDb();
+    var roomsRef = database.ref('rooms');
+
+    roomsRef.orderByChild('status').equalTo('waiting')
+      .once('value', function (snapshot) {
+        if (!snapshot.exists()) {
+          callback({ error: 'No rooms available. Create one!' });
+          return;
+        }
+
+        var uid = getOrCreateUid();
+        var available = [];
+        snapshot.forEach(function (child) {
+          var room = child.val();
+          if (!room.players || !room.players.player2) {
+            if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
+            available.push(child.key);
+          }
+        });
+
+        if (available.length === 0) {
+          callback({ error: 'No rooms available. Create one!' });
+          return;
+        }
+
+        var randomCode = available[Math.floor(Math.random() * available.length)];
+        joinRoom(playerName, randomCode, callback);
+      });
+  }
+
   window.YachtGame.Lobby = {
     generateRoomCode: generateRoomCode,
     getOrCreateUid: getOrCreateUid,
     createRoom: createRoom,
     joinRoom: joinRoom,
+    findRandomRoom: findRandomRoom,
     listenForOpponent: listenForOpponent,
     tryReconnect: tryReconnect,
     clearSession: clearSession,

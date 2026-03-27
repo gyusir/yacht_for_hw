@@ -49,6 +49,7 @@
   var btnBackLobby = document.getElementById('btn-back-lobby');
   var btnBackLogin = document.getElementById('btn-back-login');
   var btnBackLobbyWaiting = document.getElementById('btn-back-lobby-waiting');
+  var btnRandomJoin = document.getElementById('btn-random-join');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -223,6 +224,23 @@
         return;
       }
 
+      UI.showToast('Joined room ' + result.roomCode);
+      Game.init(result.roomCode, result.playerKey);
+    });
+  });
+
+  // --- Quick Match (Random Join) ---
+  btnRandomJoin.addEventListener('click', function () {
+    btnRandomJoin.disabled = true;
+    lobbyError.hidden = true;
+
+    Lobby.findRandomRoom(playerName, function (result) {
+      btnRandomJoin.disabled = false;
+      if (result.error) {
+        lobbyError.textContent = result.error;
+        lobbyError.hidden = false;
+        return;
+      }
       UI.showToast('Joined room ' + result.roomCode);
       Game.init(result.roomCode, result.playerKey);
     });
