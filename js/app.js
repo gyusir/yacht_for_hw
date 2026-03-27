@@ -154,6 +154,7 @@
     playerName = nameInput.value.trim();
     if (!playerName) return;
     Auth.setGuest(playerName);
+    DiceSkins.applySkin('classic');
     UI.showScreen('screen-lobby');
   });
 

@@ -127,15 +127,22 @@
   }
 
   function loadSkin(callback) {
-    // Immediate: apply from localStorage
+    var Auth = window.YachtGame.Auth;
     var cached = localStorage.getItem('yacht-dice-skin');
+
+    // Guest: always use classic, ignore cached skin from previous account
+    if (!Auth || !Auth.isSignedIn()) {
+      applySkin('classic');
+      if (callback) callback('classic');
+      return;
+    }
+
+    // Signed in: apply cached immediately, then override from Firebase
     if (cached) {
       applySkin(cached);
     }
 
-    // If signed in, load from Firebase and override
-    var Auth = window.YachtGame.Auth;
-    if (Auth && Auth.isSignedIn()) {
+    if (Auth.isSignedIn()) {
       var uid = Auth.getPlayerUid();
       if (uid) {
         window.YachtGame.db.ref('users/' + uid + '/preferences/diceSkin').once('value', function (snap) {
