@@ -588,7 +588,6 @@ input[type="text"]::placeholder {
 }
 
 .bottom-controls {
-  margin-top: auto;
   padding-top: 12px;
 }
 
