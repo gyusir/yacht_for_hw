@@ -114,38 +114,47 @@
     var database = getDb();
     roomCode = roomCode.toUpperCase().trim();
     var roomRef = database.ref('rooms/' + roomCode);
-    var uid = getOrCreateUid();
 
-    roomRef.transaction(function (room) {
-      if (!room) return;
-      if (room.status !== 'waiting') return;
-      if (room.players && room.players.player2) return;
+    roomRef.once('value', function (snapshot) {
+      if (!snapshot.exists()) {
+        callback({ error: 'Room not found.' });
+        return;
+      }
 
-      room.players = room.players || {};
-      room.players.player2 = {
+      var room = snapshot.val();
+
+      if (room.status !== 'waiting') {
+        callback({ error: 'Room is already in a game.' });
+        return;
+      }
+
+      if (room.players && room.players.player2) {
+        callback({ error: 'Room is full.' });
+        return;
+      }
+
+      var uid = getOrCreateUid();
+      var updates = {};
+      updates['players/player2'] = {
         name: playerName,
         uid: uid,
         connected: true,
         scores: buildEmptyScores(room.gameMode),
         diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
       };
-      room.status = 'playing';
-      return room;
-    }, function (error, committed, snapshot) {
-      if (error) {
-        callback({ error: 'Failed to join room.' });
-        return;
-      }
-      if (!committed) {
-        callback({ error: 'Room not available.' });
-        return;
-      }
+      updates['status'] = 'playing';
 
-      var room = snapshot.val();
-      setupPresence(roomCode, 'player2', uid);
-      sessionStorage.setItem('yacht-room', roomCode);
-      sessionStorage.setItem('yacht-player', 'player2');
-      callback({ roomCode: roomCode, playerKey: 'player2', gameMode: room.gameMode });
+      roomRef.update(updates, function (error) {
+        if (error) {
+          callback({ error: 'Failed to join room.' });
+          return;
+        }
+
+        setupPresence(roomCode, 'player2', uid);
+        sessionStorage.setItem('yacht-room', roomCode);
+        sessionStorage.setItem('yacht-player', 'player2');
+        callback({ roomCode: roomCode, playerKey: 'player2', gameMode: room.gameMode });
+      });
     });
   }
 
