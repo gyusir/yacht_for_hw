@@ -96,6 +96,7 @@
     var oppName = myPlayerKey === 'player1' ? player2Name : player1Name;
 
     var html = '<table>';
+    html += '<colgroup><col style="width:40%"><col style="width:30%"><col style="width:30%"></colgroup>';
     html += '<thead><tr>';
     html += '<th>Category</th>';
     html += '<th class="my-header">' + escapeHtml(myName || 'You') + '</th>';

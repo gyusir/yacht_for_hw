@@ -1098,6 +1098,7 @@ input[type="text"]::placeholder {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
+  table-layout: fixed;
 }
 
 .scorecard th,
@@ -1118,6 +1119,9 @@ input[type="text"]::placeholder {
   position: sticky;
   top: 0;
   z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scorecard .category-name {
