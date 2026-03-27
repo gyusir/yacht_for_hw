@@ -12,6 +12,7 @@
   var roomListener = null;
   var lastRoomData = null;
   var isRolling = false;
+  var pendingCategory = null;
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
 
@@ -83,6 +84,9 @@
     }
 
     var isMyTurn = room.currentTurn === localPlayerKey;
+
+    // Reset pending score selection on turn change or dice re-roll
+    pendingCategory = null;
 
     // Apply dice skin of the current turn's player
     var DiceSkins = window.YachtGame.DiceSkins;
@@ -175,6 +179,20 @@
 
     var current = room.dice[index] || { value: 0, held: false };
     roomRef.child('dice/' + index + '/held').set(!current.held);
+  }
+
+  function confirmCategory(category) {
+    if (!lastRoomData) return;
+    var myScores = lastRoomData.players[localPlayerKey].scores || {};
+    if (myScores[category] !== null && myScores[category] !== undefined) return;
+
+    if (pendingCategory === category) {
+      selectCategory(category);
+      pendingCategory = null;
+    } else {
+      pendingCategory = category;
+      window.YachtGame.UI.showScoreConfirmHint(category);
+    }
   }
 
   function selectCategory(category) {
@@ -327,7 +345,7 @@
     init: init,
     rollDice: rollDice,
     toggleHold: toggleHold,
-    selectCategory: selectCategory,
+    confirmCategory: confirmCategory,
     sendEmote: sendEmote,
     leaveGame: leaveGame,
     getGameMode: getGameMode,

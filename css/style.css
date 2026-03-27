@@ -1190,7 +1190,7 @@ input[type="text"]::placeholder {
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .scorecard table {
@@ -1255,6 +1255,47 @@ input[type="text"]::placeholder {
 
 .scorecard .score-cell.filled {
   cursor: default;
+}
+
+.scorecard .score-cell.preview {
+  position: relative;
+}
+
+.scorecard .score-cell.pending {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Score confirm hint popup */
+.score-confirm-hint {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: hintFadeIn 0.2s ease;
+}
+
+.score-confirm-hint.fade-out {
+  animation: hintFadeOut 0.3s ease forwards;
+}
+
+@keyframes hintFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes hintFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 .scorecard .score-cell.last-scored {

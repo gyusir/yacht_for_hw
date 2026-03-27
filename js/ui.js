@@ -158,12 +158,44 @@
           cell.addEventListener('click', function () {
             var cat = cell.dataset.category;
             if (cat && window.YachtGame.Game) {
-              window.YachtGame.Game.selectCategory(cat);
+              window.YachtGame.Game.confirmCategory(cat);
             }
           });
         })(previewCells[i]);
       }
     }
+  }
+
+  function showScoreConfirmHint(category) {
+    // Remove any existing hint
+    var old = document.querySelector('.score-confirm-hint');
+    if (old) old.remove();
+
+    // Clear previous pending highlight
+    var allPending = document.querySelectorAll('.score-cell.pending');
+    for (var i = 0; i < allPending.length; i++) {
+      allPending[i].classList.remove('pending');
+    }
+
+    // Find the target cell
+    var cell = document.querySelector('.score-cell.preview[data-category="' + category + '"]');
+    if (!cell) return;
+
+    cell.classList.add('pending');
+
+    // Create hint popup
+    var hint = document.createElement('div');
+    hint.className = 'score-confirm-hint';
+    hint.textContent = 'Tap again to confirm';
+    cell.appendChild(hint);
+
+    // Auto fade-out after 1.5s
+    setTimeout(function () {
+      hint.classList.add('fade-out');
+      hint.addEventListener('animationend', function () {
+        if (hint.parentNode) hint.remove();
+      });
+    }, 1500);
   }
 
   function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, rowClass) {
@@ -324,6 +356,7 @@
     updateRollCounter: updateRollCounter,
     setRollButtonEnabled: setRollButtonEnabled,
     renderScorecard: renderScorecard,
+    showScoreConfirmHint: showScoreConfirmHint,
     renderGameOver: renderGameOver,
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,
