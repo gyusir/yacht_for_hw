@@ -1300,8 +1300,7 @@ input[type="text"]::placeholder {
 
 .scorecard .score-cell.last-scored {
   font-weight: 800;
-  background: var(--accent-light);
-  border-radius: 4px;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .scorecard .lower-row td {
