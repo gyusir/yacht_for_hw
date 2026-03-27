@@ -1223,6 +1223,11 @@ input[type="text"]::placeholder {
   white-space: nowrap;
 }
 
+.scorecard th.current-turn {
+  color: var(--text);
+  font-weight: 800;
+}
+
 .scorecard .category-name {
   text-align: left;
   font-weight: 500;
@@ -1300,7 +1305,11 @@ input[type="text"]::placeholder {
 
 .scorecard .score-cell.last-scored {
   font-weight: 800;
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 3px 0 0 rgba(74, 108, 247, 0.35);
+}
+
+[data-theme="dark"] .scorecard .score-cell.last-scored {
+  box-shadow: inset 3px 0 0 rgba(108, 140, 255, 0.35);
 }
 
 .scorecard .lower-row td {

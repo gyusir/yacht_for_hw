@@ -99,8 +99,8 @@
     html += '<colgroup><col style="width:40%"><col style="width:30%"><col style="width:30%"></colgroup>';
     html += '<thead><tr>';
     html += '<th>Category</th>';
-    html += '<th class="my-header">' + escapeHtml(myName || 'You') + '</th>';
-    html += '<th class="opponent-header">' + escapeHtml(oppName || 'Opponent') + '</th>';
+    html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">' + escapeHtml(myName || 'You') + '</th>';
+    html += '<th class="opponent-header' + (!isMyTurn ? ' current-turn' : '') + '">' + escapeHtml(oppName || 'Opponent') + '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
 
