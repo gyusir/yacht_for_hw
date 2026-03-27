@@ -312,8 +312,8 @@
   // --- Emote System ---
   var QUICK_EMOTES = [
     { emoji: '😎', msg: '😎 gg ez' },
-    { emoji: '🔥', msg: '🔥 실화냐?' },
-    { emoji: '💀', msg: '💀 RIP' },
+    { emoji: '🤔', msg: '🤔 Hmm...' },
+    { emoji: '😭', msg: '😭 봐줘요...' },
     { emoji: '😏', msg: '😏 그게 최선?' },
     { emoji: '👑', msg: '👑 왕이 납신다' },
     { emoji: '🐢', msg: '🐢 좀 빨리~' }
