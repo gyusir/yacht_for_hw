@@ -45,7 +45,7 @@
   --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.4);
   --score-mine: #6c8cff;
   --score-opponent: #ff6b6b;
-  --score-preview: rgba(108, 140, 255, 0.35);
+  --score-preview: rgba(108, 140, 255, 0.55);
 }
 
 /* ===== Reset & Base ===== */
