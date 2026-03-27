@@ -16,6 +16,7 @@
   var pendingCategory = null;
   var lastTurn = null;
   var lastRollCount = null;
+  var lastCelebrationTs = 0;
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
 
@@ -139,6 +140,12 @@
       myData.lastCategory || null,
       oppData.lastCategory || null
     );
+
+    // Celebration check (Yacht/Yahtzee scored)
+    if (room.celebration && room.celebration.ts && room.celebration.ts > lastCelebrationTs) {
+      lastCelebrationTs = room.celebration.ts;
+      UI.showConfetti();
+    }
   }
 
   function rollDice() {
@@ -223,10 +230,16 @@
 
     var score = Scoring.calculate(diceValues, category, gameMode);
 
+    // Yacht/Yahtzee celebration
+    var isYacht = (category === 'yacht' || category === 'yahtzee') && score === 50;
+
     // Check for Yahtzee bonus
     var updates = {};
     updates['players/' + localPlayerKey + '/scores/' + category] = score;
     updates['players/' + localPlayerKey + '/lastCategory'] = category;
+    if (isYacht) {
+      updates['celebration'] = { player: localPlayerKey, ts: firebase.database.ServerValue.TIMESTAMP };
+    }
 
     if (gameMode === 'yahtzee') {
       var hasYahtzee = true;
@@ -362,6 +375,7 @@
     lastRollCount = null;
     emoteListener = null;
     lastSeenEmoteTs = 0;
+    lastCelebrationTs = 0;
     historySaved = false;
     // Restore player's own skin
     var DiceSkins = window.YachtGame.DiceSkins;

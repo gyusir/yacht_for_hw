@@ -315,7 +315,8 @@
     { emoji: '🔥', msg: '🔥 실화냐?' },
     { emoji: '💀', msg: '💀 RIP' },
     { emoji: '😏', msg: '😏 그게 최선?' },
-    { emoji: '👑', msg: '👑 왕이 납신다' }
+    { emoji: '👑', msg: '👑 왕이 납신다' },
+    { emoji: '🐢', msg: '🐢 좀 빨리~' }
   ];
 
   var EMOTES = [

@@ -67,7 +67,7 @@
   // Roll counter — updates roll button text
   function updateRollCounter(count) {
     var btn = document.getElementById('btn-roll');
-    btn.textContent = 'Roll (' + count + '/3)';
+    btn.innerHTML = 'Roll<br><small>(' + count + '/3)</small>';
   }
 
   // Roll button state
@@ -346,6 +346,60 @@
     listEl.innerHTML = listHtml;
   }
 
+  function showConfetti() {
+    var canvas = document.createElement('canvas');
+    canvas.id = 'confetti-canvas';
+    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+    document.body.appendChild(canvas);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    var ctx = canvas.getContext('2d');
+
+    var colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6bcb', '#a66cff'];
+    var particles = [];
+    for (var i = 0; i < 120; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -10 - Math.random() * canvas.height * 0.5,
+        w: 4 + Math.random() * 6,
+        h: 6 + Math.random() * 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 4,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 10
+      });
+    }
+
+    var frame = 0;
+    var maxFrames = 150;
+    function animate() {
+      frame++;
+      if (frame > maxFrames) {
+        document.body.removeChild(canvas);
+        return;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var alpha = frame > maxFrames - 30 ? (maxFrames - frame) / 30 : 1;
+      ctx.globalAlpha = alpha;
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.vx;
+        p.vy += 0.08;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
   window.YachtGame.UI = {
     showScreen: showScreen,
     initTheme: initTheme,
@@ -361,6 +415,7 @@
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,
     showEmoteBubble: showEmoteBubble,
-    renderHistory: renderHistory
+    renderHistory: renderHistory,
+    showConfetti: showConfetti
   };
 })();

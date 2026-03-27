@@ -688,11 +688,18 @@ input[type="text"]::placeholder {
 .btn-roll {
   flex: 1;
   height: clamp(52px, 13vw, 72px);
-  padding: 0 14px;
+  padding: 0 10px;
   font-size: 0.85rem;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.2;
   border-radius: var(--radius-sm);
+}
+
+.btn-roll small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .btn-roll:disabled {
