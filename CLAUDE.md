@@ -14,15 +14,15 @@
 ### 2. CSS 스타일 (`css/style.css`)
 모든 스킨 스타일은 CSS에서만 정의한다. JS에 컬러값을 넣지 않는다.
 
-추가해야 할 CSS 블록 (총 8개):
+추가해야 할 CSS 블록 (총 6개):
 - `[data-dice-skin="id"] .die` — 라이트모드 주사위 본체
 - `[data-dice-skin="id"] .pip` — 라이트모드 핍
-- `[data-dice-skin="id"] .die.held` — 라이트모드 홀드 상태
 - `[data-theme="dark"] [data-dice-skin="id"] .die` — 다크모드 본체
 - `[data-theme="dark"] [data-dice-skin="id"] .pip` — 다크모드 핍
-- `[data-theme="dark"] [data-dice-skin="id"] .die.held` — 다크모드 홀드
 - `.skin-preview-die[data-dice-skin="id"]` — 라이트모드 프리뷰
 - `[data-theme="dark"] .skin-preview-die[data-dice-skin="id"]` — 다크모드 프리뷰
+
+홀드 표시는 `.held-check` 배지(CSS)로 통일 — 스킨별 held 규칙 불필요
 
 선택 테두리 (총 2개):
 - `.skin-option.active[data-skin-id="id"]` — 라이트모드 선택 보더
@@ -32,7 +32,6 @@
 - 라이트모드 배경(`#f0f2f5`)과 다크모드 배경(`#0f0f1a`) 각각에서 주사위가 뚜렷이 구분되어야 한다
 - 핍/텍스트 vs 주사위 배경: WCAG AA 기준 4.5:1 이상 대비
 - 다크모드에서는 메탈릭 색상 ~15-20% 밝게, 네온/글로우 계열은 강도 높이기
-- held 글로우는 스킨 시그니처 컬러의 40-55% opacity
 - 선택 보더 색상은 스킨의 대표 색상 사용
 
 ### 4. 검증

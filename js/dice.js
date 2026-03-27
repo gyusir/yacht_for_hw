@@ -74,10 +74,19 @@
     for (var i = 0; i < dieEls.length; i++) {
       var state = diceState[i] || { value: 0, held: false };
       renderDie(dieEls[i], state.value);
+
+      var existing = dieEls[i].querySelector('.held-check');
       if (state.held) {
         dieEls[i].classList.add('held');
+        if (!existing) {
+          var check = document.createElement('span');
+          check.className = 'held-check';
+          check.textContent = '\u2713';
+          dieEls[i].appendChild(check);
+        }
       } else {
         dieEls[i].classList.remove('held');
+        if (existing) existing.remove();
       }
     }
   }
