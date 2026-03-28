@@ -140,12 +140,13 @@
       (room.players.player2 && room.players.player2.scores) || {},
       gameMode,
       currentDice,
-      isMyTurn && room.rollCount > 0,
+      isMyTurn,
       localPlayerKey,
       (room.players.player1 && room.players.player1.name) || 'Player 1',
       (room.players.player2 && room.players.player2.name) || 'Player 2',
       myData.lastCategory || null,
-      oppData.lastCategory || null
+      oppData.lastCategory || null,
+      room.rollCount > 0
     );
 
     // Celebration check (Yacht/Yahtzee scored)
@@ -163,7 +164,7 @@
     if ((room.rollCount || 0) >= 3) return;
 
     isRolling = true;
-    window.YachtGame.UI.setRollButtonEnabled(false);
+    window.YachtGame.UI.setRollButtonEnabled(false, true);
 
     // Generate new values for unheld dice
     var newDice = {};

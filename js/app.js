@@ -43,6 +43,7 @@
   var btnRoll = document.getElementById('btn-roll');
   var btnNewGame = document.getElementById('btn-new-game');
   var modeRadios = document.querySelectorAll('input[name="mode"]');
+  var btnShortcut = document.getElementById('btn-shortcut');
   var btnRule = document.getElementById('btn-rule');
   var btnLeave = document.getElementById('btn-leave');
   var btnMyStats = document.getElementById('btn-my-stats');
@@ -277,6 +278,15 @@
     }
   });
 
+  // --- Shortcut Button (hover overlay) ---
+  btnShortcut.addEventListener('mouseenter', function () {
+    UI.showShortcutOverlay();
+  });
+
+  btnShortcut.addEventListener('mouseleave', function () {
+    UI.hideShortcutOverlay();
+  });
+
   // --- Rule & Leave Buttons ---
   btnRule.addEventListener('mouseenter', function () {
     var mode = Game.getGameMode();
@@ -429,6 +439,130 @@
     refreshSkinSelector();
     Lobby.cleanupStaleRooms();
   });
+
+  // --- PC Keyboard Shortcuts ---
+  var kbFocusIndex = -1;
+
+  function getKbFocusables() {
+    var items = [];
+    var previews = document.querySelectorAll('.score-cell.preview');
+    for (var i = 0; i < previews.length; i++) {
+      items.push(previews[i]);
+    }
+    if (!btnRoll.disabled) {
+      items.push(btnRoll);
+    }
+    return items;
+  }
+
+  function clearKbFocus() {
+    var old = document.querySelectorAll('.kb-focus');
+    for (var i = 0; i < old.length; i++) {
+      old[i].classList.remove('kb-focus');
+    }
+  }
+
+  function applyKbFocus(items) {
+    clearKbFocus();
+    if (kbFocusIndex >= 0 && kbFocusIndex < items.length) {
+      items[kbFocusIndex].classList.add('kb-focus');
+      // Scroll into view if needed
+      items[kbFocusIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  var EMOTE_CODES = ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY'];
+
+  document.addEventListener('keydown', function (e) {
+    // Only active during game screen
+    if (!document.body.classList.contains('in-game')) return;
+
+    // Ignore if typing in an input field
+    var tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    var key = e.key;
+
+    // 1~5: toggle dice hold
+    if (key >= '1' && key <= '5') {
+      var dieIndex = parseInt(key) - 1;
+      var dieEl = dieEls[dieIndex];
+      if (dieEl && !dieEl.classList.contains('disabled')) {
+        Game.toggleHold(dieIndex);
+      }
+      return;
+    }
+
+    // Q/W/E/R/T/Y: quick emotes (use e.code for IME compatibility)
+    var emoteIdx = EMOTE_CODES.indexOf(e.code);
+    if (emoteIdx !== -1 && emoteIdx < QUICK_EMOTES.length) {
+      sendEmoteWithCooldown(QUICK_EMOTES[emoteIdx].msg);
+      return;
+    }
+
+    // Arrow Up/Down: cycle through preview cells + roll button
+    if (key === 'ArrowDown' || key === 'ArrowUp') {
+      e.preventDefault();
+      var items = getKbFocusables();
+      if (items.length === 0) return;
+
+      if (key === 'ArrowDown') {
+        kbFocusIndex = (kbFocusIndex + 1) % items.length;
+      } else {
+        kbFocusIndex = kbFocusIndex <= 0 ? items.length - 1 : kbFocusIndex - 1;
+      }
+      applyKbFocus(items);
+      return;
+    }
+
+    // Enter: click focused item, or roll if no focus
+    if (key === 'Enter') {
+      e.preventDefault();
+      var items = getKbFocusables();
+      if (kbFocusIndex >= 0 && kbFocusIndex < items.length) {
+        items[kbFocusIndex].click();
+      } else if (!btnRoll.disabled) {
+        btnRoll.click();
+      }
+      return;
+    }
+  });
+
+  // After scorecard re-render: set smart focus based on game state
+  var origRenderScorecard = UI.renderScorecard;
+  UI.renderScorecard = function () {
+    origRenderScorecard.apply(this, arguments);
+    var items = getKbFocusables();
+
+    if (!btnRoll.disabled) {
+      // Roll button is available → focus on it (last item)
+      var rollIdx = items.indexOf(btnRoll);
+      if (rollIdx !== -1) {
+        kbFocusIndex = rollIdx;
+      }
+    } else {
+      // Roll exhausted → focus on highest-score preview cell
+      var previews = document.querySelectorAll('.score-cell.preview');
+      var bestIdx = -1;
+      var bestVal = -1;
+      for (var i = 0; i < previews.length; i++) {
+        var val = parseInt(previews[i].textContent, 10) || 0;
+        if (val > bestVal) {
+          bestVal = val;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx !== -1) {
+        kbFocusIndex = bestIdx;
+      } else if (items.length > 0) {
+        kbFocusIndex = 0;
+      } else {
+        kbFocusIndex = -1;
+      }
+    }
+
+    applyKbFocus(items);
+  };
 
   // --- Reconnection on page load ---
   Lobby.tryReconnect(function (session) {

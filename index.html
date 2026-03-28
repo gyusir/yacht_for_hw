@@ -10,6 +10,7 @@
   <header>
     <h1>Yacht Dice</h1>
     <div class="header-controls">
+      <button id="btn-shortcut" class="btn-icon game-only" title="PC 단축키">For PC</button>
       <button id="btn-rule" class="btn-icon game-only" title="규칙">Rule</button>
       <button id="btn-leave" class="btn-icon btn-leave game-only" title="나가기">Quit</button>
       <button id="theme-toggle" aria-label="Toggle theme">
@@ -214,6 +215,22 @@
         <p class="rules-note">상단 합계 ≥ 63 → 보너스 +35점<br>추가 Yahtzee당 보너스 +100점</p>
         <p class="rules-note">매 턴 최대 3회 굴림. 주사위를 클릭하여 고정/해제.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- Overlay: PC Shortcut -->
+  <div id="overlay-shortcut" class="overlay hidden">
+    <div class="overlay-content rules-content">
+      <h3>PC Shortcut</h3>
+      <table>
+        <thead><tr><th>키</th><th>동작</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>1</kbd> ~ <kbd>5</kbd></td><td>주사위 선택/해제</td></tr>
+          <tr><td><kbd>Q,W,E,R,T,Y</kbd></td><td>퀵 이모티콘 전송</td></tr>
+          <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>카테고리 & Roll 순환</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>선택 확정 / Roll</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

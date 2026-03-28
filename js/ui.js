@@ -80,16 +80,16 @@
   }
 
   // Scorecard rendering
-  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat) {
+  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat, hasRolled) {
     var container = document.getElementById('scorecard');
     var Scoring = window.YachtGame.Scoring;
     var categories = Scoring.getCategories(gameMode);
     var upperCats = Scoring.getUpperCategories();
     var lowerCats = Scoring.getLowerCategories(gameMode);
 
-    // Calculate previews if it's my turn and we have dice
+    // Calculate previews for whoever's turn it is (both players see them)
     var previews = {};
-    if (isMyTurn && currentDice && currentDice[0] > 0) {
+    if (hasRolled && currentDice && currentDice[0] > 0) {
       previews = Scoring.calculateAll(currentDice, gameMode);
     }
 
@@ -153,10 +153,10 @@
     html += '</tbody></table>';
     container.innerHTML = html;
 
-    // Attach click handlers to preview cells
-    if (isMyTurn) {
-      var previewCells = container.querySelectorAll('.score-cell.preview');
-      for (var i = 0; i < previewCells.length; i++) {
+    // Attach click handlers to MY preview cells only
+    if (isMyTurn && hasRolled) {
+      var myPreviewCells = container.querySelectorAll('.score-cell.preview');
+      for (var i = 0; i < myPreviewCells.length; i++) {
         (function (cell) {
           cell.addEventListener('click', function () {
             var cat = cell.dataset.category;
@@ -164,7 +164,7 @@
               window.YachtGame.Game.confirmCategory(cat);
             }
           });
-        })(previewCells[i]);
+        })(myPreviewCells[i]);
       }
     }
   }
@@ -224,6 +224,8 @@
     // Opponent score cell
     if (oppVal !== null && oppVal !== undefined) {
       html += '<td class="score-cell opponent filled' + (isOppLast ? ' last-scored' : '') + '">' + oppVal + '</td>';
+    } else if (!isMyTurn && previews[category] !== undefined) {
+      html += '<td class="score-cell opponent preview-opp">' + previews[category] + '</td>';
     } else {
       html += '<td class="score-cell">-</td>';
     }
@@ -307,6 +309,15 @@
 
   function hideRulesOverlay() {
     document.getElementById('overlay-rules').classList.add('hidden');
+  }
+
+  // Shortcut overlay
+  function showShortcutOverlay() {
+    document.getElementById('overlay-shortcut').classList.remove('hidden');
+  }
+
+  function hideShortcutOverlay() {
+    document.getElementById('overlay-shortcut').classList.add('hidden');
   }
 
   // History / Stats rendering
@@ -419,6 +430,8 @@
     renderGameOver: renderGameOver,
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,
+    showShortcutOverlay: showShortcutOverlay,
+    hideShortcutOverlay: hideShortcutOverlay,
     showEmoteBubble: showEmoteBubble,
     renderHistory: renderHistory,
     showConfetti: showConfetti
