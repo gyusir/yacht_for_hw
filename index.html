@@ -11,7 +11,7 @@
     <h1>Yacht Dice</h1>
     <div class="header-controls">
       <button id="btn-rule" class="btn-icon game-only" title="규칙">Rule</button>
-      <button id="btn-leave" class="btn-icon btn-leave game-only" title="나가기">QUIT</button>
+      <button id="btn-leave" class="btn-icon btn-leave game-only" title="나가기">Quit</button>
       <button id="theme-toggle" aria-label="Toggle theme">
         <span class="icon-sun">&#9728;</span>
         <span class="icon-moon">&#9790;</span>
@@ -24,15 +24,17 @@
     <div class="card">
       <h2>Welcome</h2>
       <p>Sign in to save your game history, or play as a guest.</p>
-      <button id="btn-google-signin" class="btn-google">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Sign in with Google
-      </button>
-      <div class="divider"><span>or</span></div>
       <div class="guest-section">
         <input type="text" id="player-name" placeholder="Guest name" maxlength="12" autocomplete="off">
         <button id="btn-guest" class="btn-secondary" disabled>Play as Guest</button>
       </div>
+      <div></div>
+      <div class="divider"><span>or</span></div>
+      <div></div>
+      <button id="btn-google-signin" class="btn-google">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
       <!-- Signed-in user profile (hidden by default) -->
       <div id="signed-in-profile" class="signed-in-profile" hidden>
         <img id="user-avatar" class="user-avatar" src="" alt="avatar">
@@ -53,12 +55,12 @@
       <div class="lobby-actions">
         <button id="btn-create" class="btn-primary">Create Room</button>
         <div class="divider"><span>or</span></div>
+        <button id="btn-random-join" class="btn-primary">Quick Match</button>
+        <div class="divider"><span>or</span></div>
         <div class="join-section">
-          <input type="text" id="room-code-input" placeholder="Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <input type="text" id="room-code-input" placeholder="Room code" maxlength="4" autocomplete="off" style="text-transform:uppercase">
           <button id="btn-join" class="btn-secondary" disabled>Join</button>
         </div>
-        <div class="divider"><span>or</span></div>
-        <button id="btn-random-join" class="btn-primary">Quick Match</button>
       </div>
       <p id="lobby-error" class="error-text" hidden></p>
       <div id="skin-selector" class="skin-selector" hidden>
@@ -69,8 +71,8 @@
         <div class="skin-options" id="skin-options"></div>
       </div>
       <button id="btn-my-stats" class="btn-text btn-stats" hidden>My Stats</button>
-      <button id="btn-back-login" class="btn-text">← Back</button>
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
+      <button id="btn-back-login" class="btn-text" style="width:100%;margin-top:16px;">Back to Login</button>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. \n 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
@@ -100,15 +102,16 @@
         <p>Select game mode:</p>
         <div class="mode-options">
           <label class="mode-option">
-            <input type="radio" name="mode" value="yacht" checked>
-            <span class="mode-label">Yacht</span>
-            <span class="mode-desc">12 categories, classic rules</span>
-          </label>
-          <label class="mode-option">
-            <input type="radio" name="mode" value="yahtzee">
+            <input type="radio" name="mode" value="yahtzee" checked>
             <span class="mode-label">Yahtzee</span>
             <span class="mode-desc">13 categories, bonus scoring</span>
           </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="yacht">
+            <span class="mode-label">Yacht</span>
+            <span class="mode-desc">12 categories, classic rules</span>
+          </label>
+
         </div>
       </div>
       <div class="waiting-spinner">
@@ -116,7 +119,7 @@
         <p>Waiting for opponent...</p>
       </div>
       <button id="btn-back-lobby-waiting" class="btn-secondary" style="width:100%;margin-top:12px;">← Back to Lobby</button>
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. 탭을 열어두면 유지됩니다.</p>
+      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다. \n 탭을 열어두면 유지됩니다.</p>
     </div>
   </section>
 
