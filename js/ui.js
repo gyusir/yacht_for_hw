@@ -71,9 +71,12 @@
   }
 
   // Roll button state
-  function setRollButtonEnabled(enabled) {
+  function setRollButtonEnabled(enabled, isMyTurn) {
     var btn = document.getElementById('btn-roll');
     btn.disabled = !enabled;
+    if (!isMyTurn) {
+      btn.innerHTML = 'Not your turn';
+    }
   }
 
   // Scorecard rendering

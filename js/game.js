@@ -99,12 +99,16 @@
     lastTurn = room.currentTurn;
     lastRollCount = room.rollCount || 0;
 
-    // Apply dice skin of the current turn's player
+    // Apply dice skin of the current turn's player (only after first roll)
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) {
-      var turnPlayer = room.currentTurn ? room.players[room.currentTurn] : null;
-      var turnSkin = (turnPlayer && turnPlayer.diceSkin) || 'classic';
-      DiceSkins.applySkin(turnSkin);
+      if ((room.rollCount || 0) > 0) {
+        var turnPlayer = room.currentTurn ? room.players[room.currentTurn] : null;
+        var turnSkin = (turnPlayer && turnPlayer.diceSkin) || 'classic';
+        DiceSkins.applySkin(turnSkin);
+      } else {
+        DiceSkins.applySkin('classic');
+      }
     }
 
     // Update turn indicator
@@ -127,7 +131,7 @@
     Dice.setInteractive(isMyTurn && room.rollCount > 0);
 
     // Roll button state
-    UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling);
+    UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling, isMyTurn);
 
     // Render scorecard
     var currentDice = Dice.getDiceValues(diceState);

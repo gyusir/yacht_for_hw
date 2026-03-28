@@ -622,10 +622,6 @@ input[type="text"]::placeholder {
   position: relative;
 }
 
-.die:hover:not(.disabled) {
-  transform: translateY(-2px);
-}
-
 /* Held check badge */
 .die .held-check {
   display: none;
@@ -746,7 +742,7 @@ input[type="text"]::placeholder {
 }
 
 [data-theme="dark"] [data-dice-skin="ornate"] .pip {
-  background: radial-gradient(circle, #4ee89a, #3ddc84);
+  background: radial-gradient(circle, #33b172, #22583a);
   box-shadow: 0 0 5px rgba(61, 220, 132, 0.5);
 }
 
