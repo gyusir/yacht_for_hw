@@ -99,8 +99,7 @@ body.in-game .game-only {
 }
 
 .btn-leave:hover {
-  color: #fff !important;
-  background: var(--danger) !important;
+  color: var(--danger) !important;
 }
 
 #theme-toggle {
