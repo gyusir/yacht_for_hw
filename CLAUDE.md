@@ -3,7 +3,7 @@
 ## Git 브랜치 규칙
 
 - **main 브랜치로 checkout하지 않는다**
-- **main 브랜치로 직접 push하지 않는다**
+- **사용자 허락 없이 main에 push하지 않는다**
 - 모든 작업은 feature 브랜치에서 수행하고, main 병합은 반드시 사용자 허락을 받은 후에만 진행한다
 
 ## Dice Skin Addition Checklist
