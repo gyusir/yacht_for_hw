@@ -1,5 +1,11 @@
 # Yacht Dice - Project Rules
 
+## Git 브랜치 규칙
+
+- **main 브랜치로 checkout하지 않는다**
+- **main 브랜치로 직접 push하지 않는다**
+- 모든 작업은 feature 브랜치에서 수행하고, main 병합은 반드시 사용자 허락을 받은 후에만 진행한다
+
 ## Dice Skin Addition Checklist
 
 새 주사위 스킨을 추가할 때 반드시 아래 순서를 따른다.
