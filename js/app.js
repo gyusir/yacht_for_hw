@@ -235,6 +235,15 @@
 
   // --- Quick Match (Random Join) ---
   btnRandomJoin.addEventListener('click', function () {
+    // Ensure playerName is set (may be empty after back-navigation)
+    if (!playerName) {
+      playerName = Auth.getPlayerName();
+    }
+    if (!playerName) {
+      lobbyError.textContent = 'Please set a name first.';
+      lobbyError.hidden = false;
+      return;
+    }
     btnRandomJoin.disabled = true;
     lobbyError.hidden = true;
 

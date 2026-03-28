@@ -26,6 +26,9 @@
     opponentKey = playerKey === 'player1' ? 'player2' : 'player1';
     roomRef = window.YachtGame.db.ref('rooms/' + roomCode);
 
+    // Show game screen immediately (don't wait for first Firebase callback)
+    window.YachtGame.UI.showScreen('screen-game');
+
     // Listen for room changes
     roomListener = roomRef.on('value', onRoomUpdate);
 
