@@ -1,0 +1,100 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        ".read": true,
+
+        "dice": {
+          ".write": false
+        },
+        "rollCount": {
+          ".write": false
+        },
+        "currentTurn": {
+          ".write": false
+        },
+        "status": {
+          ".write": false
+        },
+        "winner": {
+          ".write": false
+        },
+        "celebration": {
+          ".write": false
+        },
+        "gameMode": {
+          ".write": false
+        },
+        "createdAt": {
+          ".write": false
+        },
+        "lastActivityAt": {
+          ".write": false
+        },
+
+        "heldDice": {
+          "$index": {
+            ".write": "auth != null && $index.matches(/^[0-4]$/) && newData.isBoolean() && root.child('rooms/' + $roomCode + '/status').val() === 'playing' && root.child('rooms/' + $roomCode + '/rollCount').val() > 0 && root.child('rooms/' + $roomCode + '/players/' + root.child('rooms/' + $roomCode + '/currentTurn').val() + '/uid').val() === auth.uid",
+            ".validate": "newData.isBoolean()"
+          }
+        },
+
+        "players": {
+          "$playerKey": {
+            "scores": {
+              ".write": false
+            },
+            "lastCategory": {
+              ".write": false
+            },
+            "name": {
+              ".write": false
+            },
+            "uid": {
+              ".write": false
+            },
+            "connected": {
+              ".write": "auth != null && root.child('rooms/' + $roomCode + '/players/' + $playerKey + '/uid').val() === auth.uid",
+              ".validate": "newData.isBoolean()"
+            },
+            "diceSkin": {
+              ".write": "auth != null && root.child('rooms/' + $roomCode + '/players/' + $playerKey + '/uid').val() === auth.uid",
+              ".validate": "newData.isString() && newData.val().length < 30"
+            }
+          }
+        },
+
+        "emotes": {
+          "$playerKey": {
+            ".write": "auth != null && root.child('rooms/' + $roomCode + '/players/' + $playerKey + '/uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['msg', 'name', 'ts']) && newData.child('msg').isString() && newData.child('msg').val().length < 100"
+          }
+        }
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+
+        "history": {
+          ".write": false
+        },
+        "stats": {
+          ".write": false
+        },
+
+        "displayName": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length < 50"
+        },
+        "photoURL": {
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "preferences": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}
