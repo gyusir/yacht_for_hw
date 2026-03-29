@@ -88,6 +88,30 @@
 - **사용자 허락 없이 main에 push하지 않는다**
 - **사용자 허락 없이 PR을 merge하지 않는다**
 
+## Content Security Policy (CSP) 관리
+
+`firebase.json`의 `headers` 섹션에서 CSP를 관리한다. Firebase 앱은 다양한 Google 도메인에 의존하므로 CSP 변경 시 반드시 아래 사항을 준수한다.
+
+### 필수 도메인 목록
+
+| directive | 필수 도메인 | 이유 |
+|---|---|---|
+| `script-src` | `https://www.gstatic.com` | Firebase SDK |
+| `script-src` | `https://apis.google.com` | Google Auth |
+| `script-src` | `https://accounts.google.com` | Google Sign-in |
+| `script-src` | `https://*.firebasedatabase.app` | RTDB JSONP long-polling (WebSocket 실패 시 fallback) |
+| `connect-src` | `https://*.firebaseio.com`, `wss://*.firebaseio.com` | RTDB 실시간 연결 |
+| `connect-src` | `https://*.firebasedatabase.app`, `wss://*.firebasedatabase.app` | RTDB 연결 |
+| `connect-src` | `https://*.googleapis.com` | Firebase Auth, Cloud Functions |
+| `connect-src` | `https://*.cloudfunctions.net` | Cloud Functions callable 호출 |
+| `connect-src` | `https://*.gstatic.com` | Firebase SDK source maps |
+| `frame-src` | `https://accounts.google.com`, `https://*.firebaseapp.com` | Google OAuth popup/redirect |
+
+### 주의사항
+- **SPA rewrite**: `"source": "**"` rewrite를 사용하므로 `**/*.html` 패턴은 매칭되지 않는다. CSP는 반드시 `"source": "**"` 블록에 배치한다.
+- **배포 전 테스트**: CSP 변경 시 반드시 `/localtest hosting`으로 로컬에서 먼저 확인한다. 프로덕션 배포 후 CSP 오류가 발생하면 사이트 전체가 작동 불능이 된다.
+- **새 Firebase 서비스 추가 시**: 해당 서비스가 사용하는 도메인을 CSP에 추가해야 한다.
+
 ## Dice Skin Addition Checklist
 
 새 주사위 스킨을 추가할 때 반드시 아래 순서를 따른다.
