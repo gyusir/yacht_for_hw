@@ -178,6 +178,44 @@
     }
   }
 
+  // Pip layouts for mini dice faces: maps value → array of visible pip positions (1-9 grid)
+  var MINI_PIP_LAYOUTS = {
+    1: [5],
+    2: [3, 7],
+    3: [3, 5, 7],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+
+  function renderMiniFaceHTML(skinId, value) {
+    var html = '<div class="cube-face skin-preview-die" data-dice-skin="' + skinId + '" data-value="' + value + '">';
+    if (skinId === 'crimson') {
+      html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
+    } else {
+      var positions = MINI_PIP_LAYOUTS[value] || [];
+      for (var p = 1; p <= 9; p++) {
+        html += '<div class="mini-pip' + (positions.indexOf(p) === -1 ? ' hidden' : '') + '"></div>';
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderMiniDieHTML(skinId) {
+    skinId = skinId || 'classic';
+    var html = '<span class="header-die-cube">';
+    html += '<span class="cube-inner" data-dice-skin="' + skinId + '">';
+    html += renderMiniFaceHTML(skinId, 1);  // front
+    html += renderMiniFaceHTML(skinId, 6);  // back
+    html += renderMiniFaceHTML(skinId, 2);  // right
+    html += renderMiniFaceHTML(skinId, 5);  // left
+    html += renderMiniFaceHTML(skinId, 3);  // top
+    html += renderMiniFaceHTML(skinId, 4);  // bottom
+    html += '</span></span>';
+    return html;
+  }
+
   function getCurrentSkin() {
     return currentSkinId;
   }
@@ -191,6 +229,7 @@
     saveSkin: saveSkin,
     loadSkin: loadSkin,
     renderSkinSelector: renderSkinSelector,
+    renderMiniDieHTML: renderMiniDieHTML,
     getCurrentSkin: getCurrentSkin,
     getCrimsonChar: getCrimsonChar,
     SKIN_DEFS: SKIN_DEFS

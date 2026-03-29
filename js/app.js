@@ -449,6 +449,9 @@
   // --- PC Keyboard Shortcuts ---
   var kbFocusIndex = -1;
 
+  // Expose setter so UI click handlers can sync kb-focus index
+  window.YachtGame._setKbFocusIndex = function (idx) { kbFocusIndex = idx; };
+
   function getKbFocusables() {
     var items = [];
     var previews = document.querySelectorAll('.score-cell.preview');
@@ -547,7 +550,7 @@
         kbFocusIndex = rollIdx;
       }
     } else {
-      // Roll exhausted → focus on highest-score preview cell
+      // Roll exhausted → auto-focus on highest-score preview cell
       var previews = document.querySelectorAll('.score-cell.preview');
       var bestIdx = -1;
       var bestVal = -1;

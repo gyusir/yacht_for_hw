@@ -101,7 +101,7 @@
 
     // Ensure we're on the game screen
     if (room.status === 'playing') {
-      UI.showScreen('screen-game');
+      UI.showScreen('screen-game', gameMode);
     }
 
     var isMyTurn = room.currentTurn === localPlayerKey;
@@ -113,7 +113,7 @@
     lastTurn = room.currentTurn;
     lastRollCount = room.rollCount || 0;
 
-    // Apply dice skin of the current turn's player (only after first roll)
+    // Apply dice skin: classic before first roll, player's skin after rolling
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) {
       if ((room.rollCount || 0) > 0) {
@@ -147,7 +147,7 @@
     Dice.setInteractive(isMyTurn && room.rollCount > 0);
 
     // Roll button state
-    UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling, isMyTurn);
+    UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling, isMyTurn, room.rollCount || 0);
 
     // Render scorecard
     var currentDice = Dice.getDiceValues(diceState);
@@ -162,13 +162,21 @@
       (room.players.player2 && room.players.player2.name) || 'Player 2',
       myData.lastCategory || null,
       oppData.lastCategory || null,
-      room.rollCount > 0
+      room.rollCount > 0,
+      (myData && myData.diceSkin) || 'classic',
+      (oppData && oppData.diceSkin) || 'classic'
     );
 
-    // Celebration check (Yacht/Yahtzee scored)
-    if (room.celebration && room.celebration.ts && room.celebration.ts > lastCelebrationTs) {
-      lastCelebrationTs = room.celebration.ts;
-      UI.showConfetti();
+    // Celebration check: all 5 dice show the same value
+    if (!isRolling && (room.rollCount || 0) > 0) {
+      var diceVals = currentDice;
+      if (diceVals[0] > 0 && diceVals[0] === diceVals[1] && diceVals[1] === diceVals[2] && diceVals[2] === diceVals[3] && diceVals[3] === diceVals[4]) {
+        var celebKey = room.currentTurn + '_' + room.rollCount;
+        if (celebKey !== lastCelebrationTs) {
+          lastCelebrationTs = celebKey;
+          UI.showConfetti();
+        }
+      }
     }
   }
 
@@ -181,6 +189,13 @@
 
     isRolling = true;
     window.YachtGame.UI.setRollButtonEnabled(false, true);
+
+    // Apply skin immediately so the animation renders with the correct skin
+    var DiceSkins = window.YachtGame.DiceSkins;
+    if (DiceSkins) {
+      var myData = room.players[localPlayerKey];
+      DiceSkins.applySkin((myData && myData.diceSkin) || 'classic');
+    }
 
     // Determine which dice are held (for animation: skip held dice)
     var heldData = room.heldDice || {};
@@ -252,7 +267,7 @@
       if (lastRoomData) {
         var newRollCount = lastRoomData.rollCount || 0;
         var isMyTurn = lastRoomData.currentTurn === localPlayerKey;
-        window.YachtGame.UI.setRollButtonEnabled(isMyTurn && newRollCount < 3, isMyTurn);
+        window.YachtGame.UI.setRollButtonEnabled(isMyTurn && newRollCount < 3, isMyTurn, newRollCount);
         // Re-trigger scorecard render so the kb-focus wrapper sees the enabled roll button
         var Scoring = window.YachtGame.Scoring;
         var Dice = window.YachtGame.Dice;
@@ -274,7 +289,9 @@
           (lastRoomData.players.player2 && lastRoomData.players.player2.name) || 'Player 2',
           (lastRoomData.players[localPlayerKey] && lastRoomData.players[localPlayerKey].lastCategory) || null,
           (lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] && lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'].lastCategory) || null,
-          lastRoomData.rollCount > 0
+          lastRoomData.rollCount > 0,
+          (lastRoomData.players[localPlayerKey] && lastRoomData.players[localPlayerKey].diceSkin) || 'classic',
+          (lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] && lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'].diceSkin) || 'classic'
         );
       }
     }).catch(function (error) {
@@ -454,6 +471,8 @@
     sendEmote: sendEmote,
     leaveGame: leaveGame,
     getGameMode: getGameMode,
-    destroy: destroy
+    destroy: destroy,
+    getPendingCategory: function () { return pendingCategory; },
+    isRolling: function () { return isRolling; }
   };
 })();
