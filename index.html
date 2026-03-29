@@ -64,6 +64,34 @@
           <button id="btn-join" class="btn-secondary" disabled>Join</button>
         </div>
       </div>
+      <div class="divider"><span>or</span></div>
+      <div class="bot-section">
+        <div class="bot-mode-select">
+          <div class="mode-options">
+            <label class="mode-option">
+              <input type="radio" name="bot-mode" value="yahtzee" checked>
+              <span class="mode-label">Yahtzee</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="bot-mode" value="yacht">
+              <span class="mode-label">Yacht</span>
+            </label>
+          </div>
+        </div>
+        <div class="bot-difficulty">
+          <label class="bot-option">
+            <input type="radio" name="bot-difficulty" value="basic" checked>
+            <span class="bot-label">Basic</span>
+            <span class="bot-desc">적당한 수준의 AI</span>
+          </label>
+          <label class="bot-option">
+            <input type="radio" name="bot-difficulty" value="gambler">
+            <span class="bot-label">Gambler</span>
+            <span class="bot-desc">최적화된 전략 AI</span>
+          </label>
+        </div>
+        <button id="btn-bot-play" class="btn-primary">Play vs Bot</button>
+      </div>
       <div id="skin-selector" class="skin-selector" hidden>
         <div class="skin-selector-header">
           <span class="skin-selector-label">Dice Skin</span>
@@ -252,6 +280,8 @@
   <script src="js/history.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/lobby.js"></script>
+  <script src="js/bot-ai.js"></script>
+  <script src="js/bot-game.js"></script>
   <script src="js/game.js"></script>
   <script src="js/app.js"></script>
 </body>

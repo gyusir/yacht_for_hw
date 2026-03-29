@@ -470,6 +470,53 @@ exports.cancelRoom = regionFn.https.onCall(async (data, context) => {
   return { success: true };
 });
 
+// ─── saveBotGameResult ───
+
+exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  const { gameMode, botDifficulty, myScore, oppScore, result } = data;
+
+  if (gameMode !== "yacht" && gameMode !== "yahtzee") {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
+  }
+  if (botDifficulty !== "basic" && botDifficulty !== "gambler") {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid bot difficulty.");
+  }
+  if (typeof myScore !== "number" || typeof oppScore !== "number") {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid scores.");
+  }
+  if (result !== "win" && result !== "loss" && result !== "tie") {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid result.");
+  }
+
+  const userRef = db.ref("users/" + uid);
+  const profileSnap = await userRef.child("displayName").once("value");
+  if (!profileSnap.exists()) return { success: false };
+
+  const botName = botDifficulty === "gambler" ? "Bot (Gambler)" : "Bot (Basic)";
+
+  await userRef.child("history").push({
+    date: ServerValue.TIMESTAMP,
+    mode: gameMode,
+    opponentName: botName,
+    myScore: myScore,
+    oppScore: oppScore,
+    result: result,
+    roomCode: "BOT"
+  });
+
+  await userRef.child("stats").transaction((stats) => {
+    if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
+    stats.totalGames = (stats.totalGames || 0) + 1;
+    if (result === "win") stats.wins = (stats.wins || 0) + 1;
+    else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
+    else stats.ties = (stats.ties || 0) + 1;
+    return stats;
+  });
+
+  return { success: true };
+});
+
 // ─── onGameFinished (DB trigger) ───
 
 exports.onGameFinished = functions.region("asia-southeast1")

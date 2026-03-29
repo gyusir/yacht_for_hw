@@ -468,6 +468,60 @@ input[type="text"]::placeholder {
   width: auto;
 }
 
+/* ===== Bot Section ===== */
+.bot-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bot-mode-select .mode-options {
+  display: flex;
+  gap: 8px;
+}
+
+.bot-mode-select .mode-option {
+  padding: 10px 8px;
+}
+
+.bot-difficulty {
+  display: flex;
+  gap: 8px;
+}
+
+.bot-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  text-align: center;
+}
+
+.bot-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.bot-option input {
+  display: none;
+}
+
+.bot-label {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.bot-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .error-text {
   color: var(--danger);
   font-size: 0.85rem;
