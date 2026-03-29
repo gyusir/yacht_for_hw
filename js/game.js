@@ -205,13 +205,17 @@
       })(i);
     }
 
+    var rollRequestPending = true;
     var rollSafetyTimer = setTimeout(function () {
       // Safety: stop spinning and render from lastRoomData
       for (var s = 0; s < spinTimers.length; s++) {
         clearInterval(spinTimers[s].timer);
         dieEls[spinTimers[s].idx].classList.remove('rolling');
       }
-      isRolling = false;
+      // Only allow re-roll if the server request already completed
+      if (!rollRequestPending) {
+        isRolling = false;
+      }
       if (lastRoomData && lastRoomData.dice) {
         var ds = [];
         var hd = lastRoomData.heldDice || {};
@@ -225,6 +229,7 @@
 
     // Call Cloud Function — when it responds, stop spinning and show real values
     rollDiceFn({ roomCode: roomCode }).then(function (result) {
+      rollRequestPending = false;
       clearTimeout(rollSafetyTimer);
       var serverDice = result.data.dice;
 
@@ -273,6 +278,7 @@
         );
       }
     }).catch(function (error) {
+      rollRequestPending = false;
       clearTimeout(rollSafetyTimer);
       for (var s = 0; s < spinTimers.length; s++) {
         clearInterval(spinTimers[s].timer);
@@ -299,6 +305,24 @@
     var heldRef = window.YachtGame.db.ref('rooms/' + roomCode + '/heldDice/' + index);
     heldRef.set(newHeld).catch(function (err) {
       console.error('Failed to update held state:', err);
+      // Rollback optimistic UI on failure
+      var rollbackEls = document.querySelectorAll('.die');
+      var rollbackEl = rollbackEls[index];
+      if (rollbackEl) {
+        if (isCurrentlyHeld) {
+          rollbackEl.classList.add('held');
+          if (!rollbackEl.querySelector('.held-check')) {
+            var chk = document.createElement('span');
+            chk.className = 'held-check';
+            chk.textContent = '\u2713';
+            rollbackEl.appendChild(chk);
+          }
+        } else {
+          rollbackEl.classList.remove('held');
+          var existingChk = rollbackEl.querySelector('.held-check');
+          if (existingChk) existingChk.remove();
+        }
+      }
     });
 
     // Immediate local UI feedback: toggle only this die's held state via DOM
@@ -341,6 +365,13 @@
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
     if ((room.rollCount || 0) < 1) return;
+
+    // Pre-validate category before sending to server
+    var Scoring = window.YachtGame.Scoring;
+    if (Scoring && Scoring.getCategories) {
+      var validCats = Scoring.getCategories(room.gameMode);
+      if (validCats.indexOf(category) === -1) return;
+    }
 
     var myScores = room.players[localPlayerKey].scores || {};
     if (myScores[category] !== null && myScores[category] !== undefined) return;

@@ -189,6 +189,10 @@
         gameMode: room.gameMode,
         status: room.status
       });
+    }, function (error) {
+      console.error('tryReconnect error:', error);
+      clearSession();
+      callback(null);
     });
   }
 

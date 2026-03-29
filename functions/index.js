@@ -28,6 +28,15 @@ function opponentOf(key) {
   return key === "player1" ? "player2" : "player1";
 }
 
+function sanitizePlayerName(name) {
+  if (!name || typeof name !== "string") return null;
+  // Trim whitespace and collapse internal spaces
+  name = name.trim().replace(/\s+/g, " ");
+  if (name.length === 0) return null;
+  if (name.length > 12) name = name.substring(0, 12);
+  return name;
+}
+
 function generateRoomCode() {
   var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   var code = "";
@@ -49,27 +58,57 @@ function randomDie() {
   return crypto.randomInt(1, 7);
 }
 
+// ─── Rate Limiting ───
+
+const RATE_LIMITS = {
+  createRoom: { windowMs: 10000, maxRequests: 3 },
+  joinRoom: { windowMs: 10000, maxRequests: 5 },
+  rollDice: { windowMs: 2000, maxRequests: 3 },
+  selectCategory: { windowMs: 2000, maxRequests: 2 }
+};
+
+async function checkRateLimit(uid, action) {
+  const limit = RATE_LIMITS[action];
+  if (!limit) return;
+
+  const now = Date.now();
+  const rateLimitRef = db.ref("rateLimits/" + uid + "/" + action);
+  const snap = await rateLimitRef.once("value");
+  const data = snap.val();
+
+  if (data && data.count >= limit.maxRequests && (now - data.windowStart) < limit.windowMs) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
+  }
+
+  if (!data || (now - data.windowStart) >= limit.windowMs) {
+    await rateLimitRef.set({ windowStart: now, count: 1 });
+  } else {
+    await rateLimitRef.update({ count: data.count + 1 });
+  }
+}
+
+const ROOM_CODE_MAX_RETRIES = 5;
+
 const regionFn = functions.region("asia-northeast3");
 
 // ─── createRoom ───
 
 exports.createRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
+  await checkRateLimit(uid, "createRoom");
   const { gameMode, diceSkin } = data;
   let playerName = data.playerName;
 
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
   }
-  if (!playerName || typeof playerName !== "string") {
+  playerName = sanitizePlayerName(playerName);
+  if (!playerName) {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
-  }
-  if (playerName.length > 12) {
-    playerName = playerName.substring(0, 12);
   }
 
   let code, exists;
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < ROOM_CODE_MAX_RETRIES; attempt++) {
     code = generateRoomCode();
     const snap = await db.ref("rooms/" + code).once("value");
     if (!snap.exists()) { exists = false; break; }
@@ -113,20 +152,19 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
 
 exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
+  await checkRateLimit(uid, "joinRoom");
   const { roomCode, diceSkin, random } = data;
   let playerName = data.playerName;
 
-  if (!playerName || typeof playerName !== "string") {
+  playerName = sanitizePlayerName(playerName);
+  if (!playerName) {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
-  }
-  if (playerName.length > 12) {
-    playerName = playerName.substring(0, 12);
   }
 
   let targetCode = roomCode;
 
   if (random) {
-    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").once("value");
+    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(50).once("value");
     if (!snap.exists()) {
       throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
     }
@@ -218,6 +256,7 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
 
 exports.rollDice = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
+  await checkRateLimit(uid, "rollDice");
   const { roomCode } = data;
 
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
@@ -271,6 +310,7 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
 
 exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
+  await checkRateLimit(uid, "selectCategory");
   const { roomCode, category } = data;
 
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
@@ -279,107 +319,107 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   }
 
   const roomRef = db.ref("rooms/" + roomCode);
-  const snap = await roomRef.once("value");
-  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
 
-  const room = snap.val();
-  if (room.status !== "playing") {
-    throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
-  }
+  // Use transaction to prevent race conditions (duplicate category writes)
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
 
-  const playerKey = findPlayerKey(room.players, uid);
-  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
-  if (room.currentTurn !== playerKey) {
-    throw new functions.https.HttpsError("failed-precondition", "Not your turn.");
-  }
-  if ((room.rollCount || 0) < 1) {
-    throw new functions.https.HttpsError("failed-precondition", "Must roll at least once.");
-  }
+    if (room.status !== "playing") return;
+    const playerKey = findPlayerKey(room.players, uid);
+    if (!playerKey) return;
+    if (room.currentTurn !== playerKey) return;
+    if ((room.rollCount || 0) < 1) return;
 
-  const gameMode = room.gameMode;
-  const validCategories = Scoring.getCategories(gameMode);
-  if (validCategories.indexOf(category) === -1) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid category for this game mode.");
-  }
+    const gameMode = room.gameMode;
+    const validCategories = Scoring.getCategories(gameMode);
+    if (validCategories.indexOf(category) === -1) return;
 
-  const myScores = (room.players[playerKey] && room.players[playerKey].scores) || {};
-  if (myScores[category] !== null && myScores[category] !== undefined) {
-    throw new functions.https.HttpsError("failed-precondition", "Category already filled.");
-  }
+    const myScores = (room.players[playerKey] && room.players[playerKey].scores) || {};
+    if (myScores[category] !== null && myScores[category] !== undefined) return;
 
-  const diceValues = [];
-  for (let i = 0; i < 5; i++) {
-    const d = room.dice && room.dice[i];
-    const v = (d && d.value) || 0;
-    if (v < 1 || v > 6) {
-      throw new functions.https.HttpsError("failed-precondition", "Invalid dice state.");
+    const diceValues = [];
+    for (let i = 0; i < 5; i++) {
+      const d = room.dice && room.dice[i];
+      const v = (d && d.value) || 0;
+      if (v < 1 || v > 6) return;
+      diceValues.push(v);
     }
-    diceValues.push(v);
-  }
 
-  const score = Scoring.calculate(diceValues, category, gameMode);
+    const score = Scoring.calculate(diceValues, category, gameMode);
+    const oppKey = opponentOf(playerKey);
 
-  const oppKey = opponentOf(playerKey);
-  const isYacht = (category === "yacht" || category === "yahtzee") && score === 50;
+    room.players[playerKey].scores[category] = score;
+    room.players[playerKey].lastCategory = category;
 
-  const updates = {};
-  updates["players/" + playerKey + "/scores/" + category] = score;
-  updates["players/" + playerKey + "/lastCategory"] = category;
-
-  if (isYacht) {
-    updates["celebration"] = { player: playerKey, ts: ServerValue.TIMESTAMP };
-  }
-
-  let yahtzeeBonus = false;
-  if (gameMode === "yahtzee") {
-    let allSame = true;
-    for (let i = 1; i < diceValues.length; i++) {
-      if (diceValues[i] !== diceValues[0]) { allSame = false; break; }
+    if ((category === "yacht" || category === "yahtzee") && score === 50) {
+      room.celebration = { player: playerKey, ts: { ".sv": "timestamp" } };
     }
-    if (allSame && myScores.yahtzee === 50 && category !== "yahtzee") {
-      const currentBonus = myScores.yahtzeeBonus || 0;
-      updates["players/" + playerKey + "/scores/yahtzeeBonus"] = currentBonus + 100;
-      yahtzeeBonus = true;
+
+    let yahtzeeBonus = false;
+    if (gameMode === "yahtzee") {
+      let allSame = true;
+      for (let i = 1; i < diceValues.length; i++) {
+        if (diceValues[i] !== diceValues[0]) { allSame = false; break; }
+      }
+      if (allSame && myScores.yahtzee === 50 && category !== "yahtzee") {
+        const currentBonus = myScores.yahtzeeBonus || 0;
+        room.players[playerKey].scores.yahtzeeBonus = currentBonus + 100;
+        yahtzeeBonus = true;
+      }
     }
-  }
 
-  updates["lastActivityAt"] = ServerValue.TIMESTAMP;
-  updates["currentTurn"] = oppKey;
-  updates["rollCount"] = 0;
-  for (let i = 0; i < 5; i++) {
-    updates["dice/" + i + "/held"] = false;
-    updates["dice/" + i + "/value"] = 0;
-  }
-  updates["heldDice"] = null;
-
-  const updatedScores = Object.assign({}, myScores);
-  updatedScores[category] = score;
-  if (yahtzeeBonus) {
-    updatedScores.yahtzeeBonus = (myScores.yahtzeeBonus || 0) + 100;
-  }
-
-  const oppScores = (room.players[oppKey] && room.players[oppKey].scores) || {};
-  const myAllFilled = Scoring.allFilled(updatedScores, gameMode);
-  const oppAllFilled = Scoring.allFilled(oppScores, gameMode);
-
-  let winner = null;
-  if (myAllFilled && oppAllFilled) {
-    const myTotal = Scoring.totalScore(updatedScores, gameMode, updatedScores.yahtzeeBonus);
-    const oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
-
-    if (myTotal > oppTotal) {
-      winner = playerKey;
-    } else if (oppTotal > myTotal) {
-      winner = oppKey;
-    } else {
-      winner = "tie";
+    room.lastActivityAt = { ".sv": "timestamp" };
+    room.currentTurn = oppKey;
+    room.rollCount = 0;
+    for (let i = 0; i < 5; i++) {
+      if (room.dice[i]) {
+        room.dice[i].held = false;
+        room.dice[i].value = 0;
+      }
     }
-    updates["winner"] = winner;
-    updates["status"] = "finished";
+    room.heldDice = null;
+
+    const updatedScores = room.players[playerKey].scores;
+    const oppScores = (room.players[oppKey] && room.players[oppKey].scores) || {};
+    const myAllFilled = Scoring.allFilled(updatedScores, gameMode);
+    const oppAllFilled = Scoring.allFilled(oppScores, gameMode);
+
+    if (myAllFilled && oppAllFilled) {
+      const myTotal = Scoring.totalScore(updatedScores, gameMode, updatedScores.yahtzeeBonus);
+      const oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
+
+      if (myTotal > oppTotal) {
+        room.winner = playerKey;
+      } else if (oppTotal > myTotal) {
+        room.winner = oppKey;
+      } else {
+        room.winner = "tie";
+      }
+      room.status = "finished";
+    }
+
+    // Store transient data for response
+    room._transient = { score, yahtzeeBonus, playerKey };
+
+    return room;
+  });
+
+  if (!result.committed) {
+    throw new functions.https.HttpsError("failed-precondition", "Could not update game state. Try again.");
   }
 
-  await roomRef.update(updates);
-  return { score, yahtzeeBonus, gameOver: !!winner, winner };
+  const room = result.snapshot.val();
+  if (!room || !room._transient) {
+    throw new functions.https.HttpsError("failed-precondition", "Invalid game state.");
+  }
+
+  const { score, yahtzeeBonus, playerKey } = room._transient;
+  const winner = room.winner || null;
+
+  // Clean up transient data
+  await roomRef.child("_transient").remove();
+
+  return { score, yahtzeeBonus, gameOver: !!winner && room.status === "finished", winner };
 });
 
 // ─── leaveGame ───
@@ -451,13 +491,13 @@ exports.onGameFinished = functions.region("asia-southeast1")
     const gameMode = room.gameMode;
     const winner = room.winner;
 
-    for (const playerKey of ["player1", "player2"]) {
+    const playerUpdates = ["player1", "player2"].map(async (playerKey) => {
       const player = room.players[playerKey];
-      if (!player || !player.uid) continue;
+      if (!player || !player.uid) return;
 
       const oppKey = opponentOf(playerKey);
       const opponent = room.players[oppKey];
-      if (!opponent) continue;
+      if (!opponent) return;
 
       const myScores = player.scores || {};
       const oppScores = opponent.scores || {};
@@ -471,12 +511,21 @@ exports.onGameFinished = functions.region("asia-southeast1")
 
       const userRef = db.ref("users/" + player.uid);
       const profileSnap = await userRef.child("displayName").once("value");
-      if (!profileSnap.exists()) continue;
+      if (!profileSnap.exists()) return;
+
+      // Use verified displayName from opponent's profile when available
+      let oppDisplayName = opponent.name;
+      if (opponent.uid) {
+        const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
+        if (oppProfileSnap.exists()) {
+          oppDisplayName = oppProfileSnap.val();
+        }
+      }
 
       await userRef.child("history").push({
         date: ServerValue.TIMESTAMP,
         mode: gameMode,
-        opponentName: opponent.name,
+        opponentName: oppDisplayName,
         myScore: myTotal,
         oppScore: oppTotal,
         result: result,
@@ -491,12 +540,16 @@ exports.onGameFinished = functions.region("asia-southeast1")
         else stats.ties = (stats.ties || 0) + 1;
         return stats;
       });
-    }
+    });
+
+    await Promise.all(playerUpdates);
 
     // Schedule room cleanup
     setTimeout(async () => {
       try {
         await db.ref("rooms/" + roomCode).remove();
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        console.error("Failed to cleanup room " + roomCode + ":", e);
+      }
     }, 30000);
   });
