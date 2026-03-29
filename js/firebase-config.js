@@ -25,3 +25,10 @@ window.YachtGame.db = firebase.database();
 window.YachtGame.auth = firebase.auth();
 window.YachtGame.googleProvider = new firebase.auth.GoogleAuthProvider();
 window.YachtGame.functions = firebase.app().functions('asia-northeast3');
+
+// localhost에서는 emulator 사용
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emulator')) {
+  window.YachtGame.auth.useEmulator('http://localhost:9099');
+  window.YachtGame.db.useEmulator('localhost', 9000);
+  window.YachtGame.functions.useEmulator('localhost', 5001);
+}
