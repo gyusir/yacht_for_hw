@@ -11,6 +11,9 @@
     var db = window.YachtGame.db;
     db.ref('users/' + firebaseUid + '/stats').once('value', function (snap) {
       callback(snap.val() || { totalGames: 0, wins: 0, losses: 0, ties: 0 });
+    }, function (error) {
+      console.error('loadStats error:', error);
+      callback(null);
     });
   }
 
@@ -28,6 +31,9 @@
         // Reverse so most recent is first
         games.reverse();
         callback(games);
+      }, function (error) {
+        console.error('loadHistory error:', error);
+        callback([]);
       });
   }
 

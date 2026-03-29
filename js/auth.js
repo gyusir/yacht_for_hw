@@ -67,9 +67,9 @@
       isGuest = true;
       if (callback) callback(null);
     }).catch(function (error) {
-      // Fallback: proceed without auth (limited functionality)
+      // Anonymous auth is required — cannot play without a uid
       console.error('Anonymous auth failed:', error);
-      isGuest = true;
+      isGuest = false;
       currentUser = null;
       if (callback) callback(error);
     });
