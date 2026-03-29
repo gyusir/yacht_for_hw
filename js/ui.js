@@ -5,7 +5,7 @@
   window.YachtGame = window.YachtGame || {};
 
   // Screen management
-  function showScreen(screenId) {
+  function showScreen(screenId, gameMode) {
     var screens = document.querySelectorAll('.screen');
     for (var i = 0; i < screens.length; i++) {
       screens[i].classList.remove('active');
@@ -13,10 +13,15 @@
     var target = document.getElementById(screenId);
     if (target) target.classList.add('active');
 
+    var titleEl = document.querySelector('h1');
     if (screenId === 'screen-game') {
       document.body.classList.add('in-game');
+      if (titleEl) {
+        titleEl.textContent = gameMode === 'yahtzee' ? 'Yahtzee Dice' : 'Yacht Dice';
+      }
     } else {
       document.body.classList.remove('in-game');
+      if (titleEl) titleEl.textContent = 'Yacht Dice';
     }
   }
 
@@ -67,20 +72,25 @@
   // Roll counter — updates roll button text
   function updateRollCounter(count) {
     var btn = document.getElementById('btn-roll');
-    btn.innerHTML = 'Roll<br><small>(' + count + '/3)</small>';
+    if (count >= 3) {
+      btn.innerHTML = 'Roll End';
+    } else {
+      btn.innerHTML = "Let's Roll!<br><small>(" + count + '/3)</small>';
+    }
   }
 
   // Roll button state
-  function setRollButtonEnabled(enabled, isMyTurn) {
+  function setRollButtonEnabled(enabled, isMyTurn, rollCount) {
     var btn = document.getElementById('btn-roll');
     btn.disabled = !enabled;
     if (!isMyTurn) {
-      btn.innerHTML = 'Not your turn';
+      var rc = rollCount || 0;
+      btn.innerHTML = "Foe's turn<br><small>(" + rc + '/3)</small>';
     }
   }
 
   // Scorecard rendering
-  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat, hasRolled) {
+  function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat, hasRolled, myDiceSkin, oppDiceSkin) {
     var container = document.getElementById('scorecard');
     var Scoring = window.YachtGame.Scoring;
     var categories = Scoring.getCategories(gameMode);
@@ -100,10 +110,18 @@
 
     var html = '<table>';
     html += '<colgroup><col style="width:40%"><col style="width:30%"><col style="width:30%"></colgroup>';
+    var DiceSkins = window.YachtGame.DiceSkins;
+    var myDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(myDiceSkin) : '';
+    var oppDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(oppDiceSkin) : '';
+
     html += '<thead><tr>';
     html += '<th>Category</th>';
-    html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">' + escapeHtml(myName || 'You') + '</th>';
-    html += '<th class="opponent-header' + (!isMyTurn ? ' current-turn' : '') + '">' + escapeHtml(oppName || 'Opponent') + '</th>';
+    html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">';
+    html += '<span class="header-die-wrap' + (isMyTurn ? ' header-die-spin' : '') + '">' + myDieHTML + '</span> ';
+    html += escapeHtml(myName || 'You') + '</th>';
+    html += '<th class="opponent-header' + (!isMyTurn ? ' current-turn' : '') + '">';
+    html += '<span class="header-die-wrap' + (!isMyTurn ? ' header-die-spin' : '') + '">' + oppDieHTML + '</span> ';
+    html += escapeHtml(oppName || 'Opponent') + '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
 
@@ -157,14 +175,21 @@
     if (isMyTurn && hasRolled) {
       var myPreviewCells = container.querySelectorAll('.score-cell.preview');
       for (var i = 0; i < myPreviewCells.length; i++) {
-        (function (cell) {
+        (function (cell, cellIndex) {
           cell.addEventListener('click', function () {
             var cat = cell.dataset.category;
             if (cat && window.YachtGame.Game) {
               window.YachtGame.Game.confirmCategory(cat);
+              // Move kb-focus to clicked cell
+              var oldFocus = document.querySelectorAll('.kb-focus');
+              for (var j = 0; j < oldFocus.length; j++) oldFocus[j].classList.remove('kb-focus');
+              cell.classList.add('kb-focus');
+              if (typeof window.YachtGame._setKbFocusIndex === 'function') {
+                window.YachtGame._setKbFocusIndex(cellIndex);
+              }
             }
           });
-        })(myPreviewCells[i]);
+        })(myPreviewCells[i], i);
       }
     }
   }
