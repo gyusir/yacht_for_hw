@@ -2,7 +2,7 @@
 
 1:1 온라인 대전 주사위 게임. **Yacht**(12 카테고리)와 **Yahtzee**(13 카테고리 + 보너스) 두 가지 모드를 지원한다.
 
-> Live: GitHub Pages로 배포 중 — `https://<username>.github.io/yacht_for_hw/`
+> Live: https://yacht-ff0c8.web.app
 
 ## Features
 
@@ -14,6 +14,7 @@
 - **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환
 - **이모트** — 16종 이모티콘 채팅
 - **재접속** — 탭 복귀 시 자동 재접속
+- **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트
 - **빌드 없음** — 순수 HTML, CSS, JavaScript
 
 ## Tech Stack
@@ -23,14 +24,16 @@
 | Frontend | HTML5, CSS3, Vanilla JS (ES5) |
 | Backend | Firebase Realtime Database (서버리스) |
 | Auth | Firebase Auth (Google OAuth) |
-| Hosting | GitHub Pages (정적) |
+| Anti-Cheat | Firebase Cloud Functions (Node 22) |
+| Hosting | Firebase Hosting (글로벌 CDN, 자동 SSL) |
+| CI/CD | GitHub Actions (자동 배포 + PR 프리뷰 채널) |
 
 ## Project Structure
 
 ```
-├── index.html           # SPA 엔트리 (모든 화면 포함)
+├── index.html              # SPA 엔트리 (모든 화면 포함)
 ├── css/
-│   └── style.css        # 전체 스타일 (테마, 스킨, 반응형)
+│   └── style.css           # 전체 스타일 (테마, 스킨, 반응형)
 ├── js/
 │   ├── firebase-config.js  # Firebase 초기화
 │   ├── auth.js             # Google 로그인 / 게스트 모드
@@ -42,7 +45,17 @@
 │   ├── history.js          # 전적 저장·조회
 │   ├── ui.js               # 화면 전환, 스코어카드, 토스트
 │   └── app.js              # 엔트리포인트, 모듈 연결, 이모트
-├── CLAUDE.md            # AI 어시스턴트용 프로젝트 규칙
+├── functions/
+│   ├── index.js            # Cloud Functions (안티치트 점수 검증)
+│   ├── scoring.js          # 서버사이드 점수 계산 로직
+│   └── package.json
+├── .github/workflows/
+│   ├── firebase-hosting-merge.yml    # main merge 시 자동 배포
+│   └── firebase-hosting-preview.yml  # PR 프리뷰 채널 생성
+├── firebase.json           # Hosting, Functions, Database 설정
+├── .firebaserc             # Firebase 프로젝트 연결 (yacht-ff0c8)
+├── database.rules.json     # Realtime Database 보안 규칙
+├── CLAUDE.md               # AI 어시스턴트용 프로젝트 규칙
 └── README.md
 ```
 
@@ -89,9 +102,14 @@
 
 별도 빌드 없이 `index.html`을 브라우저에서 열면 동작한다. Firebase 연결이 필요하므로 인터넷 필요.
 
+Firebase Hosting 에뮬레이터로 로컬 테스트:
+```bash
+firebase emulators:start --only hosting
+```
+
 ### Firebase Setup (이미 구성됨)
 
-현재 `js/firebase-config.js`에 Firebase 프로젝트가 연결되어 있다. 새 프로젝트로 교체하려면:
+현재 `js/firebase-config.js`에 Firebase 프로젝트(`yacht-ff0c8`)가 연결되어 있다. 새 프로젝트로 교체하려면:
 
 1. [Firebase Console](https://console.firebase.google.com/)에서 프로젝트 생성
 2. **Build > Realtime Database** 활성화
@@ -101,7 +119,12 @@
 
 ### Deploy
 
-GitHub Pages에서 `main` 브랜치 루트(`/`)를 소스로 설정하면 자동 배포된다.
+`main` 브랜치에 merge되면 GitHub Actions가 Firebase Hosting에 자동 배포한다.
+
+- **프로덕션 배포**: `dev` → `main` PR merge 시 자동 실행
+- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL이 PR 코멘트에 자동 게시 (7일 후 만료)
+- **수동 배포**: `firebase deploy --only hosting`
+- **Functions 배포**: `firebase deploy --only functions`
 
 ### Dice Skin 추가
 

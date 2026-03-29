@@ -1,5 +1,13 @@
 # Yacht Dice - Project Rules
 
+## 호스팅 & 배포
+
+- **호스팅**: Firebase Hosting (`yacht-ff0c8.web.app`)
+- **자동 배포**: `main` 브랜치에 merge 시 GitHub Actions가 Firebase Hosting에 자동 배포
+- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL이 PR 코멘트에 자동 게시 (7일 후 만료)
+- **수동 배포**: `firebase deploy --only hosting` (호스팅) / `firebase deploy --only functions` (함수)
+- **Firebase 프로젝트**: `yacht-ff0c8` (Asia Southeast 1)
+
 ## Git 브랜치 규칙
 
 브랜치는 `main`과 `dev` 두 개만 사용한다.
