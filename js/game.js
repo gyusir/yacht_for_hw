@@ -131,12 +131,12 @@
     // Update roll counter
     UI.updateRollCounter(room.rollCount || 0);
 
-    // Render dice (merge heldDice state for accurate hold display)
+    // Render dice (heldDice is the single source of truth for held state)
     var diceState = [];
     var heldData = room.heldDice || {};
     for (var i = 0; i < 5; i++) {
       var d = room.dice[i] || { value: 0, held: false };
-      diceState.push({ value: d.value, held: d.held || heldData[i] === true });
+      diceState.push({ value: d.value, held: heldData[i] === true });
     }
 
     if (!isRolling) {
@@ -187,7 +187,7 @@
     var heldFlags = [];
     for (var i = 0; i < 5; i++) {
       var d = room.dice[i] || { value: 0, held: false };
-      heldFlags.push(d.held || heldData[i] === true);
+      heldFlags.push(heldData[i] === true);
     }
 
     // Start spinning animation on unheld dice (no final value yet)
@@ -217,7 +217,7 @@
         var hd = lastRoomData.heldDice || {};
         for (var j = 0; j < 5; j++) {
           var dd = lastRoomData.dice[j] || { value: 0, held: false };
-          ds.push({ value: dd.value, held: dd.held || hd[j] === true });
+          ds.push({ value: dd.value, held: hd[j] === true });
         }
         window.YachtGame.Dice.renderAll(ds);
       }
@@ -234,11 +234,12 @@
         dieEls[spinTimers[s].idx].classList.remove('rolling');
       }
 
-      // Render all dice with server values
+      // Render all dice with server values (use heldDice as source of truth for held state)
+      var hd = lastRoomData ? (lastRoomData.heldDice || {}) : {};
       var finalState = [];
       for (var j = 0; j < 5; j++) {
         var sd = serverDice[j] || { value: 0, held: false };
-        finalState.push({ value: sd.value, held: sd.held });
+        finalState.push({ value: sd.value, held: hd[j] === true });
       }
       window.YachtGame.Dice.renderAll(finalState);
       isRolling = false;
@@ -254,7 +255,7 @@
         var ds = [];
         for (var k = 0; k < 5; k++) {
           var dd = lastRoomData.dice[k] || { value: 0, held: false };
-          ds.push({ value: dd.value, held: dd.held || hd[k] === true });
+          ds.push({ value: dd.value, held: hd[k] === true });
         }
         var currentDice = Dice.getDiceValues(ds);
         window.YachtGame.UI.renderScorecard(
@@ -289,15 +290,16 @@
     if (room.currentTurn !== localPlayerKey) return;
     if ((room.rollCount || 0) < 1) return; // Can't hold before first roll
 
-    // Determine current held state from heldDice (client-side) or dice (server-side)
+    // Determine current held state from heldDice (single source of truth)
     var heldData = room.heldDice || {};
-    var diceHeld = room.dice[index] && room.dice[index].held;
-    var isCurrentlyHeld = heldData[index] === true || diceHeld;
+    var isCurrentlyHeld = heldData[index] === true;
     var newHeld = !isCurrentlyHeld;
 
     // Write to heldDice path (client-writable via Security Rules)
     var heldRef = window.YachtGame.db.ref('rooms/' + roomCode + '/heldDice/' + index);
-    heldRef.set(newHeld);
+    heldRef.set(newHeld).catch(function (err) {
+      console.error('Failed to update held state:', err);
+    });
 
     // Immediate local UI feedback: toggle only this die's held state via DOM
     var dieEls = document.querySelectorAll('.die');
