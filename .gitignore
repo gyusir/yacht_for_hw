@@ -72,6 +72,10 @@ node_modules/
 .agents/
 skills-lock.json
 
+# Python
+__pycache__/
+*.pyc
+
 # macOS
 .DS_Store
 

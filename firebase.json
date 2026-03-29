@@ -15,7 +15,9 @@
       "CLAUDE.md",
       "README.md",
       "skills-lock.json",
-      "*.log"
+      "*.log",
+      "tools/**",
+      "__pycache__/**"
     ],
     "headers": [
       {
