@@ -12,7 +12,7 @@
 
   // ─── Configuration ───
 
-  var BASIC_NOISE = 1; // ±1 EV noise for Basic difficulty
+  var BASIC_NOISE = 4; // ±4 EV noise for Basic difficulty
 
   // ─── DP Table State ───
 
