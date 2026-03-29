@@ -4,6 +4,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const Scoring = require("./scoring");
+const { ServerValue } = require("firebase-admin/database");
 
 admin.initializeApp();
 const db = admin.database();
@@ -81,8 +82,8 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   const roomData = {
     gameMode: gameMode,
     status: "waiting",
-    createdAt: admin.database.ServerValue.TIMESTAMP,
-    lastActivityAt: admin.database.ServerValue.TIMESTAMP,
+    createdAt: ServerValue.TIMESTAMP,
+    lastActivityAt: ServerValue.TIMESTAMP,
     currentTurn: "player1",
     rollCount: 0,
     dice: {
@@ -174,7 +175,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     diceSkin: diceSkin || "classic"
   };
   updates["status"] = "playing";
-  updates["lastActivityAt"] = admin.database.ServerValue.TIMESTAMP;
+  updates["lastActivityAt"] = ServerValue.TIMESTAMP;
 
   await roomRef.update(updates);
   return { roomCode: targetCode, playerKey: "player2", gameMode: room.gameMode };
@@ -259,7 +260,7 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
   const updates = {
     dice: newDice,
     rollCount: rollCount + 1,
-    lastActivityAt: admin.database.ServerValue.TIMESTAMP
+    lastActivityAt: ServerValue.TIMESTAMP
   };
 
   await roomRef.update(updates);
@@ -326,7 +327,7 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   updates["players/" + playerKey + "/lastCategory"] = category;
 
   if (isYacht) {
-    updates["celebration"] = { player: playerKey, ts: admin.database.ServerValue.TIMESTAMP };
+    updates["celebration"] = { player: playerKey, ts: ServerValue.TIMESTAMP };
   }
 
   let yahtzeeBonus = false;
@@ -342,7 +343,7 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
     }
   }
 
-  updates["lastActivityAt"] = admin.database.ServerValue.TIMESTAMP;
+  updates["lastActivityAt"] = ServerValue.TIMESTAMP;
   updates["currentTurn"] = oppKey;
   updates["rollCount"] = 0;
   for (let i = 0; i < 5; i++) {
@@ -473,7 +474,7 @@ exports.onGameFinished = functions.region("asia-southeast1")
       if (!profileSnap.exists()) continue;
 
       await userRef.child("history").push({
-        date: admin.database.ServerValue.TIMESTAMP,
+        date: ServerValue.TIMESTAMP,
         mode: gameMode,
         opponentName: opponent.name,
         myScore: myTotal,

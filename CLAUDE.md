@@ -1,37 +1,90 @@
 # Yacht Dice - Project Rules
 
-## 호스팅 & 배포
+## Project Overview
 
-- **호스팅**: Firebase Hosting (`yacht-ff0c8.web.app`)
-- **자동 배포**: `main` 브랜치에 merge 시 GitHub Actions가 Firebase Hosting에 자동 배포
-- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL이 PR 코멘트에 자동 게시 (7일 후 만료)
-- **수동 배포**: `firebase deploy --only hosting` (호스팅) / `firebase deploy --only functions` (함수)
-- **Firebase 프로젝트**: `yacht-ff0c8` (Asia Southeast 1)
+1:1 온라인 대전 주사위 게임. Firebase 기반 서버리스 아키텍처로, 프론트엔드는 순수 HTML/CSS/JS(ES5), 백엔드는 Firebase Cloud Functions(Node 22)로 구성된다. 빌드 도구나 프레임워크를 사용하지 않는다.
 
-## Git 브랜치 규칙
+- **Live**: https://yacht-ff0c8.web.app
+- **Firebase 프로젝트**: `yacht-ff0c8` (Asia regions)
+- **게임 모드**: Yacht (12 카테고리) / Yahtzee (13 카테고리 + 보너스)
+
+## Architecture
+
+### Frontend (`js/`)
+| 파일 | 역할 |
+|---|---|
+| `firebase-config.js` | Firebase 초기화. localhost 시 emulator 자동 연결 |
+| `auth.js` | Google OAuth + Anonymous Auth. `getPlayerName()`은 12자 제한 |
+| `lobby.js` | Cloud Functions 호출로 방 생성/참가/취소. 프레즌스 관리 |
+| `game.js` | 게임 상태 머신, 턴 관리, Firebase 실시간 동기화 |
+| `scoring.js` | 클라이언트 점수 계산 (프리뷰용, 실제 점수는 서버에서 계산) |
+| `dice.js` | 주사위 렌더링, 굴림 애니메이션 |
+| `dice-skins.js` | 스킨 잠금해제/선택/저장. `SKIN_DEFS` 배열로 관리 |
+| `history.js` | 전적 저장·조회 (로그인 유저 전용) |
+| `ui.js` | 화면 전환, 스코어카드 렌더링, 토스트, 오버레이 |
+| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키 |
+
+### Backend (`functions/`)
+| 파일 | 역할 |
+|---|---|
+| `index.js` | Cloud Functions: createRoom, joinRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, onGameFinished |
+| `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
+
+### Key Constraints
+- Cloud Functions region: `asia-northeast3` (callable), `asia-southeast1` (DB trigger)
+- Database: Firebase Realtime Database (`asia-southeast1`)
+- playerName 최대 12자 (클라이언트 + 서버 양쪽에서 검증/truncate)
+- 게스트는 Anonymous Auth로 uid 발급, classic 스킨만 사용 가능
+
+## Hosting & Deploy
+
+- **자동 배포**: `main` 브랜치 push 시 GitHub Actions가 Hosting + Functions 동시 배포
+- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL 자동 게시 (7일 후 만료)
+- **수동 배포**: `firebase deploy --only hosting` / `firebase deploy --only functions`
+- **CI/CD 워크플로우**: `.github/workflows/firebase-hosting-merge.yml`
+
+## Local Test
+
+두 가지 모드를 지원한다. `js/firebase-config.js`에서 `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결한다.
+
+| 모드 | 명령어 | 용도 | 서버 연결 |
+|---|---|---|---|
+| Emulator 전체 | `/localtest` | Functions/Auth/DB 변경 테스트 | emulator |
+| Hosting만 | `/localtest hosting` | 프론트엔드만 변경 테스트 | 프로덕션 |
+
+### Emulator 포트
+
+| 서비스 | 포트 |
+|---|---|
+| Hosting | 5002 |
+| Emulator UI | 4000 |
+| Functions | 5001 |
+| Auth | 9099 |
+| Database | 9000 |
+
+종료: `/localtest stop`
+
+## Git Branch Rules
 
 브랜치는 `main`과 `dev` 두 개만 사용한다.
 
-### 작업 흐름
+### Workflow
 
-1. **최신 상태 동기화** (세션 시작 시 또는 유저 요청 시)
-   - `main` 브랜치로 이동하여 `git pull`로 최신 상태 업데이트
-   - `dev` 브랜치로 이동하여 `main`의 내용을 merge 또는 rebase
+1. **동기화** (세션 시작 시 또는 유저 요청 시)
+   - `main`에서 `git pull` → `dev`에서 `main` merge 또는 rebase
 
 2. **로컬 작업 & 커밋**
    - 모든 작업은 `dev` 브랜치에서 수행
-   - 작업 완료 후 로컬에서 커밋 (사용자에게 별도 허락을 구하지 않는다)
+   - 작업 완료 후 커밋 (사용자에게 별도 허락을 구하지 않는다)
 
 3. **원격 동기화 & Push**
-   - 원격 `dev` 브랜치 내용을 가져와(`git fetch` + `git pull`) 충돌 여부 확인
-   - 충돌이 없으면 원격 `dev` 브랜치에 push
+   - `git fetch` + `git pull`로 원격 `dev` 확인 후 push
 
 4. **PR 생성 & Merge**
-   - `dev` 브랜치에서 테스트 완료 후 GitHub CLI(`gh`)를 통해 PR 생성 (`dev` → `main`)
-   - GitHub 충돌 체크 통과 확인
+   - `gh` CLI로 `dev` → `main` PR 생성
    - **merge는 반드시 사용자 허락을 받은 후에만 진행한다**
 
-### 금지 사항
+### Restrictions
 - **사용자 허락 없이 main에 push하지 않는다**
 - **사용자 허락 없이 PR을 merge하지 않는다**
 
@@ -63,13 +116,13 @@
 - `.skin-option.active[data-skin-id="id"]` — 라이트모드 선택 보더
 - `[data-theme="dark"] .skin-option.active[data-skin-id="id"]` — 다크모드 선택 보더
 
-### 3. 컬러 설계 원칙
+### 3. Color Design Principles
 - 라이트모드 배경(`#f0f2f5`)과 다크모드 배경(`#0f0f1a`) 각각에서 주사위가 뚜렷이 구분되어야 한다
 - 핍/텍스트 vs 주사위 배경: WCAG AA 기준 4.5:1 이상 대비
 - 다크모드에서는 메탈릭 색상 ~15-20% 밝게, 네온/글로우 계열은 강도 높이기
 - 선택 보더 색상은 스킨의 대표 색상 사용
 
-### 4. 검증
+### 4. Verification
 - 라이트모드에서 모든 스킨 외관 확인
 - 다크모드에서 모든 스킨 외관 확인
 - 라이트↔다크 실시간 전환 시 즉시 반영되는지 확인

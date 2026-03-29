@@ -75,5 +75,6 @@ skills-lock.json
 # macOS
 .DS_Store
 
-# Claude Code local settings
-.claude/
+# Claude Code local settings (commands/ 제외)
+.claude/*
+!.claude/commands/
