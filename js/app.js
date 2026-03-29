@@ -51,6 +51,9 @@
   var btnBackLogin = document.getElementById('btn-back-login');
   var btnBackLobbyWaiting = document.getElementById('btn-back-lobby-waiting');
   var btnRandomJoin = document.getElementById('btn-random-join');
+  var btnBotPlay = document.getElementById('btn-bot-play');
+  var btnBotStart = document.getElementById('btn-bot-start');
+  var btnBackLobbyBot = document.getElementById('btn-back-lobby-bot');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -266,6 +269,39 @@
     });
   });
 
+  // --- Bot Play ---
+  btnBotPlay.addEventListener('click', function () {
+    if (!playerName) playerName = Auth.getPlayerName();
+    if (!playerName) {
+      lobbyError.textContent = 'Please set a name first.';
+      lobbyError.hidden = false;
+      return;
+    }
+    lobbyError.hidden = true;
+    UI.showScreen('screen-bot-setup');
+  });
+
+  btnBotStart.addEventListener('click', function () {
+    var botModeRadios = document.querySelectorAll('input[name="bot-mode"]');
+    var gameMode = 'yahtzee';
+    for (var i = 0; i < botModeRadios.length; i++) {
+      if (botModeRadios[i].checked) gameMode = botModeRadios[i].value;
+    }
+    var diffRadios = document.querySelectorAll('input[name="bot-difficulty"]');
+    var diff = 'basic';
+    for (var i = 0; i < diffRadios.length; i++) {
+      if (diffRadios[i].checked) diff = diffRadios[i].value;
+    }
+
+    window.YachtGame._onlineGame = window.YachtGame.Game;
+    window.YachtGame.Game = window.YachtGame.BotGame;
+    window.YachtGame.Game.init(gameMode, diff, playerName);
+  });
+
+  btnBackLobbyBot.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
+  });
+
   // --- Copy Room Code ---
   btnCopyCode.addEventListener('click', function () {
     var code = displayRoomCode.textContent;
@@ -295,7 +331,7 @@
 
   // --- Rule & Leave Buttons ---
   btnRule.addEventListener('mouseenter', function () {
-    var mode = Game.getGameMode();
+    var mode = window.YachtGame.Game.getGameMode();
     if (mode) UI.showRulesOverlay(mode);
   });
 
@@ -304,8 +340,11 @@
   });
 
   btnLeave.addEventListener('click', function () {
-    if (confirm('정말 나가시겠습니까? 상대방의 승리로 처리됩니다.')) {
-      Game.leaveGame();
+    var msg = window.YachtGame._isBotGame
+      ? '봇 게임을 종료하시겠습니까? 패배로 기록됩니다.'
+      : '정말 나가시겠습니까? 상대방의 승리로 처리됩니다.';
+    if (confirm(msg)) {
+      window.YachtGame.Game.leaveGame();
     }
   });
 
@@ -376,7 +415,7 @@
 
   function sendEmoteWithCooldown(msg) {
     if (emoteCooldown) return;
-    Game.sendEmote(msg);
+    window.YachtGame.Game.sendEmote(msg);
     emotePicker.classList.add('hidden');
     emoteCooldown = true;
     setTimeout(function () { emoteCooldown = false; }, 2000);
@@ -421,7 +460,7 @@
 
   // --- Game Screen ---
   btnRoll.addEventListener('click', function () {
-    Game.rollDice();
+    window.YachtGame.Game.rollDice();
   });
 
   // Dice click handlers
@@ -430,7 +469,7 @@
     (function (index) {
       dieEls[index].addEventListener('click', function () {
         if (!this.classList.contains('disabled')) {
-          Game.toggleHold(index);
+          window.YachtGame.Game.toggleHold(index);
         }
       });
     })(i);
@@ -438,7 +477,13 @@
 
   // --- Game Over ---
   btnNewGame.addEventListener('click', function () {
-    Game.destroy();
+    window.YachtGame.Game.destroy();
+    // Restore online controller if in bot mode
+    if (window.YachtGame._onlineGame) {
+      window.YachtGame.Game = window.YachtGame._onlineGame;
+      window.YachtGame._onlineGame = null;
+    }
+    window.YachtGame._isBotGame = false;
     Lobby.clearSession();
     UI.showScreen('screen-lobby');
     lobbyError.hidden = true;
@@ -497,7 +542,7 @@
       var dieIndex = parseInt(key) - 1;
       var dieEl = dieEls[dieIndex];
       if (dieEl && !dieEl.classList.contains('disabled')) {
-        Game.toggleHold(dieIndex);
+        window.YachtGame.Game.toggleHold(dieIndex);
       }
       return;
     }
@@ -550,7 +595,7 @@
         kbFocusIndex = rollIdx;
       }
     } else {
-      var pending = Game.getPendingCategory ? Game.getPendingCategory() : null;
+      var pending = window.YachtGame.Game.getPendingCategory ? window.YachtGame.Game.getPendingCategory() : null;
       var previews = document.querySelectorAll('.score-cell.preview');
       if (pending) {
         // Pending category exists — preserve focus on that cell
@@ -585,7 +630,7 @@
 
     // Re-show pending hint if category is pending (survives DOM re-render)
     if (btnRoll.disabled) {
-      var pending = Game.getPendingCategory ? Game.getPendingCategory() : null;
+      var pending = window.YachtGame.Game.getPendingCategory ? window.YachtGame.Game.getPendingCategory() : null;
       if (pending) {
         UI.showScoreConfirmHint(pending);
       }
