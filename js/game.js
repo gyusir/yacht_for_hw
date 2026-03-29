@@ -17,6 +17,7 @@
   var lastTurn = null;
   var lastRollCount = null;
   var lastCelebrationTs = 0;
+  var celebratedBonuses = {};
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
 
@@ -174,6 +175,19 @@
         var celebKey = room.currentTurn + '_' + room.rollCount;
         if (celebKey !== lastCelebrationTs) {
           lastCelebrationTs = celebKey;
+          UI.showConfetti();
+        }
+      }
+    }
+
+    // Celebration check: Yahtzee upper bonus achieved
+    if (gameMode === 'yahtzee') {
+      var players = ['player1', 'player2'];
+      for (var pi = 0; pi < players.length; pi++) {
+        var pk = players[pi];
+        var pScores = (room.players[pk] && room.players[pk].scores) || {};
+        if (!celebratedBonuses[pk] && Scoring.upperBonus(pScores) > 0) {
+          celebratedBonuses[pk] = true;
           UI.showConfetti();
         }
       }
@@ -458,6 +472,7 @@
     emoteListener = null;
     lastSeenEmoteTs = 0;
     lastCelebrationTs = 0;
+    celebratedBonuses = {};
     // Restore player's own skin
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();

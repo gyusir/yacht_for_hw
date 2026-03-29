@@ -550,27 +550,46 @@
         kbFocusIndex = rollIdx;
       }
     } else {
-      // Roll exhausted → auto-focus on highest-score preview cell
+      var pending = Game.getPendingCategory ? Game.getPendingCategory() : null;
       var previews = document.querySelectorAll('.score-cell.preview');
-      var bestIdx = -1;
-      var bestVal = -1;
-      for (var i = 0; i < previews.length; i++) {
-        var val = parseInt(previews[i].textContent, 10) || 0;
-        if (val > bestVal) {
-          bestVal = val;
-          bestIdx = i;
+      if (pending) {
+        // Pending category exists — preserve focus on that cell
+        for (var i = 0; i < previews.length; i++) {
+          if (previews[i].dataset.category === pending) {
+            kbFocusIndex = i;
+            break;
+          }
         }
-      }
-      if (bestIdx !== -1) {
-        kbFocusIndex = bestIdx;
-      } else if (items.length > 0) {
-        kbFocusIndex = 0;
       } else {
-        kbFocusIndex = -1;
+        // Roll exhausted → auto-focus on highest-score preview cell
+        var bestIdx = -1;
+        var bestVal = -1;
+        for (var i = 0; i < previews.length; i++) {
+          var val = parseInt(previews[i].textContent, 10) || 0;
+          if (val > bestVal) {
+            bestVal = val;
+            bestIdx = i;
+          }
+        }
+        if (bestIdx !== -1) {
+          kbFocusIndex = bestIdx;
+        } else if (items.length > 0) {
+          kbFocusIndex = 0;
+        } else {
+          kbFocusIndex = -1;
+        }
       }
     }
 
     applyKbFocus(items);
+
+    // Re-show pending hint if category is pending (survives DOM re-render)
+    if (btnRoll.disabled) {
+      var pending = Game.getPendingCategory ? Game.getPendingCategory() : null;
+      if (pending) {
+        UI.showScoreConfirmHint(pending);
+      }
+    }
   };
 
   // --- Reconnection on page load ---
