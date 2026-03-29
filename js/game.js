@@ -20,11 +20,26 @@
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
 
+  // Cloud Functions references
+  var rollDiceFn = null;
+  var selectCategoryFn = null;
+  var leaveGameFn = null;
+
+  function getFunctions() {
+    if (!rollDiceFn) {
+      var fns = window.YachtGame.functions;
+      rollDiceFn = fns.httpsCallable('rollDice');
+      selectCategoryFn = fns.httpsCallable('selectCategory');
+      leaveGameFn = fns.httpsCallable('leaveGame');
+    }
+  }
+
   function init(code, playerKey) {
     roomCode = code;
     localPlayerKey = playerKey;
     opponentKey = playerKey === 'player1' ? 'player2' : 'player1';
     roomRef = window.YachtGame.db.ref('rooms/' + roomCode);
+    getFunctions();
 
     // Show game screen immediately (don't wait for first Firebase callback)
     window.YachtGame.UI.showScreen('screen-game');
@@ -80,8 +95,7 @@
         p1.scores || {}, p2.scores || {},
         gameMode, room.winner, localPlayerKey
       );
-      // Save game history for signed-in users
-      saveGameHistory(room);
+      // History is now saved by server-side trigger (onGameFinished)
       return;
     }
 
@@ -166,33 +180,33 @@
     isRolling = true;
     window.YachtGame.UI.setRollButtonEnabled(false, true);
 
-    // Generate new values for unheld dice
-    var newDice = {};
-    var diceState = [];
+    // Generate placeholder values for animation
+    var animDiceState = [];
     for (var i = 0; i < 5; i++) {
       var current = room.dice[i] || { value: 0, held: false };
       if (current.held) {
-        newDice[i] = { value: current.value, held: true };
+        animDiceState.push({ value: current.value, held: true });
       } else {
-        newDice[i] = { value: Math.ceil(Math.random() * 6), held: false };
+        animDiceState.push({ value: Math.ceil(Math.random() * 6), held: false });
       }
-      diceState.push(newDice[i]);
     }
 
-    var newRollCount = (room.rollCount || 0) + 1;
-
-    // Animate dice locally
+    // Animate dice locally with placeholder values
     var dieEls = document.querySelectorAll('.die');
-    // Safety timeout: force unlock if animation callback never fires
-    var rollSafetyTimer = setTimeout(function () { isRolling = false; }, 1000);
-    window.YachtGame.Dice.animateRoll(dieEls, diceState, function () {
+    var rollSafetyTimer = setTimeout(function () { isRolling = false; }, 3000);
+
+    window.YachtGame.Dice.animateRoll(dieEls, animDiceState, function () {
       clearTimeout(rollSafetyTimer);
+      // Animation done; actual values will come from Firebase listener
+    });
+
+    // Call Cloud Function (server generates real dice values)
+    rollDiceFn({ roomCode: roomCode }).then(function () {
       isRolling = false;
-      // Write to Firebase after animation
-      var updates = {};
-      updates['dice'] = newDice;
-      updates['rollCount'] = newRollCount;
-      roomRef.update(updates);
+    }).catch(function (error) {
+      isRolling = false;
+      console.error('rollDice error:', error);
+      window.YachtGame.UI.showToast('Roll failed: ' + (error.message || 'Unknown error'));
     });
   }
 
@@ -203,7 +217,21 @@
     if ((room.rollCount || 0) < 1) return; // Can't hold before first roll
 
     var current = room.dice[index] || { value: 0, held: false };
-    roomRef.child('dice/' + index + '/held').set(!current.held);
+    var newHeld = !current.held;
+
+    // Write to heldDice path (client-writable via Security Rules)
+    var heldRef = window.YachtGame.db.ref('rooms/' + roomCode + '/heldDice/' + index);
+    heldRef.set(newHeld);
+
+    // Immediate local UI feedback: update lastRoomData and re-render
+    if (lastRoomData.dice && lastRoomData.dice[index]) {
+      lastRoomData.dice[index].held = newHeld;
+    }
+    var diceState = [];
+    for (var i = 0; i < 5; i++) {
+      diceState.push(lastRoomData.dice[i] || { value: 0, held: false });
+    }
+    window.YachtGame.Dice.renderAll(diceState);
   }
 
   function confirmCategory(category) {
@@ -225,111 +253,23 @@
     if (!lastRoomData) return;
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
-    if ((room.rollCount || 0) < 1) return; // Must roll at least once
+    if ((room.rollCount || 0) < 1) return;
 
     var myScores = room.players[localPlayerKey].scores || {};
-    if (myScores[category] !== null && myScores[category] !== undefined) return; // Already filled
-
-    var Scoring = window.YachtGame.Scoring;
-    var diceValues = [];
-    for (var i = 0; i < 5; i++) {
-      var d = room.dice[i];
-      var v = (d && d.value) || 0;
-      if (v < 1 || v > 6) return; // invalid dice, abort
-      diceValues.push(v);
-    }
-
-    var score = Scoring.calculate(diceValues, category, gameMode);
-
-    // Yacht/Yahtzee celebration
-    var isYacht = (category === 'yacht' || category === 'yahtzee') && score === 50;
-
-    // Check for Yahtzee bonus
-    var updates = {};
-    updates['players/' + localPlayerKey + '/scores/' + category] = score;
-    updates['players/' + localPlayerKey + '/lastCategory'] = category;
-    if (isYacht) {
-      updates['celebration'] = { player: localPlayerKey, ts: firebase.database.ServerValue.TIMESTAMP };
-    }
-
-    if (gameMode === 'yahtzee') {
-      var hasYahtzee = true;
-      for (var i = 1; i < diceValues.length; i++) {
-        if (diceValues[i] !== diceValues[0]) { hasYahtzee = false; break; }
-      }
-      var existingYahtzeeScore = myScores.yahtzee;
-      if (hasYahtzee && existingYahtzeeScore === 50 && category !== 'yahtzee') {
-        var currentBonus = myScores.yahtzeeBonus || 0;
-        updates['players/' + localPlayerKey + '/scores/yahtzeeBonus'] = currentBonus + 100;
-        window.YachtGame.UI.showToast('Yahtzee Bonus! +100');
-      }
-    }
-
-    // Switch turn and reset dice
-    updates['lastActivityAt'] = firebase.database.ServerValue.TIMESTAMP;
-    updates['currentTurn'] = opponentKey;
-    updates['rollCount'] = 0;
-    for (var i = 0; i < 5; i++) {
-      updates['dice/' + i + '/held'] = false;
-      updates['dice/' + i + '/value'] = 0;
-    }
-
-    // Check if game is over after this move
-    var updatedScores = Object.assign({}, myScores);
-    updatedScores[category] = score;
-
-    var oppScores = room.players[opponentKey].scores || {};
-    var myAllFilled = Scoring.allFilled(updatedScores, gameMode);
-    var oppAllFilled = Scoring.allFilled(oppScores, gameMode);
-
-    if (myAllFilled && oppAllFilled) {
-      // Game over
-      var myTotal = Scoring.totalScore(updatedScores, gameMode, updatedScores.yahtzeeBonus);
-      var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
-
-      if (myTotal > oppTotal) {
-        updates['winner'] = localPlayerKey;
-      } else if (oppTotal > myTotal) {
-        updates['winner'] = opponentKey;
-      } else {
-        updates['winner'] = 'tie';
-      }
-      updates['status'] = 'finished';
-    }
+    if (myScores[category] !== null && myScores[category] !== undefined) return;
 
     isWriting = true;
-    roomRef.update(updates, function () {
+
+    // Call Cloud Function — server calculates score and updates game state
+    selectCategoryFn({ roomCode: roomCode, category: category }).then(function (result) {
       isWriting = false;
-    });
-  }
-
-  var historySaved = false;
-  function saveGameHistory(room) {
-    if (historySaved) return;
-    var Auth = window.YachtGame.Auth;
-    if (!Auth || !Auth.isSignedIn()) return;
-    historySaved = true;
-
-    var Scoring = window.YachtGame.Scoring;
-    var myData = room.players[localPlayerKey];
-    var oppData = room.players[opponentKey];
-    var myScores = myData.scores || {};
-    var oppScores = oppData.scores || {};
-    var myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
-    var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
-
-    var result;
-    if (room.winner === localPlayerKey) result = 'win';
-    else if (room.winner === 'tie') result = 'tie';
-    else result = 'loss';
-
-    window.YachtGame.History.saveResult(Auth.getPlayerUid(), {
-      mode: gameMode,
-      opponentName: oppData.name,
-      myScore: myTotal,
-      oppScore: oppTotal,
-      result: result,
-      roomCode: roomCode
+      if (result.data && result.data.yahtzeeBonus) {
+        window.YachtGame.UI.showToast('Yahtzee Bonus! +100');
+      }
+    }).catch(function (error) {
+      isWriting = false;
+      console.error('selectCategory error:', error);
+      window.YachtGame.UI.showToast('Failed: ' + (error.message || 'Unknown error'));
     });
   }
 
@@ -347,7 +287,10 @@
 
   function leaveGame() {
     if (roomRef && lastRoomData && lastRoomData.status === 'playing') {
-      roomRef.update({ status: 'finished', winner: opponentKey });
+      // Call Cloud Function for safe forfeit
+      leaveGameFn({ roomCode: roomCode }).catch(function (error) {
+        console.error('leaveGame error:', error);
+      });
     }
     destroy();
     window.YachtGame.Lobby.clearSession();
@@ -365,14 +308,7 @@
     if (roomRef && emoteListener) {
       roomRef.child('emotes/' + opponentKey).off('value', emoteListener);
     }
-    // Schedule delayed cleanup for finished games
-    var codeToClean = roomCode;
-    var statusToCheck = lastRoomData && lastRoomData.status;
-    if (codeToClean && statusToCheck === 'finished') {
-      setTimeout(function () {
-        window.YachtGame.db.ref('rooms/' + codeToClean).remove();
-      }, 30000);
-    }
+    // Room cleanup is now handled by the server-side onGameFinished trigger
     roomRef = null;
     roomCode = null;
     localPlayerKey = null;
@@ -387,7 +323,6 @@
     emoteListener = null;
     lastSeenEmoteTs = 0;
     lastCelebrationTs = 0;
-    historySaved = false;
     // Restore player's own skin
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();

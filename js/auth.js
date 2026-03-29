@@ -59,23 +59,34 @@
     });
   }
 
-  function setGuest(name) {
-    isGuest = true;
+  function setGuest(name, callback) {
     guestName = name;
-    currentUser = null;
+    // Use Anonymous Auth so guests get a uid for Security Rules
+    window.YachtGame.auth.signInAnonymously().then(function (result) {
+      currentUser = result.user;
+      isGuest = true;
+      if (callback) callback(null);
+    }).catch(function (error) {
+      // Fallback: proceed without auth (limited functionality)
+      console.error('Anonymous auth failed:', error);
+      isGuest = true;
+      currentUser = null;
+      if (callback) callback(error);
+    });
   }
 
   function onAuthStateChanged(callback) {
     window.YachtGame.auth.onAuthStateChanged(function (user) {
       currentUser = user;
-      if (user) isGuest = false;
+      if (user && !user.isAnonymous) isGuest = false;
       callback(user);
     });
   }
 
   function getPlayerName() {
+    if (isGuest && guestName) return guestName;
+    if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
     if (currentUser) return currentUser.displayName || 'Player';
-    if (isGuest) return guestName;
     return 'Guest';
   }
 
@@ -85,11 +96,11 @@
   }
 
   function isSignedIn() {
-    return !!currentUser;
+    return !!currentUser && !currentUser.isAnonymous;
   }
 
   function isGuestMode() {
-    return isGuest;
+    return isGuest || (currentUser && currentUser.isAnonymous);
   }
 
   function getPhotoURL() {

@@ -103,8 +103,11 @@
 
   // Listen for auth state changes
   Auth.onAuthStateChanged(function (user) {
+    // Skip UI changes for anonymous (guest) auth users
+    if (user && user.isAnonymous) return;
+
     showLoginScreen(user);
-    // Show My Stats button in lobby if signed in
+    // Show My Stats button in lobby if signed in (non-anonymous)
     if (btnMyStats) {
       btnMyStats.hidden = !user;
     }
@@ -158,10 +161,13 @@
   btnGuest.addEventListener('click', function () {
     playerName = nameInput.value.trim();
     if (!playerName) return;
-    Auth.setGuest(playerName);
-    DiceSkins.applySkin('classic');
-    UI.showScreen('screen-lobby');
-    Lobby.cleanupStaleRooms();
+    btnGuest.disabled = true;
+    Auth.setGuest(playerName, function () {
+      btnGuest.disabled = false;
+      DiceSkins.applySkin('classic');
+      UI.showScreen('screen-lobby');
+      Lobby.cleanupStaleRooms();
+    });
   });
 
   // --- Lobby Screen ---

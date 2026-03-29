@@ -9,6 +9,22 @@
   var presenceCallback = null;
   var lastCleanupTime = 0;
 
+  // Cloud Functions references
+  var createRoomFn = null;
+  var joinRoomFn = null;
+  var updateGameModeFn = null;
+  var cancelRoomFn = null;
+
+  function getFunctions() {
+    if (!createRoomFn) {
+      var fns = window.YachtGame.functions;
+      createRoomFn = fns.httpsCallable('createRoom');
+      joinRoomFn = fns.httpsCallable('joinRoom');
+      updateGameModeFn = fns.httpsCallable('updateGameMode');
+      cancelRoomFn = fns.httpsCallable('cancelRoom');
+    }
+  }
+
   var STALE_MS = {
     finished: 5 * 60 * 1000,
     waitingDisconnected: 2 * 60 * 1000,
@@ -21,150 +37,73 @@
     return db;
   }
 
-  function generateRoomCode() {
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1 to avoid confusion
-    var code = '';
-    for (var i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-  }
-
-  function generateUid() {
-    if (window.crypto && window.crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    // Fallback
-    return 'uid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-  }
-
   function getOrCreateUid() {
-    // Use Firebase Auth uid if signed in
     var Auth = window.YachtGame.Auth;
-    if (Auth && Auth.isSignedIn()) {
+    if (Auth) {
       var firebaseUid = Auth.getPlayerUid();
-      sessionStorage.setItem('yacht-uid', firebaseUid);
-      return firebaseUid;
+      if (firebaseUid) {
+        sessionStorage.setItem('yacht-uid', firebaseUid);
+        return firebaseUid;
+      }
     }
-    // Guest fallback
+    // Guest fallback (should not happen with Anonymous Auth)
     var uid = sessionStorage.getItem('yacht-uid');
     if (!uid) {
-      uid = generateUid();
+      uid = 'uid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
       sessionStorage.setItem('yacht-uid', uid);
     }
     return uid;
   }
 
-  function createRoom(playerName, gameMode, callback, _retries) {
-    _retries = _retries || 0;
-    if (_retries >= 3) {
-      callback({ error: 'Failed to create room. Please try again.' });
-      return;
-    }
+  function createRoom(playerName, gameMode, callback) {
+    getFunctions();
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
-    var database = getDb();
-    var code = generateRoomCode();
-    var roomRef = database.ref('rooms/' + code);
+    createRoomFn({
+      playerName: playerName,
+      gameMode: gameMode,
+      diceSkin: diceSkin
+    }).then(function (result) {
+      var data = result.data;
+      var code = data.roomCode;
+      var playerKey = data.playerKey;
 
-    // Check if room exists
-    roomRef.once('value', function (snapshot) {
-      if (snapshot.exists()) {
-        // Rare collision, retry with limit
-        createRoom(playerName, gameMode, callback, _retries + 1);
-        return;
-      }
-
+      // Set up presence
       var uid = getOrCreateUid();
-      var roomData = {
-        gameMode: gameMode,
-        status: 'waiting',
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        lastActivityAt: firebase.database.ServerValue.TIMESTAMP,
-        currentTurn: 'player1',
-        rollCount: 0,
-        dice: {
-          0: { value: 0, held: false },
-          1: { value: 0, held: false },
-          2: { value: 0, held: false },
-          3: { value: 0, held: false },
-          4: { value: 0, held: false }
-        },
-        players: {
-          player1: {
-            name: playerName,
-            uid: uid,
-            connected: true,
-            scores: buildEmptyScores(gameMode),
-            diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
-          }
-        },
-        winner: ''
-      };
+      setupPresence(code, playerKey, uid);
 
-      roomRef.set(roomData, function (error) {
-        if (error) {
-          callback({ error: 'Failed to create room.' });
-          return;
-        }
+      // Save session info
+      sessionStorage.setItem('yacht-room', code);
+      sessionStorage.setItem('yacht-player', playerKey);
 
-        // Set up presence
-        setupPresence(code, 'player1', uid);
-
-        // Save session info
-        sessionStorage.setItem('yacht-room', code);
-        sessionStorage.setItem('yacht-player', 'player1');
-
-        callback({ roomCode: code, playerKey: 'player1' });
-      });
+      callback({ roomCode: code, playerKey: playerKey });
+    }).catch(function (error) {
+      callback({ error: error.message || 'Failed to create room.' });
     });
   }
 
   function joinRoom(playerName, roomCode, callback) {
-    var database = getDb();
+    getFunctions();
     roomCode = roomCode.toUpperCase().trim();
-    var roomRef = database.ref('rooms/' + roomCode);
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
-    roomRef.once('value', function (snapshot) {
-      if (!snapshot.exists()) {
-        callback({ error: 'Room not found.' });
-        return;
-      }
-
-      var room = snapshot.val();
-
-      if (room.status !== 'waiting') {
-        callback({ error: 'Room is already in a game.' });
-        return;
-      }
-
-      if (room.players && room.players.player2) {
-        callback({ error: 'Room is full.' });
-        return;
-      }
+    joinRoomFn({
+      roomCode: roomCode,
+      playerName: playerName,
+      diceSkin: diceSkin
+    }).then(function (result) {
+      var data = result.data;
+      var code = data.roomCode;
+      var playerKey = data.playerKey;
 
       var uid = getOrCreateUid();
-      var updates = {};
-      updates['players/player2'] = {
-        name: playerName,
-        uid: uid,
-        connected: true,
-        scores: buildEmptyScores(room.gameMode),
-        diceSkin: (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic'
-      };
-      updates['status'] = 'playing';
-      updates['lastActivityAt'] = firebase.database.ServerValue.TIMESTAMP;
+      setupPresence(code, playerKey, uid);
+      sessionStorage.setItem('yacht-room', code);
+      sessionStorage.setItem('yacht-player', playerKey);
 
-      roomRef.update(updates, function (error) {
-        if (error) {
-          callback({ error: 'Failed to join room.' });
-          return;
-        }
-
-        setupPresence(roomCode, 'player2', uid);
-        sessionStorage.setItem('yacht-room', roomCode);
-        sessionStorage.setItem('yacht-player', 'player2');
-        callback({ roomCode: roomCode, playerKey: 'player2', gameMode: room.gameMode });
-      });
+      callback({ roomCode: code, playerKey: playerKey, gameMode: data.gameMode });
+    }).catch(function (error) {
+      callback({ error: error.message || 'Failed to join room.' });
     });
   }
 
@@ -205,17 +144,17 @@
   }
 
   function tryReconnect(callback) {
-    var roomCode = sessionStorage.getItem('yacht-room');
+    var savedRoomCode = sessionStorage.getItem('yacht-room');
     var playerKey = sessionStorage.getItem('yacht-player');
     var uid = sessionStorage.getItem('yacht-uid');
 
-    if (!roomCode || !playerKey || !uid) {
+    if (!savedRoomCode || !playerKey || !uid) {
       callback(null);
       return;
     }
 
     var database = getDb();
-    var roomRef = database.ref('rooms/' + roomCode);
+    var roomRef = database.ref('rooms/' + savedRoomCode);
 
     roomRef.once('value', function (snapshot) {
       if (!snapshot.exists()) {
@@ -240,12 +179,12 @@
       }
 
       // Reconnect: set connected flag
-      var connRef = database.ref('rooms/' + roomCode + '/players/' + playerKey + '/connected');
+      var connRef = database.ref('rooms/' + savedRoomCode + '/players/' + playerKey + '/connected');
       connRef.set(true);
-      setupPresence(roomCode, playerKey, uid);
+      setupPresence(savedRoomCode, playerKey, uid);
 
       callback({
-        roomCode: roomCode,
+        roomCode: savedRoomCode,
         playerKey: playerKey,
         gameMode: room.gameMode,
         status: room.status
@@ -260,8 +199,6 @@
   }
 
   function buildEmptyScores(gameMode) {
-    // Note: Firebase strips null values, so unfilled categories simply won't exist.
-    // We use an _init flag to ensure the scores object itself persists in Firebase.
     var scores = { _init: true };
     if (gameMode === 'yahtzee') {
       scores.yahtzeeBonus = 0;
@@ -270,104 +207,58 @@
   }
 
   function updateGameMode(roomCode, gameMode) {
-    var database = getDb();
-    database.ref('rooms/' + roomCode + '/gameMode').set(gameMode);
+    getFunctions();
+    updateGameModeFn({ roomCode: roomCode, gameMode: gameMode }).catch(function (error) {
+      console.error('updateGameMode error:', error);
+    });
   }
 
   function cancelRoom(roomCode) {
     if (!roomCode) return;
+    getFunctions();
+
+    // Stop listening
     var database = getDb();
-    // Remove the room and stop listening
     database.ref('rooms/' + roomCode + '/players/player2').off();
-    database.ref('rooms/' + roomCode).remove();
+
+    cancelRoomFn({ roomCode: roomCode }).catch(function (error) {
+      console.error('cancelRoom error:', error);
+    });
+
     cleanupPresence();
     clearSession();
   }
 
   function findRandomRoom(playerName, callback) {
-    var database = getDb();
-    var roomsRef = database.ref('rooms');
+    getFunctions();
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
-    roomsRef.orderByChild('status').equalTo('waiting')
-      .once('value', function (snapshot) {
-        if (!snapshot.exists()) {
-          callback({ error: 'No rooms available. Create one!' });
-          return;
-        }
+    joinRoomFn({
+      random: true,
+      playerName: playerName,
+      diceSkin: diceSkin
+    }).then(function (result) {
+      var data = result.data;
+      var code = data.roomCode;
+      var playerKey = data.playerKey;
 
-        var uid = getOrCreateUid();
-        var now = Date.now();
-        var available = [];
-        snapshot.forEach(function (child) {
-          var room = child.val();
-          if (!room.players || !room.players.player2) {
-            if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
-            if (room.players && room.players.player1 && room.players.player1.connected === false) return;
-            if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
-            available.push(child.key);
-          }
-        });
+      var uid = getOrCreateUid();
+      setupPresence(code, playerKey, uid);
+      sessionStorage.setItem('yacht-room', code);
+      sessionStorage.setItem('yacht-player', playerKey);
 
-        if (available.length === 0) {
-          callback({ error: 'No rooms available. Create one!' });
-          return;
-        }
-
-        var randomCode = available[Math.floor(Math.random() * available.length)];
-        joinRoom(playerName, randomCode, callback);
-      });
+      callback({ roomCode: code, playerKey: playerKey, gameMode: data.gameMode });
+    }).catch(function (error) {
+      callback({ error: error.message || 'No rooms available. Create one!' });
+    });
   }
 
   function cleanupStaleRooms() {
-    var now = Date.now();
-    if (now - lastCleanupTime < 60000) return;
-    lastCleanupTime = now;
-
-    var database = getDb();
-    var cutoff = now - STALE_MS.finished;
-
-    database.ref('rooms').orderByChild('createdAt').endAt(cutoff)
-      .once('value', function (snapshot) {
-        if (!snapshot.exists()) return;
-
-        var deletes = {};
-        snapshot.forEach(function (child) {
-          var room = child.val();
-          var activityAge = now - (room.lastActivityAt || room.createdAt || 0);
-          var age = now - (room.createdAt || 0);
-          var shouldDelete = false;
-
-          if (room.status === 'finished') {
-            if (activityAge > STALE_MS.finished) shouldDelete = true;
-          } else if (room.status === 'waiting') {
-            var p1 = room.players && room.players.player1;
-            if (p1 && p1.connected === false && age > STALE_MS.waitingDisconnected) {
-              shouldDelete = true;
-            } else if (age > STALE_MS.waitingStale) {
-              shouldDelete = true;
-            }
-          } else if (room.status === 'playing') {
-            var p1 = room.players && room.players.player1;
-            var p2 = room.players && room.players.player2;
-            var bothOff = (p1 && p1.connected === false) && (p2 && p2.connected === false);
-            if (bothOff && activityAge > STALE_MS.playingAbandoned) {
-              shouldDelete = true;
-            }
-          }
-
-          if (shouldDelete) {
-            deletes['rooms/' + child.key] = null;
-          }
-        });
-
-        if (Object.keys(deletes).length > 0) {
-          database.ref().update(deletes);
-        }
-      });
+    // Room cleanup is now handled by server-side onGameFinished trigger
+    // This function is kept as a no-op for backward compatibility
   }
 
   window.YachtGame.Lobby = {
-    generateRoomCode: generateRoomCode,
     getOrCreateUid: getOrCreateUid,
     createRoom: createRoom,
     joinRoom: joinRoom,

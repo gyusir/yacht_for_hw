@@ -24,3 +24,4 @@ firebase.initializeApp(firebaseConfig);
 window.YachtGame.db = firebase.database();
 window.YachtGame.auth = firebase.auth();
 window.YachtGame.googleProvider = new firebase.auth.GoogleAuthProvider();
+window.YachtGame.functions = firebase.app().functions('asia-northeast3');
