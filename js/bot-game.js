@@ -144,14 +144,10 @@
     // Ensure game screen
     UI.showScreen('screen-game', roomData.gameMode);
 
-    // Dice skin
+    // Dice skin: always show current turn player's skin
     if (DiceSkins) {
-      if (roomData.rollCount > 0) {
-        var turnPlayer = roomData.currentTurn === 'player1' ? myData : oppData;
-        DiceSkins.applySkin((turnPlayer && turnPlayer.diceSkin) || 'classic');
-      } else {
-        DiceSkins.applySkin('classic');
-      }
+      var turnPlayer = roomData.currentTurn === 'player1' ? myData : oppData;
+      DiceSkins.applySkin((turnPlayer && turnPlayer.diceSkin) || 'classic');
     }
 
     UI.updateTurnIndicator(isMyTurn, oppData.name || 'Bot');
@@ -443,8 +439,9 @@
     var Dice = window.YachtGame.Dice;
     var DiceSkins = window.YachtGame.DiceSkins;
 
-    // Apply classic skin for bot
-    if (DiceSkins) DiceSkins.applySkin('classic');
+    // Apply bot's skin
+    var botData = roomData.players.player2;
+    if (DiceSkins) DiceSkins.applySkin((botData && botData.diceSkin) || 'classic');
 
     // Determine held dice
     var hd = roomData.heldDice || {};
@@ -661,7 +658,7 @@
           uid: 'bot',
           connected: true,
           scores: buildEmptyScores(gameMode),
-          diceSkin: 'classic',
+          diceSkin: diff === 'gambler' ? 'carbon' : 'circuit',
           lastCategory: null
         }
       },

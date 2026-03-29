@@ -99,8 +99,9 @@
     var uid = Auth.getPlayerUid();
     History.loadStats(uid, function (stats) {
       var totalGames = (stats && stats.totalGames) || 0;
+      var botWins = (stats && stats.botWins) || {};
       if (skinSelector) skinSelector.hidden = false;
-      DiceSkins.renderSkinSelector(skinOptions, totalGames);
+      DiceSkins.renderSkinSelector(skinOptions, totalGames, botWins);
     });
   }
 

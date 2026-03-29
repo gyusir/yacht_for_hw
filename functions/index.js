@@ -489,7 +489,33 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Invalid result.");
   }
 
+  // Score-result consistency check
+  if (result === "win" && myScore <= oppScore) {
+    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
+  }
+  if (result === "loss" && myScore >= oppScore) {
+    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
+  }
+  if (result === "tie" && myScore !== oppScore) {
+    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
+  }
+
+  // Score range validation
+  const maxScore = gameMode === "yacht" ? 305 : 1575;
+  if (myScore < 0 || myScore > maxScore || oppScore < 0 || oppScore > maxScore) {
+    throw new functions.https.HttpsError("invalid-argument", "Score out of range.");
+  }
+
   const userRef = db.ref("users/" + uid);
+
+  // Rate limiting: min 30s between bot game saves
+  const lastGameSnap = await userRef.child("lastBotGame").once("value");
+  const lastGame = lastGameSnap.val() || 0;
+  if (Date.now() - lastGame < 30000) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
+  }
+  await userRef.child("lastBotGame").set(ServerValue.TIMESTAMP);
+
   const profileSnap = await userRef.child("displayName").once("value");
   if (!profileSnap.exists()) return { success: false };
 
@@ -508,7 +534,11 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
   await userRef.child("stats").transaction((stats) => {
     if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
     stats.totalGames = (stats.totalGames || 0) + 1;
-    if (result === "win") stats.wins = (stats.wins || 0) + 1;
+    if (result === "win") {
+      stats.wins = (stats.wins || 0) + 1;
+      if (!stats.botWins) stats.botWins = {};
+      stats.botWins[botDifficulty] = (stats.botWins[botDifficulty] || 0) + 1;
+    }
     else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
     else stats.ties = (stats.ties || 0) + 1;
     return stats;
