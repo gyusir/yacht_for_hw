@@ -86,7 +86,10 @@
   function getPlayerName() {
     if (isGuest && guestName) return guestName;
     if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
-    if (currentUser) return currentUser.displayName || 'Player';
+    if (currentUser) {
+      var name = currentUser.displayName || 'Player';
+      return name.length > 12 ? name.substring(0, 12) : name;
+    }
     return 'Guest';
   }
 

@@ -54,13 +54,17 @@ const regionFn = functions.region("asia-northeast3");
 
 exports.createRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
-  const { gameMode, playerName, diceSkin } = data;
+  const { gameMode, diceSkin } = data;
+  let playerName = data.playerName;
 
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
   }
-  if (!playerName || typeof playerName !== "string" || playerName.length > 12) {
+  if (!playerName || typeof playerName !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
+  }
+  if (playerName.length > 12) {
+    playerName = playerName.substring(0, 12);
   }
 
   let code, exists;
@@ -108,10 +112,14 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
 
 exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
-  const { roomCode, playerName, diceSkin, random } = data;
+  const { roomCode, diceSkin, random } = data;
+  let playerName = data.playerName;
 
-  if (!playerName || typeof playerName !== "string" || playerName.length > 12) {
+  if (!playerName || typeof playerName !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
+  }
+  if (playerName.length > 12) {
+    playerName = playerName.substring(0, 12);
   }
 
   let targetCode = roomCode;
