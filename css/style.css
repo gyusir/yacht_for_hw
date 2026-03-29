@@ -83,7 +83,7 @@ header h1 {
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .game-only {
@@ -649,7 +649,6 @@ input[type="text"]::placeholder {
 
 .die.disabled {
   cursor: default;
-  opacity: 0.7;
 }
 
 .die.rolling {
@@ -1328,6 +1327,10 @@ input[type="text"]::placeholder {
   background: var(--surface-hover);
 }
 
+.scorecard .bonus-row .category-name {
+  font-style: italic;
+}
+
 .scorecard .total-row td {
   font-weight: 700;
   font-size: 0.95rem;
@@ -1578,6 +1581,8 @@ input[type="text"]::placeholder {
   width: 14px;
   height: 14px;
   position: relative;
+  top: -2px;
+  vertical-align: middle;
   transform-style: preserve-3d;
   margin-right: 6px;
 }

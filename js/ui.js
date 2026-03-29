@@ -311,6 +311,7 @@
       bubble.style.left = (rect.left + rect.width / 2) + 'px';
       bubble.style.top = (rect.top + window.scrollY + rect.height / 2) + 'px';
       bubble.style.transform = 'translate(-50%, -50%)';
+      bubble.style.minWidth = rect.width + 'px';
     }
 
     bubble.style.animation = 'none';
