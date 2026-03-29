@@ -674,6 +674,14 @@
 
     window.YachtGame._isBotGame = true;
 
+    // Load DP table for bot AI (non-blocking — game starts immediately)
+    var BotAI = window.YachtGame.BotAI;
+    if (BotAI && BotAI.loadDPTable && !BotAI.isReady(gameMode)) {
+      BotAI.loadDPTable(gameMode, function (ok) {
+        if (ok) console.log('[BotGame] DP table ready for', gameMode);
+      });
+    }
+
     onStateUpdate();
     resetIdleTimer();
   }

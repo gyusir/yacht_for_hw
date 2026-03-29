@@ -20,9 +20,18 @@
 | `scoring.js` | 클라이언트 점수 계산 (프리뷰용, 실제 점수는 서버에서 계산) |
 | `dice.js` | 주사위 렌더링, 굴림 애니메이션 |
 | `dice-skins.js` | 스킨 잠금해제/선택/저장. `SKIN_DEFS` 배열로 관리 |
+| `bot-ai.js` | Bot AI 의사결정. DP 룩업 테이블 기반 최적 전략 (Gambler=최적, Basic=±1 노이즈) |
+| `bot-game.js` | Bot 대전 컨트롤러. 로컬 게임 상태, 턴 흐름, 애니메이션, 이모트 |
 | `history.js` | 전적 저장·조회 (로그인 유저 전용) |
 | `ui.js` | 화면 전환, 스코어카드 렌더링, 토스트, 오버레이 |
 | `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키 |
+
+### Bot AI (`data/`, `tools/`)
+| 파일 | 역할 |
+|---|---|
+| `data/dp_yacht.json` | Yacht 모드 DP 룩업 테이블 (4,096 상태, 36KB) |
+| `data/dp_yahtzee.json` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, 11MB) |
+| `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
 
 ### Backend (`functions/`)
 | 파일 | 역할 |
@@ -111,6 +120,43 @@
 - **SPA rewrite**: `"source": "**"` rewrite를 사용하므로 `**/*.html` 패턴은 매칭되지 않는다. CSP는 반드시 `"source": "**"` 블록에 배치한다.
 - **배포 전 테스트**: CSP 변경 시 반드시 `/localtest hosting`으로 로컬에서 먼저 확인한다. 프로덕션 배포 후 CSP 오류가 발생하면 사이트 전체가 작동 불능이 된다.
 - **새 Firebase 서비스 추가 시**: 해당 서비스가 사용하는 도메인을 CSP에 추가해야 한다.
+
+## Bot AI Architecture
+
+### DP 룩업 테이블 (`data/`)
+
+Expectimax 알고리즘으로 모든 게임 상태의 최적 기대값(EV)을 사전 계산한 테이블. `tools/generate_dp.py`로 생성한다.
+
+- **Yacht**: `dp[mask]` — 4,096 상태 (Float64Array, 36KB)
+- **Yahtzee**: `dp[mask * 128 + upper * 2 + yzFlag]` — 1,048,576 상태 (Float64Array → base64, 11MB)
+  - `mask`: 비어있는 카테고리 비트마스크 (bit i=1이면 카테고리 i 미사용)
+  - `upper`: 상단 섹션 합계 (0~63으로 클램핑)
+  - `yzFlag`: Yahtzee를 50점으로 채웠는지 여부 (0 또는 1)
+
+### 브라우저 의사결정 (`js/bot-ai.js`)
+
+봇 턴마다 Phase 배열을 계산하여 최적 행동을 결정한다:
+
+1. **Phase 0** (`val0[252]`): 각 주사위 조합에서 카테고리 선택 시 최대 EV
+2. **Phase 1** (`val1[252]`): 1회 리롤 기회가 있을 때 최적 홀드 선택의 EV
+
+결정 로직:
+- `shouldReroll`: `val1[현재주사위] > val0[현재주사위]`이면 리롤
+- `chooseHolds`: 32개 홀드 마스크 중 EV 최대인 것 선택 (rollsLeft=2이면 val1 참조, rollsLeft=1이면 val0 참조)
+- `chooseCategory`: 사용 가능 카테고리 중 `score + dp[nextState]` 최대인 것 선택
+
+### 난이도 차이
+- **Gambler**: noise=0 (완벽한 최적 플레이)
+- **Basic**: noise=±1 (`BASIC_NOISE` 상수, `bot-ai.js` 상단에서 조절 가능)
+
+### DP 테이블 재생성
+
+점수 규칙(`scoring.js`)이 변경되면 DP 테이블을 재생성해야 한다:
+```bash
+python3 tools/generate_dp.py yacht    # ~2초
+python3 tools/generate_dp.py yahtzee  # ~65초 (10코어)
+```
+의존성: `pip install numpy numba`
 
 ## Dice Skin Addition Checklist
 
