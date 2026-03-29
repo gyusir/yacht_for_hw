@@ -131,10 +131,12 @@
     // Update roll counter
     UI.updateRollCounter(room.rollCount || 0);
 
-    // Render dice
+    // Render dice (merge heldDice state for accurate hold display)
     var diceState = [];
+    var heldData = room.heldDice || {};
     for (var i = 0; i < 5; i++) {
-      diceState.push(room.dice[i] || { value: 0, held: false });
+      var d = room.dice[i] || { value: 0, held: false };
+      diceState.push({ value: d.value, held: d.held || heldData[i] === true });
     }
 
     if (!isRolling) {
@@ -180,30 +182,101 @@
     isRolling = true;
     window.YachtGame.UI.setRollButtonEnabled(false, true);
 
-    // Generate placeholder values for animation
-    var animDiceState = [];
+    // Determine which dice are held (for animation: skip held dice)
+    var heldData = room.heldDice || {};
+    var heldFlags = [];
     for (var i = 0; i < 5; i++) {
-      var current = room.dice[i] || { value: 0, held: false };
-      if (current.held) {
-        animDiceState.push({ value: current.value, held: true });
-      } else {
-        animDiceState.push({ value: Math.ceil(Math.random() * 6), held: false });
-      }
+      var d = room.dice[i] || { value: 0, held: false };
+      heldFlags.push(d.held || heldData[i] === true);
     }
 
-    // Animate dice locally with placeholder values
+    // Start spinning animation on unheld dice (no final value yet)
     var dieEls = document.querySelectorAll('.die');
-    var rollSafetyTimer = setTimeout(function () { isRolling = false; }, 3000);
+    var spinTimers = [];
+    for (var i = 0; i < 5; i++) {
+      if (heldFlags[i]) continue;
+      (function (idx) {
+        var el = dieEls[idx];
+        el.classList.add('rolling');
+        var timer = setInterval(function () {
+          window.YachtGame.Dice.renderDie(el, Math.ceil(Math.random() * 6));
+        }, 50);
+        spinTimers.push({ idx: idx, timer: timer });
+      })(i);
+    }
 
-    window.YachtGame.Dice.animateRoll(dieEls, animDiceState, function () {
-      clearTimeout(rollSafetyTimer);
-      // Animation done; actual values will come from Firebase listener
-    });
-
-    // Call Cloud Function (server generates real dice values)
-    rollDiceFn({ roomCode: roomCode }).then(function () {
+    var rollSafetyTimer = setTimeout(function () {
+      // Safety: stop spinning and render from lastRoomData
+      for (var s = 0; s < spinTimers.length; s++) {
+        clearInterval(spinTimers[s].timer);
+        dieEls[spinTimers[s].idx].classList.remove('rolling');
+      }
       isRolling = false;
+      if (lastRoomData && lastRoomData.dice) {
+        var ds = [];
+        var hd = lastRoomData.heldDice || {};
+        for (var j = 0; j < 5; j++) {
+          var dd = lastRoomData.dice[j] || { value: 0, held: false };
+          ds.push({ value: dd.value, held: dd.held || hd[j] === true });
+        }
+        window.YachtGame.Dice.renderAll(ds);
+      }
+    }, 5000);
+
+    // Call Cloud Function — when it responds, stop spinning and show real values
+    rollDiceFn({ roomCode: roomCode }).then(function (result) {
+      clearTimeout(rollSafetyTimer);
+      var serverDice = result.data.dice;
+
+      // Stop spinning and render server's actual values
+      for (var s = 0; s < spinTimers.length; s++) {
+        clearInterval(spinTimers[s].timer);
+        dieEls[spinTimers[s].idx].classList.remove('rolling');
+      }
+
+      // Render all dice with server values
+      var finalState = [];
+      for (var j = 0; j < 5; j++) {
+        var sd = serverDice[j] || { value: 0, held: false };
+        finalState.push({ value: sd.value, held: sd.held });
+      }
+      window.YachtGame.Dice.renderAll(finalState);
+      isRolling = false;
+      // Re-enable roll button and re-render scorecard so focus logic runs correctly
+      if (lastRoomData) {
+        var newRollCount = lastRoomData.rollCount || 0;
+        var isMyTurn = lastRoomData.currentTurn === localPlayerKey;
+        window.YachtGame.UI.setRollButtonEnabled(isMyTurn && newRollCount < 3, isMyTurn);
+        // Re-trigger scorecard render so the kb-focus wrapper sees the enabled roll button
+        var Scoring = window.YachtGame.Scoring;
+        var Dice = window.YachtGame.Dice;
+        var hd = lastRoomData.heldDice || {};
+        var ds = [];
+        for (var k = 0; k < 5; k++) {
+          var dd = lastRoomData.dice[k] || { value: 0, held: false };
+          ds.push({ value: dd.value, held: dd.held || hd[k] === true });
+        }
+        var currentDice = Dice.getDiceValues(ds);
+        window.YachtGame.UI.renderScorecard(
+          (lastRoomData.players.player1 && lastRoomData.players.player1.scores) || {},
+          (lastRoomData.players.player2 && lastRoomData.players.player2.scores) || {},
+          lastRoomData.gameMode,
+          currentDice,
+          isMyTurn,
+          localPlayerKey,
+          (lastRoomData.players.player1 && lastRoomData.players.player1.name) || 'Player 1',
+          (lastRoomData.players.player2 && lastRoomData.players.player2.name) || 'Player 2',
+          (lastRoomData.players[localPlayerKey] && lastRoomData.players[localPlayerKey].lastCategory) || null,
+          (lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] && lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'].lastCategory) || null,
+          lastRoomData.rollCount > 0
+        );
+      }
     }).catch(function (error) {
+      clearTimeout(rollSafetyTimer);
+      for (var s = 0; s < spinTimers.length; s++) {
+        clearInterval(spinTimers[s].timer);
+        dieEls[spinTimers[s].idx].classList.remove('rolling');
+      }
       isRolling = false;
       console.error('rollDice error:', error);
       window.YachtGame.UI.showToast('Roll failed: ' + (error.message || 'Unknown error'));
@@ -216,22 +289,34 @@
     if (room.currentTurn !== localPlayerKey) return;
     if ((room.rollCount || 0) < 1) return; // Can't hold before first roll
 
-    var current = room.dice[index] || { value: 0, held: false };
-    var newHeld = !current.held;
+    // Determine current held state from heldDice (client-side) or dice (server-side)
+    var heldData = room.heldDice || {};
+    var diceHeld = room.dice[index] && room.dice[index].held;
+    var isCurrentlyHeld = heldData[index] === true || diceHeld;
+    var newHeld = !isCurrentlyHeld;
 
     // Write to heldDice path (client-writable via Security Rules)
     var heldRef = window.YachtGame.db.ref('rooms/' + roomCode + '/heldDice/' + index);
     heldRef.set(newHeld);
 
-    // Immediate local UI feedback: update lastRoomData and re-render
-    if (lastRoomData.dice && lastRoomData.dice[index]) {
-      lastRoomData.dice[index].held = newHeld;
+    // Immediate local UI feedback: toggle only this die's held state via DOM
+    var dieEls = document.querySelectorAll('.die');
+    var el = dieEls[index];
+    if (el) {
+      var existing = el.querySelector('.held-check');
+      if (newHeld) {
+        el.classList.add('held');
+        if (!existing) {
+          var check = document.createElement('span');
+          check.className = 'held-check';
+          check.textContent = '\u2713';
+          el.appendChild(check);
+        }
+      } else {
+        el.classList.remove('held');
+        if (existing) existing.remove();
+      }
     }
-    var diceState = [];
-    for (var i = 0; i < 5; i++) {
-      diceState.push(lastRoomData.dice[i] || { value: 0, held: false });
-    }
-    window.YachtGame.Dice.renderAll(diceState);
   }
 
   function confirmCategory(category) {
