@@ -1,4 +1,40 @@
 {
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "database.rules.json",
+      "functions/**",
+      "node_modules/**",
+      ".git/**",
+      ".github/**",
+      ".gitignore",
+      ".claude/**",
+      ".agents/**",
+      "CLAUDE.md",
+      "README.md",
+      "skills-lock.json",
+      "*.log"
+    ],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=600" }
+        ]
+      }
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  },
   "functions": [
     {
       "source": "functions",
