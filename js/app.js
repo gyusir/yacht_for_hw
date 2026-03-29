@@ -52,6 +52,8 @@
   var btnBackLobbyWaiting = document.getElementById('btn-back-lobby-waiting');
   var btnRandomJoin = document.getElementById('btn-random-join');
   var btnBotPlay = document.getElementById('btn-bot-play');
+  var btnBotStart = document.getElementById('btn-bot-start');
+  var btnBackLobbyBot = document.getElementById('btn-back-lobby-bot');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -269,36 +271,35 @@
 
   // --- Bot Play ---
   btnBotPlay.addEventListener('click', function () {
-    // Get game mode from bot section
-    var botModeRadios = document.querySelectorAll('input[name="bot-mode"]');
-    var gameMode = 'yahtzee';
-    for (var i = 0; i < botModeRadios.length; i++) {
-      if (botModeRadios[i].checked) gameMode = botModeRadios[i].value;
-    }
-
-    // Get difficulty
-    var diffRadios = document.querySelectorAll('input[name="bot-difficulty"]');
-    var diff = 'basic';
-    for (var i = 0; i < diffRadios.length; i++) {
-      if (diffRadios[i].checked) diff = diffRadios[i].value;
-    }
-
-    // Ensure player name
     if (!playerName) playerName = Auth.getPlayerName();
     if (!playerName) {
       lobbyError.textContent = 'Please set a name first.';
       lobbyError.hidden = false;
       return;
     }
-
     lobbyError.hidden = true;
+    UI.showScreen('screen-bot-setup');
+  });
 
-    // Swap controller to BotGame
+  btnBotStart.addEventListener('click', function () {
+    var botModeRadios = document.querySelectorAll('input[name="bot-mode"]');
+    var gameMode = 'yahtzee';
+    for (var i = 0; i < botModeRadios.length; i++) {
+      if (botModeRadios[i].checked) gameMode = botModeRadios[i].value;
+    }
+    var diffRadios = document.querySelectorAll('input[name="bot-difficulty"]');
+    var diff = 'basic';
+    for (var i = 0; i < diffRadios.length; i++) {
+      if (diffRadios[i].checked) diff = diffRadios[i].value;
+    }
+
     window.YachtGame._onlineGame = window.YachtGame.Game;
     window.YachtGame.Game = window.YachtGame.BotGame;
-
-    // Start bot game
     window.YachtGame.Game.init(gameMode, diff, playerName);
+  });
+
+  btnBackLobbyBot.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
   });
 
   // --- Copy Room Code ---
