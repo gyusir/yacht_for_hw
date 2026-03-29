@@ -13,14 +13,19 @@
   window.YachtGame = window.YachtGame || {};
 
   // Skin definitions in unlock order
-  // unlockAt: number of totalGames required (0 = always available)
+  // unlockAt: number of totalGames required (0 = always available, -1 = bot unlock)
+  // unlockBy: bot difficulty to beat for unlock (requires BOT_WIN_THRESHOLD wins)
+  var BOT_WIN_THRESHOLD = 5;
+
   var SKIN_DEFS = [
     { id: 'classic',   name: 'Classic',   unlockAt: 0 },
     { id: 'ornate',    name: 'Ornate',    unlockAt: 3 },
     { id: 'bronze',    name: 'Bronze',    unlockAt: 6 },
     { id: 'marble',    name: 'Marble',    unlockAt: 9 },
     { id: 'crimson',   name: 'Crimson',   unlockAt: 12 },
-    { id: 'hologram',  name: 'Hologram',  unlockAt: 15 }
+    { id: 'hologram',  name: 'Hologram',  unlockAt: 15 },
+    { id: 'circuit',   name: 'Circuit',   unlockAt: -1, unlockBy: 'basic' },
+    { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -35,17 +40,25 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames) {
+  function getUnlockedCount(totalGames, botWins) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (totalGames >= SKIN_DEFS[i].unlockAt) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins)) count++;
     }
     return count;
   }
 
-  function isUnlocked(skinId, totalGames) {
-    var def = getSkinDef(skinId);
+  function isSkinUnlocked(def, totalGames, botWins) {
+    if (def.unlockBy) {
+      var wins = (botWins && botWins[def.unlockBy]) || 0;
+      return wins >= BOT_WIN_THRESHOLD;
+    }
     return totalGames >= def.unlockAt;
+  }
+
+  function isUnlocked(skinId, totalGames, botWins) {
+    var def = getSkinDef(skinId);
+    return isSkinUnlocked(def, totalGames, botWins);
   }
 
   function applySkin(skinId) {
@@ -100,21 +113,32 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames) {
+  function renderSkinSelector(containerEl, totalGames, botWins) {
     if (!containerEl) return;
     containerEl.innerHTML = '';
     totalGames = totalGames || 0;
+    botWins = botWins || {};
 
-    var unlockedCount = getUnlockedCount(totalGames);
+    var unlockedCount = getUnlockedCount(totalGames, botWins);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       // -1 because classic doesn't count as "unlocked bonus"
-      countEl.textContent = (unlockedCount - 1) + '/5 unlocked';
+      countEl.textContent = (unlockedCount - 1) + '/7 unlocked';
     }
 
+    var botDividerInserted = false;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = totalGames >= def.unlockAt;
+      var unlocked = isSkinUnlocked(def, totalGames, botWins);
+
+      // Insert divider before first bot skin
+      if (def.unlockBy && !botDividerInserted) {
+        var divider = document.createElement('div');
+        divider.className = 'skin-divider';
+        divider.innerHTML = '<span>Bot Skins</span>';
+        containerEl.appendChild(divider);
+        botDividerInserted = true;
+      }
       var option = document.createElement('div');
       option.className = 'skin-option';
       if (!unlocked) option.classList.add('locked');
@@ -151,20 +175,29 @@
       nameEl.textContent = def.name;
       option.appendChild(nameEl);
 
-      // Lock overlay
+      // Lock icon (on die) + progress text (below name)
       if (!unlocked) {
         var lockEl = document.createElement('div');
         lockEl.className = 'lock-overlay';
-        var gamesNeeded = def.unlockAt - totalGames;
-        lockEl.title = gamesNeeded + ' more game' + (gamesNeeded > 1 ? 's' : '') + ' to unlock';
-        lockEl.textContent = '\uD83D\uDD12'; // 🔒
+        lockEl.textContent = '\uD83D\uDD12';
         option.appendChild(lockEl);
+
+        var progressEl = document.createElement('span');
+        progressEl.className = 'lock-progress';
+        if (def.unlockBy) {
+          var wins = (botWins[def.unlockBy]) || 0;
+          var botLabel = def.unlockBy === 'gambler' ? 'Gambler' : 'Basic';
+          progressEl.textContent = 'vs ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
+        } else {
+          progressEl.textContent = totalGames + '/' + def.unlockAt + ' games';
+        }
+        option.appendChild(progressEl);
       }
 
       // Click handler
-      (function (skinDef, isUnlocked, optionEl) {
+      (function (skinDef, skinUnlocked, optionEl) {
         optionEl.addEventListener('click', function () {
-          if (!isUnlocked) return;
+          if (!skinUnlocked) return;
           // Deselect previous
           var prev = containerEl.querySelector('.skin-option.active');
           if (prev) prev.classList.remove('active');
