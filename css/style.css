@@ -67,11 +67,23 @@ body {
 /* ===== Header ===== */
 header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
+  flex-direction: column;
+  padding: 16px 24px 0;
   max-width: 640px;
   margin: 0 auto;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.header-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 header h1 {
@@ -81,25 +93,43 @@ header h1 {
 }
 
 .header-controls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.game-only {
   display: none;
+  gap: 6px;
+  padding-top: 8px;
+  margin-bottom: 12px;
+  width: 100%;
 }
 
-body.in-game .game-only {
+body.in-game .header-controls {
   display: flex;
 }
 
-.btn-leave {
-  color: var(--danger) !important;
+.header-controls .btn-icon {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  text-align: center;
+  transition: background var(--transition), color var(--transition);
 }
 
-.btn-leave:hover {
+.header-controls .btn-icon:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.header-controls .btn-leave {
   color: var(--danger) !important;
+  border-color: var(--danger);
+}
+
+.header-controls .btn-leave:hover {
+  background: var(--danger);
+  color: #fff !important;
 }
 
 #theme-toggle {
@@ -138,6 +168,10 @@ body.in-game .game-only {
   display: block;
 }
 
+.screen.no-anim {
+  animation: none;
+}
+
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -152,6 +186,30 @@ body.in-game .game-only {
   transition: background var(--transition);
 }
 
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-header-row h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0;
+}
+
+.card-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.card-header-row .btn-tutorial {
+  margin: 0;
+  position: relative;
+  top: -2px;
+}
+
 .card h2 {
   font-size: 1.4rem;
   margin-bottom: 8px;
@@ -161,6 +219,11 @@ body.in-game .game-only {
   color: var(--text-muted);
   margin-bottom: 20px;
   font-size: 0.95rem;
+  white-space: pre-line;
+}
+
+[data-i18n] {
+  white-space: pre-line;
 }
 
 /* ===== Inputs ===== */
@@ -206,6 +269,14 @@ input[type="text"]::placeholder {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--danger);
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
 }
 
 .btn-secondary {
@@ -288,6 +359,10 @@ input[type="text"]::placeholder {
   gap: 8px;
 }
 
+.hidden-section {
+  display: none !important;
+}
+
 .btn-text {
   background: none;
   border: none;
@@ -304,7 +379,7 @@ input[type="text"]::placeholder {
 
 /* Signed-in profile */
 .signed-in-profile {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
@@ -314,12 +389,17 @@ input[type="text"]::placeholder {
   margin-top: 16px;
 }
 
+.signed-in-profile.visible {
+  display: flex;
+}
+
 .user-avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--accent);
+  background: var(--accent-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23a0b4f0'/%3E%3Ccircle cx='32' cy='42' r='6' fill='%23fff'/%3E%3Ccircle cx='68' cy='42' r='6' fill='%23fff'/%3E%3Ccircle cx='32' cy='42' r='3' fill='%23222'/%3E%3Ccircle cx='68' cy='42' r='3' fill='%23222'/%3E%3Cpath d='M35 62 Q50 74 65 62' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center/cover no-repeat;
 }
 
 .user-info {
@@ -425,6 +505,41 @@ input[type="text"]::placeholder {
 .result-loss { color: var(--danger); font-weight: 700; }
 .result-tie { color: var(--text-muted); font-weight: 600; }
 
+.history-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.btn-pager {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: background var(--transition);
+}
+
+.btn-pager:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-pager:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pager-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
 .no-history {
   text-align: center;
   color: var(--text-muted);
@@ -461,11 +576,32 @@ input[type="text"]::placeholder {
 
 .join-section input {
   flex: 1;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 .join-section .btn-secondary {
   flex-shrink: 0;
   width: auto;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.lobby-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lobby-btn-row .btn-primary {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 360px) {
+  .lobby-btn-row {
+    flex-direction: column;
+  }
 }
 
 /* ===== Bot Section ===== */
@@ -1035,6 +1171,20 @@ input[type="text"]::placeholder {
 .skin-selector {
   margin-top: 20px;
   text-align: center;
+  padding: 20px !important;
+}
+
+.skin-section {
+  margin-top: 14px;
+}
+
+.skin-section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
 }
 
 .skin-selector-header {
@@ -1664,6 +1814,121 @@ input[type="text"]::placeholder {
   box-shadow: var(--shadow-lg);
 }
 
+.overlay-content p {
+  white-space: pre-line;
+}
+
+/* ===== Tutorial ===== */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.tutorial-highlight {
+  position: relative !important;
+  z-index: 1001 !important;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 4px var(--accent);
+}
+
+
+.tutorial-tooltip {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 3px var(--accent);
+  max-width: 320px;
+  width: calc(100% - 32px);
+  z-index: 10000;
+  pointer-events: auto;
+  text-align: center;
+}
+[data-theme="dark"] .tutorial-tooltip {
+  background: #1e1e2e;
+}
+
+.tutorial-tooltip p {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  white-space: pre-line;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.tutorial-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-tutorial-next {
+  padding: 8px 28px;
+}
+
+.btn-tutorial-skip {
+  padding: 8px 20px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Tutorial entry button on login/lobby */
+.btn-tutorial {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  margin-top: 8px;
+}
+.btn-tutorial:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tutorial-overlay.hidden,
+.tutorial-tooltip.hidden {
+  display: none !important;
+}
+
+.disconnect-countdown {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.draw-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.draw-buttons .btn-primary,
+.draw-buttons .btn-secondary {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
 /* ===== Session Notice ===== */
 .session-notice {
   margin-top: 16px;
@@ -1786,7 +2051,11 @@ input[type="text"]::placeholder {
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
   header {
-    padding: 12px 16px;
+    padding: 12px 16px 0;
+  }
+
+  .header-controls {
+    margin-bottom: 6px;
   }
 
   .screen {

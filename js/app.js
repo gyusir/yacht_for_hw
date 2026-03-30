@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  var DEFAULT_AVATAR = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#a0b4f0"/><circle cx="32" cy="42" r="6" fill="#fff"/><circle cx="68" cy="42" r="6" fill="#fff"/><circle cx="32" cy="42" r="3" fill="#222"/><circle cx="68" cy="42" r="3" fill="#222"/><path d="M35 62 Q50 74 65 62" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="18" r="4" fill="#fff" opacity="0.5"/><circle cx="82" cy="50" r="4" fill="#fff" opacity="0.5"/><circle cx="18" cy="50" r="4" fill="#fff" opacity="0.5"/></svg>');
+
   var UI = window.YachtGame.UI;
   var Lobby = window.YachtGame.Lobby;
   var Game = window.YachtGame.Game;
@@ -12,6 +14,10 @@
 
   // Initialize theme
   UI.initTheme();
+
+  // Initialize language
+  var I18n = window.YachtGame.I18n;
+  if (I18n) I18n.refreshStaticText();
 
   // Initialize dice skin from cache
   DiceSkins.loadSkin();
@@ -54,6 +60,13 @@
   var btnBotPlay = document.getElementById('btn-bot-play');
   var btnBotStart = document.getElementById('btn-bot-start');
   var btnBackLobbyBot = document.getElementById('btn-back-lobby-bot');
+  var btnDraw = document.getElementById('btn-draw');
+  var btnAcceptDraw = document.getElementById('btn-accept-draw');
+  var btnDeclineDraw = document.getElementById('btn-decline-draw');
+  var btnTutorialLogin = document.getElementById('btn-tutorial-login');
+  var btnTutorialLobby = document.getElementById('btn-tutorial-lobby');
+  var tutorialNext = document.getElementById('tutorial-next');
+  var tutorialSkip = document.getElementById('tutorial-skip');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -64,32 +77,47 @@
     UI.toggleTheme();
   });
 
+  // --- Language Toggle ---
+  var langToggle = document.getElementById('lang-toggle');
+  function updateLangButton() {
+    if (I18n) langToggle.textContent = I18n.getLang() === 'ko' ? 'KO' : 'EN';
+  }
+  updateLangButton();
+  langToggle.addEventListener('click', function () {
+    if (!I18n) return;
+    var newLang = I18n.getLang() === 'ko' ? 'en' : 'ko';
+    I18n.setLang(newLang);
+    I18n.refreshStaticText();
+    updateLangButton();
+    if (document.body.classList.contains('in-game') && window.YachtGame.Game && window.YachtGame.Game.refreshUI) {
+      window.YachtGame.Game.refreshUI();
+    }
+  });
+
   // --- Auth: show/hide login UI based on auth state ---
   function showLoginScreen(user) {
-    if (user) {
-      // User is signed in
-      btnGoogleSignin.hidden = true;
-      document.querySelector('.guest-section').hidden = true;
-      document.querySelector('#screen-login .divider').hidden = true;
-      signedInProfile.hidden = false;
+    var isGoogle = user && !user.isAnonymous;
+    var guestSection = document.querySelector('.guest-section');
+    var divider = document.querySelector('#screen-login .divider');
+    if (isGoogle) {
+      // Google signed in — show profile, hide guest/google buttons
+      btnGoogleSignin.classList.add('hidden-section');
+      guestSection.classList.add('hidden-section');
+      divider.classList.add('hidden-section');
+      signedInProfile.classList.add('visible');
       userDisplayName.textContent = user.displayName || 'Player';
-      if (user.photoURL) {
-        userAvatar.src = user.photoURL;
-        userAvatar.hidden = false;
-      } else {
-        userAvatar.hidden = true;
-      }
+      userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
+      userAvatar.src = user.photoURL || DEFAULT_AVATAR;
     } else {
-      // Not signed in
-      btnGoogleSignin.hidden = false;
-      document.querySelector('.guest-section').hidden = false;
-      document.querySelector('#screen-login .divider').hidden = false;
-      signedInProfile.hidden = true;
+      // Not signed in or anonymous — show guest + google login
+      btnGoogleSignin.classList.remove('hidden-section');
+      guestSection.classList.remove('hidden-section');
+      divider.classList.remove('hidden-section');
+      signedInProfile.classList.remove('visible');
     }
   }
 
   var skinSelector = document.getElementById('skin-selector');
-  var skinOptions = document.getElementById('skin-options');
 
   function refreshSkinSelector() {
     if (!Auth.isSignedIn()) {
@@ -101,7 +129,7 @@
       var totalGames = (stats && stats.totalGames) || 0;
       var botWins = (stats && stats.botWins) || {};
       if (skinSelector) skinSelector.hidden = false;
-      DiceSkins.renderSkinSelector(skinOptions, totalGames, botWins);
+      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins);
     });
   }
 
@@ -113,7 +141,7 @@
     showLoginScreen(user);
     // Show My Stats button in lobby if signed in (non-anonymous)
     if (btnMyStats) {
-      btnMyStats.hidden = !user;
+      btnMyStats.hidden = !(user && !user.isAnonymous);
     }
     if (user) {
       DiceSkins.loadSkin();
@@ -138,8 +166,10 @@
   // Sign Out
   btnSignout.addEventListener('click', function () {
     Auth.signOut(function () {
+      showLoginScreen(null);
       UI.showScreen('screen-login');
-      UI.showToast('Signed out');
+      var I18n = window.YachtGame.I18n;
+      UI.showToast(I18n ? I18n.t('signed_out') : 'Signed out');
     });
   });
 
@@ -340,13 +370,62 @@
     UI.hideRulesOverlay();
   });
 
+  var leaveOverlay = document.getElementById('overlay-leave-confirm');
+  var leaveMsg = document.getElementById('leave-confirm-msg');
+  var btnLeaveYes = document.getElementById('btn-leave-yes');
+  var btnLeaveNo = document.getElementById('btn-leave-no');
+
   btnLeave.addEventListener('click', function () {
+    var I18n = window.YachtGame.I18n;
     var msg = window.YachtGame._isBotGame
-      ? '봇 게임을 종료하시겠습니까? 패배로 기록됩니다.'
-      : '정말 나가시겠습니까? 상대방의 승리로 처리됩니다.';
-    if (confirm(msg)) {
-      window.YachtGame.Game.leaveGame();
+      ? (I18n ? I18n.t('confirm_leave_bot') : 'Leave bot game? This counts as a loss.')
+      : (I18n ? I18n.t('confirm_leave_online') : 'Really leave? Your opponent wins.');
+    leaveMsg.textContent = msg;
+    leaveOverlay.classList.remove('hidden');
+  });
+
+  btnLeaveYes.addEventListener('click', function () {
+    leaveOverlay.classList.add('hidden');
+    window.YachtGame.Game.leaveGame();
+  });
+
+  btnLeaveNo.addEventListener('click', function () {
+    leaveOverlay.classList.add('hidden');
+  });
+
+  // --- Draw Proposal ---
+  btnDraw.addEventListener('click', function () {
+    var I18n = window.YachtGame.I18n;
+    if (window.YachtGame._isBotGame) {
+      UI.showToast(I18n ? I18n.t('bot_no_draw') : '로봇은 무승부를 모릅니다 🤖');
+      return;
     }
+    window.YachtGame.Game.proposeDraw();
+    UI.showToast(I18n ? I18n.t('draw_proposed') : 'Draw proposed. Waiting for response...');
+  });
+
+  btnAcceptDraw.addEventListener('click', function () {
+    window.YachtGame.Game.respondToDraw(true);
+  });
+
+  btnDeclineDraw.addEventListener('click', function () {
+    window.YachtGame.Game.respondToDraw(false);
+  });
+
+  // --- Tutorial ---
+  btnTutorialLogin.addEventListener('click', function () {
+    window.YachtGame.Tutorial.start();
+  });
+  btnTutorialLobby.addEventListener('click', function () {
+    window.YachtGame.Tutorial.start();
+  });
+  tutorialNext.addEventListener('click', function () {
+    var Tutorial = window.YachtGame.Tutorial;
+    if (Tutorial && Tutorial.isActive()) Tutorial._advance();
+  });
+  tutorialSkip.addEventListener('click', function () {
+    var Tutorial = window.YachtGame.Tutorial;
+    if (Tutorial) Tutorial.cleanup();
   });
 
   // --- My Stats ---

@@ -2,48 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta id="vp-meta" name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function(){
+      var MIN_W = 520;
+      var meta = document.getElementById('vp-meta');
+      var sw = screen.width || MIN_W;
+      meta.content = sw < MIN_W
+        ? 'width=' + MIN_W
+        : 'width=device-width, initial-scale=1.0';
+    })();
+  </script>
   <title>Yacht Dice</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Yacht Dice</h1>
-    <div class="header-controls">
-      <button id="btn-shortcut" class="btn-icon game-only" title="PC 단축키">Key</button>
-      <button id="btn-rule" class="btn-icon game-only" title="규칙">Rule</button>
-      <button id="btn-leave" class="btn-icon btn-leave game-only" title="나가기">Quit</button>
-      <button id="theme-toggle" aria-label="Toggle theme">
-        <span class="icon-sun">&#9728;</span>
-        <span class="icon-moon">&#9790;</span>
-      </button>
+    <div class="header-top">
+      <h1>Yacht Dice</h1>
+      <div class="header-top-controls">
+        <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
+        <button id="theme-toggle" aria-label="Toggle theme">
+          <span class="icon-sun">&#9728;</span>
+          <span class="icon-moon">&#9790;</span>
+        </button>
+      </div>
+    </div>
+    <div class="header-controls game-only">
+      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts">Shortcut</button>
+      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules">Rule</button>
+      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw">Draw</button>
+      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave">Quit</button>
     </div>
   </header>
 
   <!-- Screen: Login -->
   <section id="screen-login" class="screen active">
     <div class="card">
-      <h2>Welcome</h2>
-      <p>Sign in to save your game history, or play as a guest.</p>
+      <div class="card-header-row">
+        <h2 data-i18n="welcome">Welcome</h2>
+        <button id="btn-tutorial-login" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
+      </div>
+      <p data-i18n="sign_in_desc">Sign in to save your game history, or play as a guest.</p>
       <div class="guest-section">
-        <input type="text" id="player-name" placeholder="Guest name" maxlength="12" autocomplete="off">
-        <button id="btn-guest" class="btn-secondary" disabled>Play as Guest</button>
+        <input type="text" id="player-name" data-i18n-placeholder="guest_name_placeholder" placeholder="Guest name" maxlength="12" autocomplete="off">
+        <button id="btn-guest" class="btn-secondary" disabled data-i18n="play_as_guest">Play as Guest</button>
       </div>
       <div></div>
-      <div class="divider"><span>or</span></div>
+      <div class="divider"><span data-i18n="or">or</span></div>
       <div></div>
       <button id="btn-google-signin" class="btn-google">
         <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Sign in with Google
+        <span data-i18n="sign_in_google">Sign in with Google</span>
       </button>
       <!-- Signed-in user profile (hidden by default) -->
-      <div id="signed-in-profile" class="signed-in-profile" hidden>
+      <div id="signed-in-profile" class="signed-in-profile">
         <img id="user-avatar" class="user-avatar" src="" alt="avatar">
         <div class="user-info">
           <span id="user-display-name" class="user-display-name"></span>
-          <button id="btn-signout" class="btn-text">Sign out</button>
+          <button id="btn-signout" class="btn-text" data-i18n="sign_out">Sign out</button>
         </div>
-        <button id="btn-continue-signed" class="btn-primary">Continue</button>
+        <button id="btn-continue-signed" class="btn-primary" data-i18n="continue_btn">Continue</button>
       </div>
     </div>
   </section>
@@ -51,115 +70,126 @@
   <!-- Screen: Lobby -->
   <section id="screen-lobby" class="screen">
     <div class="card">
-      <h2>Lobby</h2>
-      <p>Create a new room or join an existing one.</p>
+      <div class="card-header-row">
+        <h2 data-i18n="lobby">Lobby</h2>
+        <div class="card-header-actions">
+          <button id="btn-my-stats" class="btn-tutorial" hidden data-i18n="my_stats">📊 My Stats</button>
+          <button id="btn-tutorial-lobby" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
+        </div>
+      </div>
+      <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
-          <input type="text" id="room-code-input" placeholder="Enter Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
-          <button id="btn-join" class="btn-secondary" disabled>Join</button>
+          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <button id="btn-join" class="btn-secondary" disabled data-i18n="join">Join</button>
         </div>
         <p id="lobby-error" class="error-text" hidden></p>
-        <div class="divider"><span>or</span></div>
-        <button id="btn-create" class="btn-primary">Create Room</button>
-        <div class="divider"><span>or</span></div>
-        <button id="btn-random-join" class="btn-primary">Random Match</button>
-        <div class="divider"><span>or</span></div>
-        <button id="btn-bot-play" class="btn-primary">Play vs Bot</button>
+        <div class="divider"><span data-i18n="or">or</span></div>
+        <div class="lobby-btn-row">
+          <button id="btn-create" class="btn-primary" data-i18n="create_room">Create Room</button>
+          <button id="btn-random-join" class="btn-primary" data-i18n="random_match">Random Match</button>
+          <button id="btn-bot-play" class="btn-primary" data-i18n="play_vs_bot">Play vs Bot</button>
+        </div>
       </div>
-      <div id="skin-selector" class="skin-selector" hidden>
+      <div id="skin-selector" class="skin-selector card" hidden>
         <div class="skin-selector-header">
-          <span class="skin-selector-label">Dice Skin</span>
+          <span class="skin-selector-label" data-i18n="dice_skin">Dice Skin</span>
           <span id="skin-unlock-count" class="skin-unlock-count"></span>
         </div>
-        <p class="skin-unlock-hint">Play games to unlock skins. Beat bots to claim theirs.</p>
-        <div class="skin-options" id="skin-options"></div>
+        <div class="skin-section">
+          <div class="skin-section-label" data-i18n="skin_play_unlock">🎲 Play to Unlock</div>
+          <div class="skin-options" id="skin-options-play"></div>
+        </div>
+        <div class="skin-section">
+          <div class="skin-section-label" data-i18n="skin_bot_unlock">🤖 Bot Skins</div>
+          <div class="skin-options" id="skin-options-bot"></div>
+        </div>
       </div>
-      <button id="btn-my-stats" class="btn-text btn-stats" hidden>My Stats</button>
-      <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;">Back to Login</button>
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다.<br>  탭을 열어두면 유지됩니다.</p>
+      <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_login">Back to Login</button>
+      <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
 
   <!-- Screen: History / Stats -->
   <section id="screen-history" class="screen">
     <div class="card">
-      <h2>My Stats</h2>
+      <h2 data-i18n="my_stats">My Stats</h2>
       <div id="stats-summary" class="stats-summary"></div>
-      <h3 class="history-title">Recent Games</h3>
+      <h3 class="history-title" data-i18n="recent_games">Recent Games</h3>
       <div id="history-list" class="history-list"></div>
-      <button id="btn-back-lobby" class="btn-secondary" style="width:100%;margin-top:16px;">Back to Lobby</button>
+      <button id="btn-back-lobby" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_lobby">Back to Lobby</button>
     </div>
   </section>
 
   <!-- Screen: Waiting Room -->
   <section id="screen-waiting" class="screen">
     <div class="card">
-      <h2>Waiting Room</h2>
+      <h2 data-i18n="waiting_room">Waiting Room</h2>
       <div class="room-code-display">
-        <p>Share this code with your friend:</p>
+        <p data-i18n="share_code">Share this code with your friend:</p>
         <div class="code-box">
           <span id="display-room-code"></span>
           <button id="btn-copy-code" class="btn-icon" title="Copy code">&#128203;</button>
         </div>
       </div>
       <div id="mode-select" class="mode-select">
-        <p>Select game mode:</p>
+        <p data-i18n="select_game_mode">Select game mode:</p>
         <div class="mode-options">
           <label class="mode-option">
             <input type="radio" name="mode" value="yahtzee" checked>
             <span class="mode-label">Yahtzee</span>
-            <span class="mode-desc">13 categories, bonus scoring</span>
+            <span class="mode-desc" data-i18n="yahtzee_desc">13 categories, bonus scoring</span>
           </label>
           <label class="mode-option">
             <input type="radio" name="mode" value="yacht">
             <span class="mode-label">Yacht</span>
-            <span class="mode-desc">12 categories, classic rules</span>
+            <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
           </label>
 
         </div>
       </div>
       <div class="waiting-spinner">
         <div class="spinner"></div>
-        <p>Waiting for opponent...</p>
+        <p data-i18n="waiting_for_opponent">Waiting for opponent...</p>
       </div>
-      <button id="btn-back-lobby-waiting" class="btn-secondary" style="width:100%;margin-top:12px;">← Back to Lobby</button>
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다.<br>  탭을 열어두면 유지됩니다.</p>
+      <button id="btn-back-lobby-waiting" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
+      <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
 
   <!-- Screen: Bot Setup -->
   <section id="screen-bot-setup" class="screen">
     <div class="card">
-      <h2>Bot Game</h2>
+      <h2 data-i18n="bot_game">Bot Game</h2>
       <div class="mode-select">
-        <p>Select game mode:</p>
+        <p data-i18n="select_game_mode">Select game mode:</p>
         <div class="mode-options">
           <label class="mode-option">
             <input type="radio" name="bot-mode" value="yahtzee" checked>
             <span class="mode-label">Yahtzee</span>
-            <span class="mode-desc">13 categories, bonus scoring</span>
+            <span class="mode-desc" data-i18n="yahtzee_desc">13 categories, bonus scoring</span>
           </label>
           <label class="mode-option">
             <input type="radio" name="bot-mode" value="yacht">
             <span class="mode-label">Yacht</span>
-            <span class="mode-desc">12 categories, classic rules</span>
+            <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
           </label>
         </div>
       </div>
       <div class="bot-difficulty" style="margin-bottom:16px;">
         <label class="bot-option">
           <input type="radio" name="bot-difficulty" value="basic" checked>
-          <span class="bot-label">Basic</span>
-          <span class="bot-desc">적당한 수준의 AI</span>
+          <span class="bot-label" data-i18n="basic">Basic</span>
+          <span class="bot-desc" data-i18n="basic_desc">\uc801\ub2f9\ud55c \uc218\uc900\uc758 AI</span>
         </label>
         <label class="bot-option">
           <input type="radio" name="bot-difficulty" value="gambler">
-          <span class="bot-label">Gambler</span>
-          <span class="bot-desc">최적화된 전략 AI</span>
+          <span class="bot-label" data-i18n="gambler">Gambler</span>
+          <span class="bot-desc" data-i18n="gambler_desc">\ucd5c\uc801\ud654\ub41c \uc804\ub7b5 AI</span>
         </label>
       </div>
-      <button id="btn-bot-start" class="btn-primary" style="width:100%;">Start Game</button>
-      <button id="btn-back-lobby-bot" class="btn-secondary" style="width:100%;margin-top:12px;">← Back to Lobby</button>
+      <button id="btn-bot-start" class="btn-primary" style="width:100%;" data-i18n="start_game">Start Game</button>
+      <button id="btn-back-lobby-bot" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
     </div>
   </section>
 
@@ -195,7 +225,7 @@
         </div>
       </div>
 
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다.<br>  탭을 열어두면 유지됩니다.</p>
+      <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
 
@@ -204,8 +234,8 @@
     <div class="card gameover-card">
       <h2 id="winner-text"></h2>
       <div id="final-scores" class="final-scores"></div>
-      <button id="btn-new-game" class="btn-primary">New Game</button>
-      <p class="session-notice">* 탭을 닫으면 세션이 종료됩니다.<br>  탭을 열어두면 유지됩니다.</p>
+      <button id="btn-new-game" class="btn-primary" data-i18n="new_game">New Game</button>
+      <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
 
@@ -213,7 +243,8 @@
   <div id="overlay-disconnect" class="overlay hidden">
     <div class="overlay-content">
       <div class="spinner"></div>
-      <p>Opponent disconnected. Waiting for reconnection...</p>
+      <p data-i18n="opponent_disconnected">Opponent disconnected. Waiting for reconnection...</p>
+      <p class="disconnect-countdown"><span data-i18n="auto_win_in">Auto-win in</span> <span id="disconnect-timer">10</span>s</p>
     </div>
   </div>
 
@@ -221,38 +252,38 @@
   <div id="overlay-rules" class="overlay hidden">
     <div class="overlay-content rules-content">
       <div id="rules-yacht" class="rules-body" hidden>
-        <h3>Yacht 규칙</h3>
+        <h3 data-i18n="rules_yacht_title">Yacht Rules</h3>
         <table>
-          <thead><tr><th>카테고리</th><th>점수</th></tr></thead>
+          <thead><tr><th data-i18n="rules_cat">Category</th><th data-i18n="rules_score">Score</th></tr></thead>
           <tbody>
-            <tr><td>Ones ~ Sixes</td><td>해당 숫자의 합</td></tr>
-            <tr><td>Four of a Kind</td><td>같은 숫자 4개의 합</td></tr>
-            <tr><td>Full House</td><td>3+2 조합 시 전체 합</td></tr>
-            <tr><td>Small Straight</td><td>1-2-3-4-5 → 30점</td></tr>
-            <tr><td>Large Straight</td><td>2-3-4-5-6 → 30점</td></tr>
-            <tr><td>Choice</td><td>주사위 전체 합</td></tr>
-            <tr><td>Yacht</td><td>5개 동일 → 50점</td></tr>
+            <tr><td data-i18n="rules_ones_sixes">Ones ~ Sixes</td><td data-i18n="rules_ones_sixes_desc">Sum of matching dice</td></tr>
+            <tr><td data-i18n="rules_foak">Four of a Kind</td><td data-i18n="rules_foak_desc">Sum of 4 matching dice</td></tr>
+            <tr><td data-i18n="rules_fh">Full House</td><td data-i18n="rules_fh_desc">3+2 combo → sum of all</td></tr>
+            <tr><td data-i18n="rules_ss_yacht">Small Straight</td><td data-i18n="rules_ss_yacht_desc">1-2-3-4-5 → 30 pts</td></tr>
+            <tr><td data-i18n="rules_ls_yacht">Large Straight</td><td data-i18n="rules_ls_yacht_desc">2-3-4-5-6 → 30 pts</td></tr>
+            <tr><td data-i18n="rules_choice">Choice</td><td data-i18n="rules_choice_desc">Sum of all dice</td></tr>
+            <tr><td data-i18n="rules_yacht">Yacht</td><td data-i18n="rules_yacht_desc">5 of a kind → 50 pts</td></tr>
           </tbody>
         </table>
-        <p class="rules-note">매 턴 최대 3회 굴림. 주사위를 클릭하여 고정/해제.</p>
+        <p class="rules-note" data-i18n="rules_yacht_note">Max 3 rolls per turn. Click dice to hold/release.</p>
       </div>
       <div id="rules-yahtzee" class="rules-body" hidden>
-        <h3>Yahtzee 규칙</h3>
+        <h3 data-i18n="rules_yahtzee_title">Yahtzee Rules</h3>
         <table>
-          <thead><tr><th>카테고리</th><th>점수</th></tr></thead>
+          <thead><tr><th data-i18n="rules_cat">Category</th><th data-i18n="rules_score">Score</th></tr></thead>
           <tbody>
-            <tr><td>Ones ~ Sixes</td><td>해당 숫자의 합</td></tr>
-            <tr><td>Three of a Kind</td><td>3개 이상 동일 → 전체 합</td></tr>
-            <tr><td>Four of a Kind</td><td>4개 이상 동일 → 전체 합</td></tr>
-            <tr><td>Full House</td><td>3+2 조합 → 25점</td></tr>
-            <tr><td>Small Straight</td><td>4연속 → 30점</td></tr>
-            <tr><td>Large Straight</td><td>5연속 → 40점</td></tr>
-            <tr><td>Yahtzee</td><td>5개 동일 → 50점</td></tr>
-            <tr><td>Chance</td><td>주사위 전체 합</td></tr>
+            <tr><td data-i18n="rules_ones_sixes">Ones ~ Sixes</td><td data-i18n="rules_ones_sixes_desc">Sum of matching dice</td></tr>
+            <tr><td data-i18n="rules_toak">Three of a Kind</td><td data-i18n="rules_toak_desc">3+ matching → sum of all</td></tr>
+            <tr><td data-i18n="rules_foak">Four of a Kind</td><td data-i18n="rules_foak_yahtzee_desc">4+ matching → sum of all</td></tr>
+            <tr><td data-i18n="rules_fh_yahtzee">Full House</td><td data-i18n="rules_fh_yahtzee_desc">3+2 combo → 25 pts</td></tr>
+            <tr><td data-i18n="rules_ss_yahtzee">Small Straight</td><td data-i18n="rules_ss_yahtzee_desc">4 in a row → 30 pts</td></tr>
+            <tr><td data-i18n="rules_ls_yahtzee">Large Straight</td><td data-i18n="rules_ls_yahtzee_desc">5 in a row → 40 pts</td></tr>
+            <tr><td data-i18n="rules_yahtzee_cat">Yahtzee</td><td data-i18n="rules_yahtzee_cat_desc">5 of a kind → 50 pts</td></tr>
+            <tr><td data-i18n="rules_chance">Chance</td><td data-i18n="rules_chance_desc">Sum of all dice</td></tr>
           </tbody>
         </table>
-        <p class="rules-note">상단 합계 ≥ 63 → 보너스 +35점<br>추가 Yahtzee당 보너스 +100점</p>
-        <p class="rules-note">매 턴 최대 3회 굴림. 주사위를 클릭하여 고정/해제.</p>
+        <p class="rules-note" data-i18n="rules_yahtzee_bonus_note">Upper sum ≥ 63 → +35 bonus. Extra Yahtzee → +100 bonus each</p>
+        <p class="rules-note" data-i18n="rules_yahtzee_note">Max 3 rolls per turn. Click dice to hold/release.</p>
       </div>
     </div>
   </div>
@@ -260,16 +291,48 @@
   <!-- Overlay: PC Shortcut -->
   <div id="overlay-shortcut" class="overlay hidden">
     <div class="overlay-content rules-content">
-      <h3>PC Shortcut</h3>
+      <h3 data-i18n="shortcut_title_overlay">PC Shortcut</h3>
       <table>
-        <thead><tr><th>키</th><th>동작</th></tr></thead>
+        <thead><tr><th data-i18n="shortcut_key">Key</th><th data-i18n="shortcut_action">Action</th></tr></thead>
         <tbody>
-          <tr><td><kbd>1</kbd> ~ <kbd>5</kbd></td><td>주사위 선택/해제</td></tr>
-          <tr><td><kbd>Q,W,E,R,T,Y</kbd></td><td>퀵 이모티콘 전송</td></tr>
-          <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>카테고리 & Roll 순환</td></tr>
-          <tr><td><kbd>Enter</kbd></td><td>선택 확정 / Roll</td></tr>
+          <tr><td><kbd>1</kbd> ~ <kbd>5</kbd></td><td data-i18n="shortcut_dice">Hold/release dice</td></tr>
+          <tr><td><kbd>Q,W,E,R,T,Y</kbd></td><td data-i18n="shortcut_emote">Send quick emote</td></tr>
+          <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td data-i18n="shortcut_nav">Navigate categories & Roll</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td data-i18n="shortcut_confirm">Confirm / Roll</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Overlay: Tutorial -->
+  <div id="tutorial-overlay" class="tutorial-overlay hidden"></div>
+  <div id="tutorial-tooltip" class="tutorial-tooltip hidden">
+    <p id="tutorial-message"></p>
+    <div class="tutorial-buttons">
+      <button id="tutorial-next" class="btn-primary btn-tutorial-next">Next</button>
+      <button id="tutorial-skip" class="btn-tutorial-skip" data-i18n="tut_skip_short">Skip</button>
+    </div>
+  </div>
+
+  <!-- Overlay: Draw Proposal -->
+  <div id="overlay-draw-proposal" class="overlay hidden">
+    <div class="overlay-content">
+      <p data-i18n="draw_proposal_msg">Opponent proposes a draw. Accept?</p>
+      <div class="draw-buttons">
+        <button id="btn-accept-draw" class="btn-primary" data-i18n="accept">Accept</button>
+        <button id="btn-decline-draw" class="btn-secondary" data-i18n="decline">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay: Leave Confirm -->
+  <div id="overlay-leave-confirm" class="overlay hidden">
+    <div class="overlay-content">
+      <p id="leave-confirm-msg"></p>
+      <div class="draw-buttons">
+        <button id="btn-leave-yes" class="btn-primary btn-danger" data-i18n="confirm_yes">Yes</button>
+        <button id="btn-leave-no" class="btn-secondary" data-i18n="confirm_no">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -284,6 +347,7 @@
 
   <!-- Game Scripts -->
   <script src="js/firebase-config.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/scoring.js"></script>
   <script src="js/dice.js"></script>
   <script src="js/dice-skins.js"></script>
@@ -294,6 +358,7 @@
   <script src="js/bot-ai.js"></script>
   <script src="js/bot-game.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/tutorial.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
