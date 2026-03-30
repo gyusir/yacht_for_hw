@@ -10,14 +10,14 @@
   var returnScreen = 'screen-login';
 
   var STEPS = [
-    { id: 'intro',    highlight: null,           msgKey: 'tut_intro',    action: 'next'   },
-    { id: 'scorecard',highlight: '#scorecard',   msgKey: 'tut_scorecard',action: 'next'   },
-    { id: 'dice',     highlight: null,             msgKey: 'tut_dice',   action: 'next'   },
-    { id: 'roll',     highlight: '#btn-roll',    msgKey: 'tut_roll',    action: 'roll'   },
-    { id: 'hold',     highlight: '#dice-area',   msgKey: 'tut_hold',    action: 'hold'   },
-    { id: 'reroll',   highlight: '#btn-roll',    msgKey: 'tut_reroll',  action: 'roll'   },
-    { id: 'scoring',  highlight: '#scorecard',   msgKey: 'tut_scoring', action: 'score'  },
-    { id: 'summary',  highlight: null,           msgKey: 'tut_summary', action: 'finish' }
+    { id: 'intro',    highlight: null,         msgKey: 'tut_intro',    action: 'next'  },
+    { id: 'scorecard',highlight: '#scorecard', msgKey: 'tut_scorecard',action: 'next'  },
+    { id: 'dice',     highlight: null,         msgKey: 'tut_dice',     action: 'next',  noOverlay: true },
+    { id: 'roll',     highlight: '#btn-roll',  msgKey: 'tut_roll',     action: 'roll'  },
+    { id: 'hold',     highlight: null,         msgKey: 'tut_hold',     action: 'hold',  noOverlay: true },
+    { id: 'reroll',   highlight: '#btn-roll',  msgKey: 'tut_reroll',   action: 'roll'  },
+    { id: 'scoring',  highlight: '#scorecard', msgKey: 'tut_scoring',  action: 'score' },
+    { id: 'summary',  highlight: null,         msgKey: 'tut_summary',  action: 'finish'}
   ];
 
   function t(key) {
@@ -26,7 +26,6 @@
   }
 
   function buildMockRoom() {
-    var Scoring = window.YachtGame.Scoring;
     mockRoomData = {
       gameMode: 'yacht',
       status: 'playing',
@@ -110,7 +109,11 @@
     var skipBtn = document.getElementById('tutorial-skip');
 
     var tooltip = document.getElementById('tutorial-tooltip');
-    overlay.classList.remove('hidden');
+    if (step.noOverlay) {
+      overlay.classList.add('hidden');
+    } else {
+      overlay.classList.remove('hidden');
+    }
     tooltip.classList.remove('hidden');
     msgEl.textContent = t(step.msgKey);
 
@@ -130,7 +133,7 @@
 
     skipBtn.textContent = t('tut_skip_short');
 
-    // Position tooltip: default bottom of screen, move to top if highlight overlaps
+    // Position tooltip: default bottom, move to top if highlight overlaps
     tooltip.style.top = '';
     tooltip.style.bottom = '16px';
     tooltip.style.left = '50%';
@@ -142,7 +145,6 @@
         var rect = target.getBoundingClientRect();
         var tooltipH = tooltip.offsetHeight || 120;
         var bottomZone = window.innerHeight - 16 - tooltipH;
-        // If highlight overlaps the bottom tooltip area, move tooltip to top
         if (rect.bottom > bottomZone) {
           tooltip.style.bottom = '';
           tooltip.style.top = '16px';
@@ -152,7 +154,6 @@
   }
 
   function advance() {
-    // Clean up previous step listeners
     cleanupHoldListener();
 
     currentStep++;
@@ -165,7 +166,6 @@
     setHighlight(step.highlight);
     showTooltip(step);
 
-    // Wire up action-specific listeners
     if (step.action === 'roll') {
       setupRollListener();
     } else if (step.action === 'hold') {
@@ -231,7 +231,6 @@
       if (!cat) return;
 
       if (pendingCat === cat) {
-        // Confirm
         var Scoring = window.YachtGame.Scoring;
         var diceVals = [];
         for (var i = 0; i < 5; i++) {
@@ -261,11 +260,9 @@
     active = true;
     currentStep = -1;
 
-    // Remember which screen to return to
     var activeScreen = document.querySelector('.screen.active');
     returnScreen = activeScreen ? activeScreen.id : 'screen-login';
 
-    // Build mock data and show game screen
     buildMockRoom();
     window.YachtGame.UI.showScreen('screen-game', 'yacht');
 
@@ -273,7 +270,6 @@
     var gameScreen = document.getElementById('screen-game');
     if (gameScreen) gameScreen.classList.add('no-anim');
 
-    // Hide game-only buttons that don't apply in tutorial
     var btns = document.querySelectorAll('.game-only');
     for (var i = 0; i < btns.length; i++) {
       btns[i].style.display = 'none';
@@ -288,29 +284,22 @@
     currentStep = -1;
     mockRoomData = null;
 
-    // Clean up listeners
     cleanupHoldListener();
-
-    // Remove highlight
     setHighlight(null);
 
-    // Hide overlay, tooltip
     var overlay = document.getElementById('tutorial-overlay');
     if (overlay) overlay.classList.add('hidden');
     var tooltip = document.getElementById('tutorial-tooltip');
     if (tooltip) tooltip.classList.add('hidden');
 
-    // Restore animation stacking context
     var gameScreen = document.getElementById('screen-game');
     if (gameScreen) gameScreen.classList.remove('no-anim');
 
-    // Restore game-only buttons
     var btns = document.querySelectorAll('.game-only');
     for (var i = 0; i < btns.length; i++) {
       btns[i].style.display = '';
     }
 
-    // Return to previous screen
     window.YachtGame.UI.showScreen(returnScreen);
   }
 
