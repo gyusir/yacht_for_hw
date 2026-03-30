@@ -102,6 +102,7 @@
     if (!snapshot.exists()) return;
 
     var room = snapshot.val();
+    var prevRoom = lastRoomData;
     lastRoomData = room;
     gameMode = room.gameMode;
 
@@ -136,6 +137,19 @@
     } else {
       UI.showDrawProposal(false);
       UI.showDrawPending(false);
+    }
+
+    // Skip re-render if only non-game-state fields changed (e.g. emotes)
+    if (prevRoom && prevRoom.status === room.status &&
+        prevRoom.currentTurn === room.currentTurn &&
+        prevRoom.rollCount === room.rollCount &&
+        JSON.stringify(prevRoom.dice) === JSON.stringify(room.dice) &&
+        JSON.stringify(prevRoom.heldDice) === JSON.stringify(room.heldDice) &&
+        JSON.stringify(prevRoom.players && prevRoom.players.player1 && prevRoom.players.player1.scores) ===
+        JSON.stringify(room.players && room.players.player1 && room.players.player1.scores) &&
+        JSON.stringify(prevRoom.players && prevRoom.players.player2 && prevRoom.players.player2.scores) ===
+        JSON.stringify(room.players && room.players.player2 && room.players.player2.scores)) {
+      return;
     }
 
     // Game over check
