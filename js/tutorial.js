@@ -152,17 +152,21 @@
     overlay.classList.remove('hidden');
     msgEl.textContent = t(step.msgKey);
 
-    if (step.action === 'next') {
-      nextBtn.style.display = '';
-      nextBtn.textContent = t('tut_next');
-    } else if (step.action === 'finish') {
+    if (step.action === 'finish') {
       nextBtn.style.display = '';
       nextBtn.textContent = t('tut_start_playing');
+      skipBtn.style.display = 'none';
+    } else if (step.action === 'next' || step.action === 'hold') {
+      nextBtn.style.display = '';
+      nextBtn.textContent = t('tut_next');
+      skipBtn.style.display = '';
     } else {
+      // roll, score — hide next until action is done
       nextBtn.style.display = 'none';
+      skipBtn.style.display = '';
     }
 
-    skipBtn.textContent = t('tut_skip');
+    skipBtn.textContent = t('tut_skip_short');
 
     // Position tooltip: default bottom of screen, move to top if highlight overlaps
     var tooltip = document.getElementById('tutorial-tooltip');
@@ -187,6 +191,9 @@
   }
 
   function advance() {
+    // Clean up previous step listeners
+    cleanupHoldListener();
+
     currentStep++;
     if (currentStep >= STEPS.length) {
       cleanup();
@@ -228,6 +235,8 @@
     renderMockState();
   }
 
+  var holdClickHandler = null;
+
   function setupHoldListener() {
     var diceArea = document.getElementById('dice-area');
     function onHoldClick(e) {
@@ -237,17 +246,17 @@
       if (isNaN(idx)) return;
       mockRoomData.heldDice[idx] = !mockRoomData.heldDice[idx];
       renderMockState();
-      // Check if at least one is held
-      var anyHeld = false;
-      for (var i = 0; i < 5; i++) {
-        if (mockRoomData.heldDice[i]) anyHeld = true;
-      }
-      if (anyHeld) {
-        diceArea.removeEventListener('click', onHoldClick);
-        setTimeout(function () { advance(); }, 300);
-      }
     }
+    holdClickHandler = onHoldClick;
     diceArea.addEventListener('click', onHoldClick);
+  }
+
+  function cleanupHoldListener() {
+    if (holdClickHandler) {
+      var diceArea = document.getElementById('dice-area');
+      if (diceArea) diceArea.removeEventListener('click', holdClickHandler);
+      holdClickHandler = null;
+    }
   }
 
   function setupScoreListener() {
@@ -313,6 +322,9 @@
     active = false;
     currentStep = -1;
     mockRoomData = null;
+
+    // Clean up listeners
+    cleanupHoldListener();
 
     // Remove highlight
     setHighlight(null);

@@ -176,6 +176,7 @@
       tut_summary: 'Great! You know the basics. Try playing against a bot to practice!',
       tut_next: 'Next',
       tut_skip: 'Skip Tutorial',
+      tut_skip_short: 'Skip',
       tut_start_playing: 'Start Playing!',
       tut_you: 'You',
       tut_opponent: 'Opponent'
@@ -352,6 +353,7 @@
       tut_summary: '\uc644\ub8cc! \uae30\ubcf8\uc744 \uc775\ud614\uc2b5\ub2c8\ub2e4. \ubd07 \ub300\uc804\uc73c\ub85c \uc5f0\uc2b5\ud574 \ubcf4\uc138\uc694!',
       tut_next: '\ub2e4\uc74c',
       tut_skip: '\ud29c\ud1a0\ub9ac\uc5bc \uac74\ub108\ub6f0\uae30',
+      tut_skip_short: '\uac74\ub108\ub6f0\uae30',
       tut_start_playing: '\ud50c\ub808\uc774 \uc2dc\uc791!',
       tut_you: '\ub098',
       tut_opponent: '\uc0c1\ub300'
