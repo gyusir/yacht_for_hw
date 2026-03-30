@@ -370,14 +370,27 @@
     UI.hideRulesOverlay();
   });
 
+  var leaveOverlay = document.getElementById('overlay-leave-confirm');
+  var leaveMsg = document.getElementById('leave-confirm-msg');
+  var btnLeaveYes = document.getElementById('btn-leave-yes');
+  var btnLeaveNo = document.getElementById('btn-leave-no');
+
   btnLeave.addEventListener('click', function () {
     var I18n = window.YachtGame.I18n;
     var msg = window.YachtGame._isBotGame
       ? (I18n ? I18n.t('confirm_leave_bot') : 'Leave bot game? This counts as a loss.')
       : (I18n ? I18n.t('confirm_leave_online') : 'Really leave? Your opponent wins.');
-    if (confirm(msg)) {
-      window.YachtGame.Game.leaveGame();
-    }
+    leaveMsg.textContent = msg;
+    leaveOverlay.classList.remove('hidden');
+  });
+
+  btnLeaveYes.addEventListener('click', function () {
+    leaveOverlay.classList.add('hidden');
+    window.YachtGame.Game.leaveGame();
+  });
+
+  btnLeaveNo.addEventListener('click', function () {
+    leaveOverlay.classList.add('hidden');
   });
 
   // --- Draw Proposal ---
