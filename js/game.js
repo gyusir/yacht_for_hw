@@ -25,6 +25,12 @@
   var rollDiceFn = null;
   var selectCategoryFn = null;
   var leaveGameFn = null;
+  var proposeDrawFn = null;
+  var respondToDrawFn = null;
+  var claimDisconnectWinFn = null;
+  var disconnectTimerId = null;
+  var disconnectCountdownId = null;
+  var DISCONNECT_TIMEOUT = 10;
 
   function getFunctions() {
     if (!rollDiceFn) {
@@ -32,7 +38,39 @@
       rollDiceFn = fns.httpsCallable('rollDice');
       selectCategoryFn = fns.httpsCallable('selectCategory');
       leaveGameFn = fns.httpsCallable('leaveGame');
+      proposeDrawFn = fns.httpsCallable('proposeDraw');
+      respondToDrawFn = fns.httpsCallable('respondToDraw');
+      claimDisconnectWinFn = fns.httpsCallable('claimDisconnectWin');
     }
+  }
+
+  function clearDisconnectTimer() {
+    if (disconnectTimerId) { clearTimeout(disconnectTimerId); disconnectTimerId = null; }
+    if (disconnectCountdownId) { clearInterval(disconnectCountdownId); disconnectCountdownId = null; }
+  }
+
+  function startDisconnectCountdown() {
+    clearDisconnectTimer();
+    var remaining = DISCONNECT_TIMEOUT;
+    var timerEl = document.getElementById('disconnect-timer');
+    if (timerEl) timerEl.textContent = remaining;
+
+    disconnectCountdownId = setInterval(function () {
+      remaining--;
+      if (timerEl) timerEl.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(disconnectCountdownId);
+        disconnectCountdownId = null;
+      }
+    }, 1000);
+
+    disconnectTimerId = setTimeout(function () {
+      disconnectTimerId = null;
+      getFunctions();
+      claimDisconnectWinFn({ roomCode: roomCode }).catch(function (err) {
+        console.error('claimDisconnectWin error:', err);
+      });
+    }, DISCONNECT_TIMEOUT * 1000);
   }
 
   function init(code, playerKey) {
@@ -79,11 +117,25 @@
       return;
     }
 
-    // Handle disconnection
+    // Handle disconnection with 10s auto-win countdown
     if (oppData.connected === false && room.status === 'playing') {
       UI.showDisconnectOverlay(true);
+      if (!disconnectTimerId) startDisconnectCountdown();
     } else {
       UI.showDisconnectOverlay(false);
+      clearDisconnectTimer();
+    }
+
+    // Handle draw proposal
+    if (room.drawProposal && room.status === 'playing') {
+      if (room.drawProposal.proposedBy !== localPlayerKey) {
+        UI.showDrawProposal(true);
+      } else {
+        UI.showDrawPending(true);
+      }
+    } else {
+      UI.showDrawProposal(false);
+      UI.showDrawPending(false);
     }
 
     // Game over check
@@ -473,9 +525,26 @@
     lastSeenEmoteTs = 0;
     lastCelebrationTs = 0;
     celebratedBonuses = {};
+    clearDisconnectTimer();
     // Restore player's own skin
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();
+  }
+
+  function proposeDraw() {
+    if (!roomCode) return;
+    getFunctions();
+    proposeDrawFn({ roomCode: roomCode }).catch(function (err) {
+      console.error('proposeDraw error:', err);
+    });
+  }
+
+  function respondToDraw(accept) {
+    if (!roomCode) return;
+    getFunctions();
+    respondToDrawFn({ roomCode: roomCode, accept: accept }).catch(function (err) {
+      console.error('respondToDraw error:', err);
+    });
   }
 
   window.YachtGame.Game = {
@@ -488,6 +557,8 @@
     getGameMode: getGameMode,
     destroy: destroy,
     getPendingCategory: function () { return pendingCategory; },
-    isRolling: function () { return isRolling; }
+    isRolling: function () { return isRolling; },
+    proposeDraw: proposeDraw,
+    respondToDraw: respondToDraw
   };
 })();

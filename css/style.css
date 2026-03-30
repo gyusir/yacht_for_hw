@@ -1681,6 +1681,22 @@ input[type="text"]::placeholder {
   box-shadow: var(--shadow-lg);
 }
 
+.disconnect-countdown {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.draw-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.draw-buttons .btn-primary,
+.draw-buttons .btn-secondary {
+  padding: 10px 24px;
+}
+
 /* ===== Session Notice ===== */
 .session-notice {
   margin-top: 16px;

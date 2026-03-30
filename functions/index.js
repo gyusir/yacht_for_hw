@@ -470,6 +470,94 @@ exports.cancelRoom = regionFn.https.onCall(async (data, context) => {
   return { success: true };
 });
 
+// ─── proposeDraw ───
+
+exports.proposeDraw = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  const { roomCode } = data;
+
+  if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
+
+  const roomRef = db.ref("rooms/" + roomCode);
+  const snap = await roomRef.once("value");
+  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+
+  const room = snap.val();
+  const playerKey = findPlayerKey(room.players, uid);
+  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+  if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
+  if (room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "A draw proposal is already pending.");
+
+  await roomRef.child("drawProposal").set({
+    proposedBy: playerKey,
+    timestamp: ServerValue.TIMESTAMP
+  });
+
+  return { success: true };
+});
+
+// ─── respondToDraw ───
+
+exports.respondToDraw = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  const { roomCode, accept } = data;
+
+  if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
+
+  const roomRef = db.ref("rooms/" + roomCode);
+  const snap = await roomRef.once("value");
+  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+
+  const room = snap.val();
+  const playerKey = findPlayerKey(room.players, uid);
+  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+  if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
+  if (!room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "No draw proposal pending.");
+  if (room.drawProposal.proposedBy === playerKey) throw new functions.https.HttpsError("failed-precondition", "Cannot respond to own proposal.");
+
+  if (accept) {
+    await roomRef.update({ status: "finished", winner: "tie", drawProposal: null });
+  } else {
+    await roomRef.child("drawProposal").remove();
+  }
+
+  return { success: true };
+});
+
+// ─── claimDisconnectWin ───
+
+exports.claimDisconnectWin = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  const { roomCode } = data;
+
+  if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
+
+  const roomRef = db.ref("rooms/" + roomCode);
+
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    if (room.status !== "playing") return;
+
+    const playerKey = findPlayerKey(room.players, uid);
+    if (!playerKey) return;
+
+    const oppKey = opponentOf(playerKey);
+    if (room.players[oppKey] && room.players[oppKey].connected === false) {
+      room.status = "finished";
+      room.winner = playerKey;
+      return room;
+    }
+
+    return;
+  });
+
+  if (!result.committed) {
+    throw new functions.https.HttpsError("failed-precondition", "Cannot claim win: opponent may have reconnected.");
+  }
+
+  return { success: true };
+});
+
 // ─── saveBotGameResult ───
 
 exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {

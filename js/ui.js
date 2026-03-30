@@ -67,6 +67,20 @@
     }
   }
 
+  // Draw proposal overlays
+  function showDrawProposal(show) {
+    var overlay = document.getElementById('overlay-draw-proposal');
+    if (overlay) {
+      if (show) overlay.classList.remove('hidden');
+      else overlay.classList.add('hidden');
+    }
+  }
+
+  function showDrawPending(show) {
+    var btn = document.getElementById('btn-draw');
+    if (btn) btn.disabled = show;
+  }
+
   // Turn indicator (no-op, turn is shown via roll button dimming)
   function updateTurnIndicator(isMyTurn, opponentName) {}
 
@@ -467,6 +481,8 @@
     hideShortcutOverlay: hideShortcutOverlay,
     showEmoteBubble: showEmoteBubble,
     renderHistory: renderHistory,
-    showConfetti: showConfetti
+    showConfetti: showConfetti,
+    showDrawProposal: showDrawProposal,
+    showDrawPending: showDrawPending
   };
 })();

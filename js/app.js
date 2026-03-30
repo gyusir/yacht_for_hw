@@ -58,6 +58,9 @@
   var btnBotPlay = document.getElementById('btn-bot-play');
   var btnBotStart = document.getElementById('btn-bot-start');
   var btnBackLobbyBot = document.getElementById('btn-back-lobby-bot');
+  var btnDraw = document.getElementById('btn-draw');
+  var btnAcceptDraw = document.getElementById('btn-accept-draw');
+  var btnDeclineDraw = document.getElementById('btn-decline-draw');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -314,6 +317,7 @@
 
     window.YachtGame._onlineGame = window.YachtGame.Game;
     window.YachtGame.Game = window.YachtGame.BotGame;
+    btnDraw.hidden = true;
     window.YachtGame.Game.init(gameMode, diff, playerName);
   });
 
@@ -366,6 +370,22 @@
     if (confirm(msg)) {
       window.YachtGame.Game.leaveGame();
     }
+  });
+
+  // --- Draw Proposal ---
+  btnDraw.addEventListener('click', function () {
+    if (window.YachtGame._isBotGame) return;
+    window.YachtGame.Game.proposeDraw();
+    var I18n = window.YachtGame.I18n;
+    UI.showToast(I18n ? I18n.t('draw_proposed') : 'Draw proposed. Waiting for response...');
+  });
+
+  btnAcceptDraw.addEventListener('click', function () {
+    window.YachtGame.Game.respondToDraw(true);
+  });
+
+  btnDeclineDraw.addEventListener('click', function () {
+    window.YachtGame.Game.respondToDraw(false);
   });
 
   // --- My Stats ---
@@ -504,6 +524,7 @@
       window.YachtGame._onlineGame = null;
     }
     window.YachtGame._isBotGame = false;
+    btnDraw.hidden = false;
     Lobby.clearSession();
     UI.showScreen('screen-lobby');
     lobbyError.hidden = true;

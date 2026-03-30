@@ -12,6 +12,7 @@
     <div class="header-controls">
       <button id="btn-shortcut" class="btn-icon game-only" data-i18n-title="shortcut_title" title="PC Shortcuts">Key</button>
       <button id="btn-rule" class="btn-icon game-only" data-i18n-title="rule_title" title="Rules">Rule</button>
+      <button id="btn-draw" class="btn-icon game-only" title="Draw">Draw</button>
       <button id="btn-leave" class="btn-icon btn-leave game-only" data-i18n-title="leave_title" title="Leave">Quit</button>
       <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
       <button id="theme-toggle" aria-label="Toggle theme">
@@ -215,6 +216,7 @@
     <div class="overlay-content">
       <div class="spinner"></div>
       <p data-i18n="opponent_disconnected">Opponent disconnected. Waiting for reconnection...</p>
+      <p class="disconnect-countdown"><span data-i18n="auto_win_in">Auto-win in</span> <span id="disconnect-timer">10</span>s</p>
     </div>
   </div>
 
@@ -271,6 +273,17 @@
           <tr><td><kbd>Enter</kbd></td><td data-i18n="shortcut_confirm">Confirm / Roll</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Overlay: Draw Proposal -->
+  <div id="overlay-draw-proposal" class="overlay hidden">
+    <div class="overlay-content">
+      <p data-i18n="draw_proposal_msg">Opponent proposes a draw. Accept?</p>
+      <div class="draw-buttons">
+        <button id="btn-accept-draw" class="btn-primary" data-i18n="accept">Accept</button>
+        <button id="btn-decline-draw" class="btn-secondary" data-i18n="decline">Decline</button>
+      </div>
     </div>
   </div>
 

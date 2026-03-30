@@ -86,10 +86,18 @@
 
       // Disconnect
       opponent_disconnected: 'Opponent disconnected. Waiting for reconnection...',
+      auto_win_in: 'Auto-win in',
 
       // Leave confirm
       confirm_leave_bot: 'Leave bot game? This counts as a loss.',
       confirm_leave_online: 'Really leave? Your opponent wins.',
+
+      // Draw
+      draw_proposal_msg: 'Opponent proposes a draw. Accept?',
+      draw_proposed: 'Draw proposed. Waiting for response...',
+      draw_declined: 'Opponent declined the draw.',
+      accept: 'Accept',
+      decline: 'Decline',
 
       // Category names
       cat_ones: 'Ones',
@@ -237,10 +245,18 @@
 
       // Disconnect
       opponent_disconnected: '\uc0c1\ub300\uac00 \uc5f0\uacb0 \ub04a\uacbc\uc2b5\ub2c8\ub2e4. \uc7ac\uc811\uc18d \ub300\uae30 \uc911...',
+      auto_win_in: '\uc790\ub3d9 \uc2b9\ub9ac\uae4c\uc9c0',
 
       // Leave confirm
       confirm_leave_bot: '\ubd07 \uac8c\uc784\uc744 \uc885\ub8cc\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c? \ud328\ubc30\ub85c \uae30\ub85d\ub429\ub2c8\ub2e4.',
       confirm_leave_online: '\uc815\ub9d0 \ub098\uac00\uc2dc\uaca0\uc2b5\ub2c8\uae4c? \uc0c1\ub300\ubc29\uc758 \uc2b9\ub9ac\ub85c \ucc98\ub9ac\ub429\ub2c8\ub2e4.',
+
+      // Draw
+      draw_proposal_msg: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4. \uc218\ub77d\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?',
+      draw_proposed: '\ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4. \uc751\ub2f5 \ub300\uae30 \uc911...',
+      draw_declined: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uac70\uc808\ud588\uc2b5\ub2c8\ub2e4.',
+      accept: '\uc218\ub77d',
+      decline: '\uac70\uc808',
 
       // Category names
       cat_ones: 'Ones (1)',
