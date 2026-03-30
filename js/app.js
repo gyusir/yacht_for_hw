@@ -61,6 +61,10 @@
   var btnDraw = document.getElementById('btn-draw');
   var btnAcceptDraw = document.getElementById('btn-accept-draw');
   var btnDeclineDraw = document.getElementById('btn-decline-draw');
+  var btnTutorialLogin = document.getElementById('btn-tutorial-login');
+  var btnTutorialLobby = document.getElementById('btn-tutorial-lobby');
+  var tutorialNext = document.getElementById('tutorial-next');
+  var tutorialSkip = document.getElementById('tutorial-skip');
 
   var playerName = '';
   var currentWaitingRoomCode = null;
@@ -386,6 +390,22 @@
 
   btnDeclineDraw.addEventListener('click', function () {
     window.YachtGame.Game.respondToDraw(false);
+  });
+
+  // --- Tutorial ---
+  btnTutorialLogin.addEventListener('click', function () {
+    window.YachtGame.Tutorial.start();
+  });
+  btnTutorialLobby.addEventListener('click', function () {
+    window.YachtGame.Tutorial.start();
+  });
+  tutorialNext.addEventListener('click', function () {
+    var Tutorial = window.YachtGame.Tutorial;
+    if (Tutorial && Tutorial.isActive()) Tutorial._advance();
+  });
+  tutorialSkip.addEventListener('click', function () {
+    var Tutorial = window.YachtGame.Tutorial;
+    if (Tutorial) Tutorial.cleanup();
   });
 
   // --- My Stats ---

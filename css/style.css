@@ -1681,6 +1681,63 @@ input[type="text"]::placeholder {
   box-shadow: var(--shadow-lg);
 }
 
+/* ===== Tutorial ===== */
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius);
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  max-width: 320px;
+  width: 90%;
+  z-index: 1002;
+  pointer-events: auto;
+  text-align: center;
+}
+
+.tutorial-tooltip p {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.tutorial-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-tutorial-next {
+  padding: 10px 32px;
+}
+
+.btn-tutorial-skip {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
 .disconnect-countdown {
   font-size: 1.1rem;
   font-weight: 600;

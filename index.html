@@ -47,6 +47,7 @@
         </div>
         <button id="btn-continue-signed" class="btn-primary" data-i18n="continue_btn">Continue</button>
       </div>
+      <button id="btn-tutorial-login" class="btn-text" data-i18n="tutorial">Tutorial</button>
     </div>
   </section>
 
@@ -76,6 +77,7 @@
         <p class="skin-unlock-hint" data-i18n="skin_unlock_hint">Play games to unlock skins. Beat bots to claim theirs.</p>
         <div class="skin-options" id="skin-options"></div>
       </div>
+      <button id="btn-tutorial-lobby" class="btn-text" data-i18n="tutorial">Tutorial</button>
       <button id="btn-my-stats" class="btn-text btn-stats" hidden data-i18n="my_stats">My Stats</button>
       <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_login">Back to Login</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
@@ -276,6 +278,17 @@
     </div>
   </div>
 
+  <!-- Overlay: Tutorial -->
+  <div id="tutorial-overlay" class="tutorial-overlay hidden">
+    <div id="tutorial-tooltip" class="tutorial-tooltip">
+      <p id="tutorial-message"></p>
+      <div class="tutorial-buttons">
+        <button id="tutorial-next" class="btn-primary btn-tutorial-next">Next</button>
+        <button id="tutorial-skip" class="btn-text btn-tutorial-skip">Skip Tutorial</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay: Draw Proposal -->
   <div id="overlay-draw-proposal" class="overlay hidden">
     <div class="overlay-content">
@@ -309,6 +322,7 @@
   <script src="js/bot-ai.js"></script>
   <script src="js/bot-game.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/tutorial.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
