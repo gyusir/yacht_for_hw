@@ -283,7 +283,7 @@
       // Leave confirm
       confirm_leave_bot: '\ubd07 \uac8c\uc784\uc744 \uc885\ub8cc\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n\ud328\ubc30\ub85c \uae30\ub85d\ub429\ub2c8\ub2e4.',
       confirm_leave_online: '\uc815\ub9d0 \ub098\uac00\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n\uc0c1\ub300\ubc29\uc758 \uc2b9\ub9ac\ub85c \ucc98\ub9ac\ub429\ub2c8\ub2e4.',
-      confirm_yes: '\ub124',
+      confirm_yes: '\uae30\uad8c',
       confirm_no: '\ucde8\uc18c',
 
       // Draw

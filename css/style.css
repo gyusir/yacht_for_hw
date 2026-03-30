@@ -1925,6 +1925,8 @@ input[type="text"]::placeholder {
 .draw-buttons .btn-primary,
 .draw-buttons .btn-secondary {
   padding: 10px 24px;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 /* ===== Session Notice ===== */
