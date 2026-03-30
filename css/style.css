@@ -1692,7 +1692,8 @@ input[type="text"]::placeholder {
   pointer-events: none;
 }
 
-.tutorial-overlay.hidden {
+.tutorial-overlay.hidden,
+.tutorial-tooltip.hidden {
   display: none;
 }
 

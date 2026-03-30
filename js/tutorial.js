@@ -149,7 +149,9 @@
     var nextBtn = document.getElementById('tutorial-next');
     var skipBtn = document.getElementById('tutorial-skip');
 
+    var tooltip = document.getElementById('tutorial-tooltip');
     overlay.classList.remove('hidden');
+    tooltip.classList.remove('hidden');
     msgEl.textContent = t(step.msgKey);
 
     if (step.action === 'finish') {
@@ -169,7 +171,6 @@
     skipBtn.textContent = t('tut_skip_short');
 
     // Position tooltip: default bottom of screen, move to top if highlight overlaps
-    var tooltip = document.getElementById('tutorial-tooltip');
     tooltip.style.top = '';
     tooltip.style.bottom = '16px';
     tooltip.style.left = '50%';
@@ -329,9 +330,11 @@
     // Remove highlight
     setHighlight(null);
 
-    // Hide overlay
+    // Hide overlay and tooltip
     var overlay = document.getElementById('tutorial-overlay');
     if (overlay) overlay.classList.add('hidden');
+    var tooltip = document.getElementById('tutorial-tooltip');
+    if (tooltip) tooltip.classList.add('hidden');
 
     // Restore game-only buttons
     var btns = document.querySelectorAll('.game-only');
