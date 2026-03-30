@@ -12,7 +12,7 @@
   var STEPS = [
     { id: 'intro',    highlight: null,           msgKey: 'tut_intro',    action: 'next'   },
     { id: 'scorecard',highlight: '#scorecard',   msgKey: 'tut_scorecard',action: 'next'   },
-    { id: 'dice',     highlight: '.dice-roll-row',msgKey: 'tut_dice',   action: 'next'   },
+    { id: 'dice',     highlight: null,             msgKey: 'tut_dice',   action: 'next'   },
     { id: 'roll',     highlight: '#btn-roll',    msgKey: 'tut_roll',    action: 'roll'   },
     { id: 'hold',     highlight: '#dice-area',   msgKey: 'tut_hold',    action: 'hold'   },
     { id: 'reroll',   highlight: '#btn-roll',    msgKey: 'tut_reroll',  action: 'roll'   },

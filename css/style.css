@@ -1702,7 +1702,6 @@ input[type="text"]::placeholder {
   z-index: 1001 !important;
   border-radius: var(--radius);
   box-shadow: 0 0 0 4px var(--accent);
-  background: var(--surface) !important;
 }
 
 
