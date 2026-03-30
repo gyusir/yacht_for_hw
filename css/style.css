@@ -222,6 +222,13 @@ body.in-game .header-controls {
   white-space: pre-line;
 }
 
+.welcome-tagline {
+  font-style: italic;
+  font-size: 0.85rem !important;
+  margin-bottom: 12px !important;
+  color: var(--text-muted);
+}
+
 [data-i18n] {
   white-space: pre-line;
 }
