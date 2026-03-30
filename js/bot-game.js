@@ -471,6 +471,7 @@
 
   function startBotTurn() {
     if (!roomData || roomData.status === 'finished') return;
+    if (idleTimerId) { clearTimeout(idleTimerId); idleTimerId = null; }
     turnCount++;
 
     // Game start emote on first bot turn
