@@ -250,6 +250,12 @@
 
   // Get display name for a category
   function getDisplayName(category) {
+    var I18n = window.YachtGame.I18n;
+    if (I18n) {
+      var key = 'cat_' + category;
+      var val = I18n.t(key);
+      if (val !== key) return val;
+    }
     return CATEGORY_DISPLAY[category] || category;
   }
 

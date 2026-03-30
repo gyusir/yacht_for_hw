@@ -19,22 +19,30 @@
 
   var BOT_EMOTE_COOLDOWN = 4000;
   var IDLE_TIMEOUT = 10000;
+  var botConsecutiveHigh = 0;
+  var playerConsecutiveLow = 0;
+  var prevScoreGap = 0;
 
   // ─── Emote Trigger Definitions ───
 
   var EMOTE_TRIGGERS = {
-    game_start:     { basic: 0.80, gambler: 0.90, pool: ['\u{1F9CA} 쿨하게 가자', '\u{1F3AF} 계획대로'] },
-    bot_yacht:      { basic: 0.90, gambler: 0.95, pool: ['\u{1F525} 실화냐?', '\u{1F451} 왕이 납신다'] },
-    bot_high:       { basic: 0.40, gambler: 0.60, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F3AF} 계획대로'] },
-    bot_zero:       { basic: 0.30, gambler: 0.50, pool: ['\u{1F926} 말도 안돼', '\u{1F62D} 봐줘요...'] },
-    player_yacht:   { basic: 0.50, gambler: 0.70, pool: ['\u{1F631} 헐 대박', '\u{1F340} 운 좋았을 뿐~'] },
-    player_zero:    { basic: 0.40, gambler: 0.55, pool: ['\u{1F60E} 게임 쉽네요', '\u2753 그게 최선?'] },
-    player_low:     { basic: 0.25, gambler: 0.40, pool: ['\u2753 그게 최선?', '\u{1F914} Hmm...'] },
-    bot_leading:    { basic: 0.15, gambler: 0.30, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F451} 왕이 납신다'] },
-    bot_losing:     { basic: 0.20, gambler: 0.35, pool: ['\u{1F62D} 봐줘요...', '\u{1F9CA} 쿨하게 가자'] },
-    player_slow:    { basic: 0.10, gambler: 0.25, pool: ['\u{1F422} 좀 빨리~', '\u{1F971} 하품 나온다~'] },
-    game_end_win:   { basic: 0.70, gambler: 0.85, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F451} 왕이 납신다', '\u{1F44B} Nice try!'] },
-    game_end_lose:  { basic: 0.60, gambler: 0.75, pool: ['\u{1F926} 말도 안돼', '\u{1F340} 운 좋았을 뿐~'] }
+    game_start:       { basic: 0.80, gambler: 0.90, pool: ['\u{1F9CA} 쿨하게 가자', '\u{1F3AF} 계획대로', '\u{1F44A} 한판 붙자', '\u{1F60F} 봐드림', '\u{1F3B2} 주사위의 신이 왔다'] },
+    bot_yacht:        { basic: 0.90, gambler: 0.95, pool: ['\u{1F525} 실화냐?', '\u{1F451} 왕이 납신다', '\u{1F4A5} 완벽한 한방!', '\u{1F3C6} 이게 실력이지', '\u{1F60E} 너무 쉬운데?'] },
+    bot_high:         { basic: 0.40, gambler: 0.60, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F3AF} 계획대로', '\u{1F4AA} 이 정도는 기본', '\u{1F9E0} 천재인가?', '\u{1F4C8} 점수가 쭉쭉'] },
+    bot_zero:         { basic: 0.30, gambler: 0.50, pool: ['\u{1F926} 말도 안돼', '\u{1F62D} 봐줘요...', '\u{1F4A8} 잠깐 실수...', '\u{1F612} 다음엔 안 이래'] },
+    player_yacht:     { basic: 0.50, gambler: 0.70, pool: ['\u{1F631} 헐 대박', '\u{1F340} 운 좋았을 뿐~', '\u{1F644} 치트 쓴 거 아님?', '\u{1F914} 다시는 안 나올걸', '\u{1F612} 좀 치네...'] },
+    player_zero:      { basic: 0.40, gambler: 0.55, pool: ['\u{1F60E} 게임 쉽네요', '\u2753 그게 최선?', '\u{1F923} ㅋㅋㅋㅋㅋ', '\u{1F4A9} 실력 맞아?', '\u{1F622} 너무 슬프다...'] },
+    player_low:       { basic: 0.25, gambler: 0.40, pool: ['\u2753 그게 최선?', '\u{1F914} Hmm...', '\u{1F9D0} 전략이 있긴 한 거?', '\u{1F615} 좀 더 잘할 수 있지 않나...', '\u{1F971} 하품~'] },
+    bot_leading:      { basic: 0.15, gambler: 0.30, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F451} 왕이 납신다', '\u{1F3C3} 따라와 봐~', '\u{1F4AA} 격차가 벌어지네', '\u{1F44B} 항복할래?'] },
+    bot_losing:       { basic: 0.20, gambler: 0.35, pool: ['\u{1F62D} 봐줘요...', '\u{1F9CA} 쿨하게 가자', '\u{1F612} 아직 안 끝났어', '\u{1F525} 역전 간다'] },
+    player_slow:      { basic: 0.10, gambler: 0.25, pool: ['\u{1F422} 좀 빨리~', '\u{1F971} 하품 나온다~', '\u{23F0} 시간 다 간다', '\u{1F634} Zzz...', '\u{1F4A4} 자는 거야?'] },
+    game_end_win:     { basic: 0.70, gambler: 0.85, pool: ['\u{1F60E} 게임 쉽네요', '\u{1F451} 왕이 납신다', '\u{1F44B} Nice try!', '\u{1F3C6} GG', '\u{1F60F} 한 수 배웠지?'] },
+    game_end_lose:    { basic: 0.60, gambler: 0.75, pool: ['\u{1F926} 말도 안돼', '\u{1F340} 운 좋았을 뿐~', '\u{1F612} 다음엔 진다', '\u{1F620} 리매치!'] },
+    bot_comeback:     { basic: 0.50, gambler: 0.70, pool: ['\u{1F525} 역전의 서막!', '\u{1F60F} 떨리지?', '\u{1F4AA} 다시 붙어보자', '\u{1F3AF} 계획대로', '\u{1F608} 흔들리고 있지?'] },
+    player_wasted:    { basic: 0.50, gambler: 0.70, pool: ['\u{1F62C} 아까워라~', '\u{1F923} 그걸 0점?!', '\u{1F4A9} 감사합니다~', '\u{1F92D} 그건 좀 아닌데...', '\u{1F622} 나라도 울겠다'] },
+    bot_streak:       { basic: 0.40, gambler: 0.60, pool: ['\u{1F525} 불붙었다!', '\u{1F4AA} 연속 고득점!', '\u{1F60E} 멈출 수가 없네', '\u{1F680} 폭주 중~'] },
+    player_streak_bad:{ basic: 0.35, gambler: 0.55, pool: ['\u{1F62C} 연속으로?!', '\u{1F914} 실력인가 운인가', '\u{1F4C9} 추락 중~', '\u{1F622} 눈물이 앞을 가린다'] },
+    mid_game_taunt:   { basic: 0.12, gambler: 0.25, pool: ['\u{1F60F} 중반인데 이 격차?', '\u{1F451} 이미 끝난 게임', '\u{1F44B} 지금이라도 항복?', '\u{1F3AF} 예정된 승리'] }
   };
 
   // ─── Helpers ───
@@ -84,6 +92,16 @@
 
   // ─── Emote System ───
 
+  function getScoreGap() {
+    if (!roomData) return 0;
+    var Scoring = window.YachtGame.Scoring;
+    var myScores = roomData.players.player1.scores || {};
+    var botScores = roomData.players.player2.scores || {};
+    var myT = Scoring.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
+    var botT = Scoring.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
+    return botT - myT;
+  }
+
   function tryBotEmote(event) {
     var now = Date.now();
     if (now - lastBotEmoteTime < BOT_EMOTE_COOLDOWN) return;
@@ -92,6 +110,8 @@
     if (!trigger) return;
 
     var prob = difficulty === 'gambler' ? trigger.gambler : trigger.basic;
+    var gap = getScoreGap();
+    if (gap > 50) prob = Math.min(prob * 1.3, 1.0);
     if (Math.random() > prob) return;
 
     var emote = trigger.pool[Math.floor(Math.random() * trigger.pool.length)];
@@ -360,16 +380,36 @@
     }
 
     // Check emote triggers for the category just scored
+    var HIGH_VALUE_CATS = { yacht: 1, yahtzee: 1, fullHouse: 1, largeStraight: 1 };
     if (playerKey === 'player1') {
       // Player just scored
-      if (score === 0) tryBotEmote('player_zero');
-      else if (score <= 5) tryBotEmote('player_low');
+      if (score === 0) {
+        tryBotEmote('player_zero');
+        playerConsecutiveLow++;
+        if (score === 0 && HIGH_VALUE_CATS[category]) tryBotEmote('player_wasted');
+      } else if (score <= 5) {
+        tryBotEmote('player_low');
+        playerConsecutiveLow++;
+      } else {
+        playerConsecutiveLow = 0;
+      }
+      if (playerConsecutiveLow >= 2) tryBotEmote('player_streak_bad');
       if ((category === 'yacht' || category === 'yahtzee') && score === 50) tryBotEmote('player_yacht');
+      botConsecutiveHigh = 0;
     } else {
       // Bot just scored
-      if (score === 0) tryBotEmote('bot_zero');
-      else if (score >= 25) tryBotEmote('bot_high');
+      if (score === 0) {
+        tryBotEmote('bot_zero');
+        botConsecutiveHigh = 0;
+      } else if (score >= 20) {
+        if (score >= 25) tryBotEmote('bot_high');
+        botConsecutiveHigh++;
+        if (botConsecutiveHigh >= 2) tryBotEmote('bot_streak');
+      } else {
+        botConsecutiveHigh = 0;
+      }
       if ((category === 'yacht' || category === 'yahtzee') && score === 50) tryBotEmote('bot_yacht');
+      playerConsecutiveLow = 0;
     }
 
     // Switch turn
@@ -405,8 +445,17 @@
     var Scoring2 = window.YachtGame.Scoring;
     var myT = Scoring2.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
     var botT = Scoring2.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
-    if (botT - myT >= 30) tryBotEmote('bot_leading');
-    else if (myT - botT >= 30) tryBotEmote('bot_losing');
+    var currentGap = botT - myT;
+    if (currentGap >= 30) tryBotEmote('bot_leading');
+    else if (currentGap <= -30) tryBotEmote('bot_losing');
+
+    // Comeback: bot was losing by 30+ and now gap is within 15
+    if (prevScoreGap <= -30 && currentGap > -15) tryBotEmote('bot_comeback');
+
+    // Mid-game taunt: after turn 6, bot is leading
+    if (turnCount >= 6 && currentGap > 0) tryBotEmote('mid_game_taunt');
+
+    prevScoreGap = currentGap;
 
     onStateUpdate();
 
@@ -635,7 +684,7 @@
     var uid = Auth ? Auth.getPlayerUid() : 'guest';
     var diceSkin = DiceSkins ? DiceSkins.getCurrentSkin() : 'classic';
 
-    var botName = diff === 'gambler' ? 'Bot (Gambler)' : 'Bot (Basic)';
+    var botName = diff === 'gambler' ? 'Gambler Bot' : 'Basic Bot';
 
     roomData = {
       gameMode: gameMode,
@@ -713,6 +762,9 @@
     celebratedBonuses = {};
     turnCount = 0;
     lastBotEmoteTime = 0;
+    botConsecutiveHigh = 0;
+    playerConsecutiveLow = 0;
+    prevScoreGap = 0;
     window.YachtGame._isBotGame = false;
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();

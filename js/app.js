@@ -13,6 +13,10 @@
   // Initialize theme
   UI.initTheme();
 
+  // Initialize language
+  var I18n = window.YachtGame.I18n;
+  if (I18n) I18n.refreshStaticText();
+
   // Initialize dice skin from cache
   DiceSkins.loadSkin();
 
@@ -62,6 +66,20 @@
   // --- Theme Toggle ---
   themeToggle.addEventListener('click', function () {
     UI.toggleTheme();
+  });
+
+  // --- Language Toggle ---
+  var langToggle = document.getElementById('lang-toggle');
+  function updateLangButton() {
+    if (I18n) langToggle.textContent = I18n.getLang() === 'ko' ? 'KO' : 'EN';
+  }
+  updateLangButton();
+  langToggle.addEventListener('click', function () {
+    if (!I18n) return;
+    var newLang = I18n.getLang() === 'ko' ? 'en' : 'ko';
+    I18n.setLang(newLang);
+    I18n.refreshStaticText();
+    updateLangButton();
   });
 
   // --- Auth: show/hide login UI based on auth state ---
@@ -341,9 +359,10 @@
   });
 
   btnLeave.addEventListener('click', function () {
+    var I18n = window.YachtGame.I18n;
     var msg = window.YachtGame._isBotGame
-      ? '봇 게임을 종료하시겠습니까? 패배로 기록됩니다.'
-      : '정말 나가시겠습니까? 상대방의 승리로 처리됩니다.';
+      ? (I18n ? I18n.t('confirm_leave_bot') : 'Leave bot game? This counts as a loss.')
+      : (I18n ? I18n.t('confirm_leave_online') : 'Really leave? Your opponent wins.');
     if (confirm(msg)) {
       window.YachtGame.Game.leaveGame();
     }

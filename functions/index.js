@@ -519,7 +519,7 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
   const profileSnap = await userRef.child("displayName").once("value");
   if (!profileSnap.exists()) return { success: false };
 
-  const botName = botDifficulty === "gambler" ? "Bot (Gambler)" : "Bot (Basic)";
+  const botName = botDifficulty === "gambler" ? "Gambler Bot" : "Basic Bot";
 
   await userRef.child("history").push({
     date: ServerValue.TIMESTAMP,

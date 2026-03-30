@@ -468,6 +468,23 @@ input[type="text"]::placeholder {
   width: auto;
 }
 
+.lobby-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lobby-btn-row .btn-primary {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 360px) {
+  .lobby-btn-row {
+    flex-direction: column;
+  }
+}
+
 /* ===== Bot Section ===== */
 .bot-section {
   display: flex;

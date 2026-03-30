@@ -14,14 +14,15 @@
     if (target) target.classList.add('active');
 
     var titleEl = document.querySelector('h1');
+    var I18n = window.YachtGame.I18n;
     if (screenId === 'screen-game') {
       document.body.classList.add('in-game');
       if (titleEl) {
-        titleEl.textContent = gameMode === 'yahtzee' ? 'Yahtzee Dice' : 'Yacht Dice';
+        titleEl.textContent = I18n ? (gameMode === 'yahtzee' ? I18n.t('title_yahtzee') : I18n.t('title_yacht')) : 'Yacht Dice';
       }
     } else {
       document.body.classList.remove('in-game');
-      if (titleEl) titleEl.textContent = 'Yacht Dice';
+      if (titleEl) titleEl.textContent = I18n ? I18n.t('title_yacht') : 'Yacht Dice';
     }
   }
 
@@ -72,20 +73,22 @@
   // Roll counter — updates roll button text
   function updateRollCounter(count) {
     var btn = document.getElementById('btn-roll');
+    var I18n = window.YachtGame.I18n;
     if (count >= 3) {
-      btn.innerHTML = 'Roll End';
+      btn.innerHTML = I18n ? I18n.t('roll_end') : 'Roll End';
     } else {
-      btn.innerHTML = "Let's Roll!<br><small>(" + count + '/3)</small>';
+      btn.innerHTML = (I18n ? I18n.t('lets_roll') : "Let's Roll!") + '<br><small>(' + count + '/3)</small>';
     }
   }
 
   // Roll button state
   function setRollButtonEnabled(enabled, isMyTurn, rollCount) {
     var btn = document.getElementById('btn-roll');
+    var I18n = window.YachtGame.I18n;
     btn.disabled = !enabled;
     if (!isMyTurn) {
       var rc = rollCount || 0;
-      btn.innerHTML = "Foe's turn<br><small>(" + rc + '/3)</small>';
+      btn.innerHTML = (I18n ? I18n.t('foes_turn') : "Foe's turn") + '<br><small>(' + rc + '/3)</small>';
     }
   }
 
@@ -114,8 +117,9 @@
     var myDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(myDiceSkin) : '';
     var oppDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(oppDiceSkin) : '';
 
+    var I18n = window.YachtGame.I18n;
     html += '<thead><tr>';
-    html += '<th>Category</th>';
+    html += '<th>' + (I18n ? I18n.t('category') : 'Category') + '</th>';
     html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">';
     html += '<span class="header-die-wrap' + (isMyTurn ? ' header-die-spin' : '') + '">' + myDieHTML + '</span> ';
     html += escapeHtml(myName || 'You') + '</th>';
@@ -137,7 +141,7 @@
       var myBonus = Scoring.upperBonus(myScores);
       var oppBonus = Scoring.upperBonus(oppScores);
       html += '<tr class="bonus-row">';
-      html += '<td class="category-name">Bonus</td>';
+      html += '<td class="category-name">' + (I18n ? I18n.t('bonus') : 'Bonus') + '</td>';
       html += '<td class="score-cell mine">' + myUpperSum + '/63' + (myBonus ? ' +35' : '') + '</td>';
       html += '<td class="score-cell opponent">' + oppUpperSum + '/63' + (oppBonus ? ' +35' : '') + '</td>';
       html += '</tr>';
@@ -153,7 +157,7 @@
       var myYB = myScores.yahtzeeBonus || 0;
       var oppYB = oppScores.yahtzeeBonus || 0;
       html += '<tr class="bonus-row">';
-      html += '<td class="category-name">Yahtzee Bonus</td>';
+      html += '<td class="category-name">' + (I18n ? I18n.t('yahtzee_bonus') : 'Yahtzee Bonus') + '</td>';
       html += '<td class="score-cell mine">' + (myYB > 0 ? '+' + myYB : '-') + '</td>';
       html += '<td class="score-cell opponent">' + (oppYB > 0 ? '+' + oppYB : '-') + '</td>';
       html += '</tr>';
@@ -163,7 +167,7 @@
     var myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
     var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
     html += '<tr class="total-row">';
-    html += '<td class="category-name">Total</td>';
+    html += '<td class="category-name">' + (I18n ? I18n.t('total') : 'Total') + '</td>';
     html += '<td class="score-cell mine">' + myTotal + '</td>';
     html += '<td class="score-cell opponent">' + oppTotal + '</td>';
     html += '</tr>';
@@ -214,7 +218,8 @@
     // Create hint popup
     var hint = document.createElement('div');
     hint.className = 'score-confirm-hint';
-    hint.textContent = 'Tap again to confirm';
+    var I18n = window.YachtGame.I18n;
+    hint.textContent = I18n ? I18n.t('confirm_hint') : 'Tap again to confirm';
     cell.appendChild(hint);
 
     // Auto fade-out after 1.5s
@@ -265,18 +270,19 @@
     var p1Total = Scoring.totalScore(player1Scores, gameMode, player1Scores.yahtzeeBonus);
     var p2Total = Scoring.totalScore(player2Scores, gameMode, player2Scores.yahtzeeBonus);
 
+    var I18n = window.YachtGame.I18n;
     var winnerEl = document.getElementById('winner-text');
     if (winner === 'tie') {
-      winnerEl.textContent = "It's a Tie!";
+      winnerEl.textContent = I18n ? I18n.t('its_a_tie') : "It's a Tie!";
     } else if (winner === myPlayerKey) {
-      winnerEl.textContent = 'You Win!';
+      winnerEl.textContent = I18n ? I18n.t('you_win') : 'You Win!';
     } else {
-      winnerEl.textContent = 'You Lose';
+      winnerEl.textContent = I18n ? I18n.t('you_lose') : 'You Lose';
     }
 
     var scoresEl = document.getElementById('final-scores');
     var html = '<table>';
-    html += '<thead><tr><th>Player</th><th>Score</th></tr></thead>';
+    html += '<thead><tr><th>' + (I18n ? I18n.t('player') : 'Player') + '</th><th>' + (I18n ? I18n.t('score') : 'Score') + '</th></tr></thead>';
     html += '<tbody>';
     html += '<tr' + (winner === 'player1' ? ' class="winner-score"' : '') + '>';
     html += '<td>' + escapeHtml(player1Name) + '</td>';
@@ -350,25 +356,26 @@
   function renderHistory(stats, games) {
     var summaryEl = document.getElementById('stats-summary');
     var listEl = document.getElementById('history-list');
+    var I18n = window.YachtGame.I18n;
 
     // Stats summary
     var winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
     var html = '<div class="stats-grid">';
-    html += '<div class="stat-card"><div class="stat-value">' + stats.totalGames + '</div><div class="stat-label">Games</div></div>';
-    html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">Wins</div></div>';
-    html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">Losses</div></div>';
-    html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">Ties</div></div>';
-    html += '<div class="stat-card" style="grid-column: span 2;"><div class="stat-value">' + winRate + '%</div><div class="stat-label">Win Rate</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.totalGames + '</div><div class="stat-label">' + (I18n ? I18n.t('games') : 'Games') + '</div></div>';
+    html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">' + (I18n ? I18n.t('wins') : 'Wins') + '</div></div>';
+    html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">' + (I18n ? I18n.t('losses') : 'Losses') + '</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">' + (I18n ? I18n.t('ties') : 'Ties') + '</div></div>';
+    html += '<div class="stat-card" style="grid-column: span 2;"><div class="stat-value">' + winRate + '%</div><div class="stat-label">' + (I18n ? I18n.t('win_rate') : 'Win Rate') + '</div></div>';
     html += '</div>';
     summaryEl.innerHTML = html;
 
     // Game history list
     if (games.length === 0) {
-      listEl.innerHTML = '<p class="no-history">No games played yet.</p>';
+      listEl.innerHTML = '<p class="no-history">' + (I18n ? I18n.t('no_games') : 'No games played yet.') + '</p>';
       return;
     }
 
-    var listHtml = '<table class="history-table"><thead><tr><th>Date</th><th>Mode</th><th>Opponent</th><th>Score</th><th>Result</th></tr></thead><tbody>';
+    var listHtml = '<table class="history-table"><thead><tr><th>' + (I18n ? I18n.t('date') : 'Date') + '</th><th>' + (I18n ? I18n.t('mode') : 'Mode') + '</th><th>' + (I18n ? I18n.t('opponent') : 'Opponent') + '</th><th>' + (I18n ? I18n.t('score') : 'Score') + '</th><th>' + (I18n ? I18n.t('result') : 'Result') + '</th></tr></thead><tbody>';
     for (var i = 0; i < games.length; i++) {
       var g = games[i];
       var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
