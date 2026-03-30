@@ -14,7 +14,7 @@
     { id: 'scorecard',highlight: '#scorecard',  msgKey: 'tut_scorecard',action: 'next',   useOverlay: true },
     { id: 'dice',     highlight: null,          msgKey: 'tut_dice',     action: 'next',   useOverlay: false },
     { id: 'roll',     highlight: '#btn-roll',   msgKey: 'tut_roll',     action: 'roll',   useOverlay: false },
-    { id: 'hold',     highlight: null,          msgKey: 'tut_hold',     action: 'hold',   useOverlay: false },
+    { id: 'hold',     highlight: '.bottom-controls', msgKey: 'tut_hold', action: 'hold',  useOverlay: 'dim' },
     { id: 'reroll',   highlight: '#btn-roll',   msgKey: 'tut_reroll',   action: 'roll',   useOverlay: false },
     { id: 'scoring',  highlight: '#scorecard',  msgKey: 'tut_scoring',  action: 'score',  useOverlay: true },
     { id: 'summary',  highlight: null,          msgKey: 'tut_summary',  action: 'finish', useOverlay: true }
@@ -110,10 +110,13 @@
     var skipBtn = document.getElementById('tutorial-skip');
 
     var tooltip = document.getElementById('tutorial-tooltip');
-    if (step.useOverlay !== false) {
+    // Overlay modes: true = fixed overlay, 'dim' = body::before dim, false = none
+    overlay.classList.add('hidden');
+    document.body.classList.remove('tutorial-dim');
+    if (step.useOverlay === true) {
       overlay.classList.remove('hidden');
-    } else {
-      overlay.classList.add('hidden');
+    } else if (step.useOverlay === 'dim') {
+      document.body.classList.add('tutorial-dim');
     }
     tooltip.classList.remove('hidden');
     msgEl.textContent = t(step.msgKey);
@@ -294,11 +297,12 @@
     // Remove highlight
     setHighlight(null);
 
-    // Hide overlay and tooltip
+    // Hide overlay, tooltip, dim
     var overlay = document.getElementById('tutorial-overlay');
     if (overlay) overlay.classList.add('hidden');
     var tooltip = document.getElementById('tutorial-tooltip');
     if (tooltip) tooltip.classList.add('hidden');
+    document.body.classList.remove('tutorial-dim');
 
     // Restore game-only buttons
     var btns = document.querySelectorAll('.game-only');
