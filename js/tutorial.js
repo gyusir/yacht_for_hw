@@ -13,9 +13,9 @@
     { id: 'intro',    highlight: null,          msgKey: 'tut_intro',    action: 'next',   useOverlay: true },
     { id: 'scorecard',highlight: '#scorecard',  msgKey: 'tut_scorecard',action: 'next',   useOverlay: true },
     { id: 'dice',     highlight: null,          msgKey: 'tut_dice',     action: 'next',   useOverlay: false },
-    { id: 'roll',     highlight: '#btn-roll',   msgKey: 'tut_roll',     action: 'roll',   useOverlay: true },
+    { id: 'roll',     highlight: '#btn-roll',   msgKey: 'tut_roll',     action: 'roll',   useOverlay: false },
     { id: 'hold',     highlight: null,          msgKey: 'tut_hold',     action: 'hold',   useOverlay: false },
-    { id: 'reroll',   highlight: '#btn-roll',   msgKey: 'tut_reroll',   action: 'roll',   useOverlay: true },
+    { id: 'reroll',   highlight: '#btn-roll',   msgKey: 'tut_reroll',   action: 'roll',   useOverlay: false },
     { id: 'scoring',  highlight: '#scorecard',  msgKey: 'tut_scoring',  action: 'score',  useOverlay: true },
     { id: 'summary',  highlight: null,          msgKey: 'tut_summary',  action: 'finish', useOverlay: true }
   ];
