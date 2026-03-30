@@ -164,27 +164,25 @@
 
     skipBtn.textContent = t('tut_skip');
 
-    // Position tooltip near the highlighted element
+    // Position tooltip: default bottom of screen, move to top if highlight overlaps
     var tooltip = document.getElementById('tutorial-tooltip');
+    tooltip.style.top = '';
+    tooltip.style.bottom = '16px';
+    tooltip.style.left = '50%';
+    tooltip.style.transform = 'translateX(-50%)';
+
     if (step.highlight) {
       var target = document.querySelector(step.highlight);
       if (target) {
         var rect = target.getBoundingClientRect();
-        var tooltipRect = tooltip.getBoundingClientRect();
-        var top = rect.bottom + 12;
-        if (top + tooltipRect.height > window.innerHeight) {
-          top = rect.top - tooltipRect.height - 12;
+        var tooltipH = tooltip.offsetHeight || 120;
+        var bottomZone = window.innerHeight - 16 - tooltipH;
+        // If highlight overlaps the bottom tooltip area, move tooltip to top
+        if (rect.bottom > bottomZone) {
+          tooltip.style.bottom = '';
+          tooltip.style.top = '16px';
         }
-        var left = rect.left + (rect.width - tooltipRect.width) / 2;
-        left = Math.max(8, Math.min(left, window.innerWidth - tooltipRect.width - 8));
-        tooltip.style.position = 'fixed';
-        tooltip.style.top = top + 'px';
-        tooltip.style.left = left + 'px';
       }
-    } else {
-      tooltip.style.position = '';
-      tooltip.style.top = '';
-      tooltip.style.left = '';
     }
   }
 
