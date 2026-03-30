@@ -115,30 +115,28 @@
 
   function renderSkinSelector(containerEl, totalGames, botWins) {
     if (!containerEl) return;
-    containerEl.innerHTML = '';
     totalGames = totalGames || 0;
     botWins = botWins || {};
+
+    var playContainer = document.getElementById('skin-options-play');
+    var botContainer = document.getElementById('skin-options-bot');
+    // Fallback: if new containers don't exist, use old single container
+    if (!playContainer) playContainer = containerEl;
+    if (!botContainer) botContainer = containerEl;
+    playContainer.innerHTML = '';
+    botContainer.innerHTML = '';
 
     var unlockedCount = getUnlockedCount(totalGames, botWins);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
-      // -1 because classic doesn't count as "unlocked bonus"
       countEl.textContent = (unlockedCount - 1) + '/7 unlocked';
     }
 
-    var botDividerInserted = false;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
       var unlocked = isSkinUnlocked(def, totalGames, botWins);
+      var targetContainer = def.unlockBy ? botContainer : playContainer;
 
-      // Insert divider before first bot skin
-      if (def.unlockBy && !botDividerInserted) {
-        var divider = document.createElement('div');
-        divider.className = 'skin-divider';
-        divider.innerHTML = '<span>Bot Skins</span>';
-        containerEl.appendChild(divider);
-        botDividerInserted = true;
-      }
       var option = document.createElement('div');
       option.className = 'skin-option';
       if (!unlocked) option.classList.add('locked');
@@ -198,16 +196,15 @@
       (function (skinDef, skinUnlocked, optionEl) {
         optionEl.addEventListener('click', function () {
           if (!skinUnlocked) return;
-          // Deselect previous
-          var prev = containerEl.querySelector('.skin-option.active');
-          if (prev) prev.classList.remove('active');
+          var allOptions = containerEl.querySelectorAll('.skin-option.active');
+          for (var j = 0; j < allOptions.length; j++) allOptions[j].classList.remove('active');
           optionEl.classList.add('active');
           applySkin(skinDef.id);
           saveSkin(skinDef.id);
         });
       })(def, unlocked, option);
 
-      containerEl.appendChild(option);
+      targetContainer.appendChild(option);
     }
   }
 

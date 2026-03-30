@@ -559,6 +559,29 @@
     getPendingCategory: function () { return pendingCategory; },
     isRolling: function () { return isRolling; },
     proposeDraw: proposeDraw,
-    respondToDraw: respondToDraw
+    respondToDraw: respondToDraw,
+    refreshUI: function () {
+      if (!lastRoomData) return;
+      var room = lastRoomData;
+      var myData = room.players[localPlayerKey] || {};
+      var oppKey = localPlayerKey === 'player1' ? 'player2' : 'player1';
+      var oppData = room.players[oppKey] || {};
+      var isMyTurn = room.currentTurn === localPlayerKey;
+      var diceState = [];
+      for (var i = 0; i < 5; i++) {
+        var d = (room.dice && room.dice[i]) || { value: 0, held: false };
+        var h = room.heldDice && room.heldDice[i];
+        diceState.push({ value: d.value || 0, held: !!h });
+      }
+      var currentDice = window.YachtGame.Dice.getDiceValues(diceState);
+      window.YachtGame.UI.renderScorecard(
+        myData.scores || {}, oppData.scores || {},
+        room.gameMode, currentDice, isMyTurn, localPlayerKey,
+        myData.name || 'Player 1', oppData.name || 'Player 2',
+        myData.lastCategory || null, oppData.lastCategory || null,
+        room.rollCount > 0,
+        (myData.diceSkin) || 'classic', (oppData.diceSkin) || 'classic'
+      );
+    }
   };
 })();

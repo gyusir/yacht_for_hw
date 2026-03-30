@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  var DEFAULT_AVATAR = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#a0b4f0"/><circle cx="32" cy="42" r="6" fill="#fff"/><circle cx="68" cy="42" r="6" fill="#fff"/><circle cx="32" cy="42" r="3" fill="#222"/><circle cx="68" cy="42" r="3" fill="#222"/><path d="M35 62 Q50 74 65 62" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="18" r="4" fill="#fff" opacity="0.5"/><circle cx="82" cy="50" r="4" fill="#fff" opacity="0.5"/><circle cx="18" cy="50" r="4" fill="#fff" opacity="0.5"/></svg>');
+
   var UI = window.YachtGame.UI;
   var Lobby = window.YachtGame.Lobby;
   var Game = window.YachtGame.Game;
@@ -87,34 +89,35 @@
     I18n.setLang(newLang);
     I18n.refreshStaticText();
     updateLangButton();
+    if (document.body.classList.contains('in-game') && window.YachtGame.Game && window.YachtGame.Game.refreshUI) {
+      window.YachtGame.Game.refreshUI();
+    }
   });
 
   // --- Auth: show/hide login UI based on auth state ---
   function showLoginScreen(user) {
-    if (user) {
-      // User is signed in
-      btnGoogleSignin.hidden = true;
-      document.querySelector('.guest-section').hidden = true;
-      document.querySelector('#screen-login .divider').hidden = true;
-      signedInProfile.hidden = false;
+    var isGoogle = user && !user.isAnonymous;
+    var guestSection = document.querySelector('.guest-section');
+    var divider = document.querySelector('#screen-login .divider');
+    if (isGoogle) {
+      // Google signed in — show profile, hide guest/google buttons
+      btnGoogleSignin.classList.add('hidden-section');
+      guestSection.classList.add('hidden-section');
+      divider.classList.add('hidden-section');
+      signedInProfile.classList.add('visible');
       userDisplayName.textContent = user.displayName || 'Player';
-      if (user.photoURL) {
-        userAvatar.src = user.photoURL;
-        userAvatar.hidden = false;
-      } else {
-        userAvatar.hidden = true;
-      }
+      userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
+      userAvatar.src = user.photoURL || DEFAULT_AVATAR;
     } else {
-      // Not signed in
-      btnGoogleSignin.hidden = false;
-      document.querySelector('.guest-section').hidden = false;
-      document.querySelector('#screen-login .divider').hidden = false;
-      signedInProfile.hidden = true;
+      // Not signed in or anonymous — show guest + google login
+      btnGoogleSignin.classList.remove('hidden-section');
+      guestSection.classList.remove('hidden-section');
+      divider.classList.remove('hidden-section');
+      signedInProfile.classList.remove('visible');
     }
   }
 
   var skinSelector = document.getElementById('skin-selector');
-  var skinOptions = document.getElementById('skin-options');
 
   function refreshSkinSelector() {
     if (!Auth.isSignedIn()) {
@@ -126,7 +129,7 @@
       var totalGames = (stats && stats.totalGames) || 0;
       var botWins = (stats && stats.botWins) || {};
       if (skinSelector) skinSelector.hidden = false;
-      DiceSkins.renderSkinSelector(skinOptions, totalGames, botWins);
+      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins);
     });
   }
 
@@ -138,7 +141,7 @@
     showLoginScreen(user);
     // Show My Stats button in lobby if signed in (non-anonymous)
     if (btnMyStats) {
-      btnMyStats.hidden = !user;
+      btnMyStats.hidden = !(user && !user.isAnonymous);
     }
     if (user) {
       DiceSkins.loadSkin();
@@ -163,8 +166,10 @@
   // Sign Out
   btnSignout.addEventListener('click', function () {
     Auth.signOut(function () {
+      showLoginScreen(null);
       UI.showScreen('screen-login');
-      UI.showToast('Signed out');
+      var I18n = window.YachtGame.I18n;
+      UI.showToast(I18n ? I18n.t('signed_out') : 'Signed out');
     });
   });
 
@@ -321,7 +326,6 @@
 
     window.YachtGame._onlineGame = window.YachtGame.Game;
     window.YachtGame.Game = window.YachtGame.BotGame;
-    btnDraw.hidden = true;
     window.YachtGame.Game.init(gameMode, diff, playerName);
   });
 
@@ -378,9 +382,12 @@
 
   // --- Draw Proposal ---
   btnDraw.addEventListener('click', function () {
-    if (window.YachtGame._isBotGame) return;
-    window.YachtGame.Game.proposeDraw();
     var I18n = window.YachtGame.I18n;
+    if (window.YachtGame._isBotGame) {
+      UI.showToast(I18n ? I18n.t('bot_no_draw') : '로봇은 무승부를 모릅니다 🤖');
+      return;
+    }
+    window.YachtGame.Game.proposeDraw();
     UI.showToast(I18n ? I18n.t('draw_proposed') : 'Draw proposed. Waiting for response...');
   });
 
@@ -544,7 +551,6 @@
       window.YachtGame._onlineGame = null;
     }
     window.YachtGame._isBotGame = false;
-    btnDraw.hidden = false;
     Lobby.clearSession();
     UI.showScreen('screen-lobby');
     lobbyError.hidden = true;

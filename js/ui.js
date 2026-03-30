@@ -367,6 +367,10 @@
   }
 
   // History / Stats rendering
+  var HISTORY_PAGE_SIZE = 5;
+  var historyPage = 0;
+  var historyGames = [];
+
   function renderHistory(stats, games) {
     var summaryEl = document.getElementById('stats-summary');
     var listEl = document.getElementById('history-list');
@@ -383,15 +387,30 @@
     html += '</div>';
     summaryEl.innerHTML = html;
 
-    // Game history list
+    // Store games and reset page
+    historyGames = games;
+    historyPage = 0;
+    renderHistoryPage();
+  }
+
+  function renderHistoryPage() {
+    var listEl = document.getElementById('history-list');
+    var I18n = window.YachtGame.I18n;
+    var games = historyGames;
+
     if (games.length === 0) {
       listEl.innerHTML = '<p class="no-history">' + (I18n ? I18n.t('no_games') : 'No games played yet.') + '</p>';
       return;
     }
 
+    var totalPages = Math.ceil(games.length / HISTORY_PAGE_SIZE);
+    var start = historyPage * HISTORY_PAGE_SIZE;
+    var end = Math.min(start + HISTORY_PAGE_SIZE, games.length);
+    var pageGames = games.slice(start, end);
+
     var listHtml = '<table class="history-table"><thead><tr><th>' + (I18n ? I18n.t('date') : 'Date') + '</th><th>' + (I18n ? I18n.t('mode') : 'Mode') + '</th><th>' + (I18n ? I18n.t('opponent') : 'Opponent') + '</th><th>' + (I18n ? I18n.t('score') : 'Score') + '</th><th>' + (I18n ? I18n.t('result') : 'Result') + '</th></tr></thead><tbody>';
-    for (var i = 0; i < games.length; i++) {
-      var g = games[i];
+    for (var i = 0; i < pageGames.length; i++) {
+      var g = pageGames[i];
       var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
       var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : 'result-tie');
       var resultText = g.result === 'win' ? 'W' : (g.result === 'loss' ? 'L' : 'T');
@@ -404,7 +423,27 @@
       listHtml += '</tr>';
     }
     listHtml += '</tbody></table>';
+
+    // Pagination controls
+    if (totalPages > 1) {
+      listHtml += '<div class="history-pager">';
+      listHtml += '<button class="btn-pager btn-pager-prev"' + (historyPage === 0 ? ' disabled' : '') + '>&larr;</button>';
+      listHtml += '<span class="pager-info">' + (historyPage + 1) + ' / ' + totalPages + '</span>';
+      listHtml += '<button class="btn-pager btn-pager-next"' + (historyPage >= totalPages - 1 ? ' disabled' : '') + '>&rarr;</button>';
+      listHtml += '</div>';
+    }
+
     listEl.innerHTML = listHtml;
+
+    // Bind pager buttons
+    var prevBtn = listEl.querySelector('.btn-pager-prev');
+    var nextBtn = listEl.querySelector('.btn-pager-next');
+    if (prevBtn) prevBtn.addEventListener('click', function () {
+      if (historyPage > 0) { historyPage--; renderHistoryPage(); }
+    });
+    if (nextBtn) nextBtn.addEventListener('click', function () {
+      if (historyPage < totalPages - 1) { historyPage++; renderHistoryPage(); }
+    });
   }
 
   function showConfetti() {

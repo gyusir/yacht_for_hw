@@ -2,30 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta id="vp-meta" name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function(){
+      var MIN_W = 520;
+      var meta = document.getElementById('vp-meta');
+      var sw = screen.width || MIN_W;
+      meta.content = sw < MIN_W
+        ? 'width=' + MIN_W
+        : 'width=device-width, initial-scale=1.0';
+    })();
+  </script>
   <title>Yacht Dice</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Yacht Dice</h1>
-    <div class="header-controls">
-      <button id="btn-shortcut" class="btn-icon game-only" data-i18n-title="shortcut_title" title="PC Shortcuts">Key</button>
-      <button id="btn-rule" class="btn-icon game-only" data-i18n-title="rule_title" title="Rules">Rule</button>
-      <button id="btn-draw" class="btn-icon game-only" title="Draw">Draw</button>
-      <button id="btn-leave" class="btn-icon btn-leave game-only" data-i18n-title="leave_title" title="Leave">Quit</button>
-      <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
-      <button id="theme-toggle" aria-label="Toggle theme">
-        <span class="icon-sun">&#9728;</span>
-        <span class="icon-moon">&#9790;</span>
-      </button>
+    <div class="header-top">
+      <h1>Yacht Dice</h1>
+      <div class="header-top-controls">
+        <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
+        <button id="theme-toggle" aria-label="Toggle theme">
+          <span class="icon-sun">&#9728;</span>
+          <span class="icon-moon">&#9790;</span>
+        </button>
+      </div>
+    </div>
+    <div class="header-controls game-only">
+      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts">Shortcut</button>
+      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules">Rule</button>
+      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw">Draw</button>
+      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave">Quit</button>
     </div>
   </header>
 
   <!-- Screen: Login -->
   <section id="screen-login" class="screen active">
     <div class="card">
-      <h2 data-i18n="welcome">Welcome</h2>
+      <div class="card-header-row">
+        <h2 data-i18n="welcome">Welcome</h2>
+        <button id="btn-tutorial-login" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
+      </div>
       <p data-i18n="sign_in_desc">Sign in to save your game history, or play as a guest.</p>
       <div class="guest-section">
         <input type="text" id="player-name" data-i18n-placeholder="guest_name_placeholder" placeholder="Guest name" maxlength="12" autocomplete="off">
@@ -39,7 +56,7 @@
         <span data-i18n="sign_in_google">Sign in with Google</span>
       </button>
       <!-- Signed-in user profile (hidden by default) -->
-      <div id="signed-in-profile" class="signed-in-profile" hidden>
+      <div id="signed-in-profile" class="signed-in-profile">
         <img id="user-avatar" class="user-avatar" src="" alt="avatar">
         <div class="user-info">
           <span id="user-display-name" class="user-display-name"></span>
@@ -47,14 +64,19 @@
         </div>
         <button id="btn-continue-signed" class="btn-primary" data-i18n="continue_btn">Continue</button>
       </div>
-      <button id="btn-tutorial-login" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
     </div>
   </section>
 
   <!-- Screen: Lobby -->
   <section id="screen-lobby" class="screen">
     <div class="card">
-      <h2 data-i18n="lobby">Lobby</h2>
+      <div class="card-header-row">
+        <h2 data-i18n="lobby">Lobby</h2>
+        <div class="card-header-actions">
+          <button id="btn-my-stats" class="btn-tutorial" hidden data-i18n="my_stats">📊 My Stats</button>
+          <button id="btn-tutorial-lobby" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
+        </div>
+      </div>
       <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
@@ -69,16 +91,20 @@
           <button id="btn-bot-play" class="btn-primary" data-i18n="play_vs_bot">Play vs Bot</button>
         </div>
       </div>
-      <div id="skin-selector" class="skin-selector" hidden>
+      <div id="skin-selector" class="skin-selector card" hidden>
         <div class="skin-selector-header">
           <span class="skin-selector-label" data-i18n="dice_skin">Dice Skin</span>
           <span id="skin-unlock-count" class="skin-unlock-count"></span>
         </div>
-        <p class="skin-unlock-hint" data-i18n="skin_unlock_hint">Play games to unlock skins. Beat bots to claim theirs.</p>
-        <div class="skin-options" id="skin-options"></div>
+        <div class="skin-section">
+          <div class="skin-section-label" data-i18n="skin_play_unlock">🎲 Play to Unlock</div>
+          <div class="skin-options" id="skin-options-play"></div>
+        </div>
+        <div class="skin-section">
+          <div class="skin-section-label" data-i18n="skin_bot_unlock">🤖 Bot Skins</div>
+          <div class="skin-options" id="skin-options-bot"></div>
+        </div>
       </div>
-      <button id="btn-tutorial-lobby" class="btn-tutorial" data-i18n="tutorial_btn">📖 How to Play</button>
-      <button id="btn-my-stats" class="btn-text btn-stats" hidden data-i18n="my_stats">My Stats</button>
       <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_login">Back to Login</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
