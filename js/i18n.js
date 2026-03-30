@@ -165,6 +165,7 @@
 
       // Tutorial
       tutorial: 'Tutorial',
+      tutorial_btn: '\ud83d\udcd6 How to Play',
       tut_intro: 'Welcome to Yacht Dice! Let\'s learn how to play.',
       tut_scorecard: 'This is the scorecard. Fill all categories to finish the game.',
       tut_dice: 'These are your 5 dice and the Roll button. You get 3 rolls per turn.',
@@ -340,6 +341,7 @@
 
       // Tutorial
       tutorial: '\ud29c\ud1a0\ub9ac\uc5bc',
+      tutorial_btn: '\ud83d\udcd6 \ud50c\ub808\uc774 \ubc29\ubc95',
       tut_intro: 'Yacht Dice\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! \ud50c\ub808\uc774 \ubc29\ubc95\uc744 \uc54c\uc544\ubcf4\uc138\uc694.',
       tut_scorecard: '\uc774\uac83\uc774 \uc2a4\ucf54\uc5b4\uce74\ub4dc\uc785\ub2c8\ub2e4. \ubaa8\ub4e0 \uce74\ud14c\uace0\ub9ac\ub97c \ucc44\uc6b0\uba74 \uac8c\uc784\uc774 \ub05d\ub0a9\ub2c8\ub2e4.',
       tut_dice: '\uc8fc\uc0ac\uc704 5\uac1c\uc640 Roll \ubc84\ud2bc\uc785\ub2c8\ub2e4. \ud134\ub2f9 3\ud68c \uad74\ub9b4 \uc218 \uc788\uc2b5\ub2c8\ub2e4.',

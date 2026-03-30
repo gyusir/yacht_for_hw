@@ -1710,13 +1710,14 @@ input[type="text"]::placeholder {
   transform: translateX(-50%);
   background: var(--surface);
   padding: 16px 20px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
   max-width: 320px;
   width: calc(100% - 32px);
   z-index: 1002;
   pointer-events: auto;
   text-align: center;
+  border: 2px solid var(--accent);
 }
 
 .tutorial-tooltip p {
@@ -1740,6 +1741,26 @@ input[type="text"]::placeholder {
 .btn-tutorial-skip {
   font-size: 0.8rem;
   opacity: 0.7;
+}
+
+/* Tutorial entry button on login/lobby */
+.btn-tutorial {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  margin-top: 8px;
+}
+.btn-tutorial:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .disconnect-countdown {
