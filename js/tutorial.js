@@ -24,7 +24,7 @@
     },
     {
       id: 'dice',
-      highlight: '.dice-roll-row',
+      highlight: '#dice-area',
       msgKey: 'tut_dice',
       action: 'next'
     },
