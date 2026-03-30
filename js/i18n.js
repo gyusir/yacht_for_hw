@@ -177,7 +177,7 @@
       tut_next: 'Next',
       tut_skip: 'Skip Tutorial',
       tut_skip_short: 'Skip',
-      tut_start_playing: 'Start Playing!',
+      tut_start_playing: 'Home',
       tut_you: 'You',
       tut_opponent: 'Opponent'
     },
@@ -354,7 +354,7 @@
       tut_next: '\ub2e4\uc74c',
       tut_skip: '\ud29c\ud1a0\ub9ac\uc5bc \uac74\ub108\ub6f0\uae30',
       tut_skip_short: '\uac74\ub108\ub6f0\uae30',
-      tut_start_playing: '\ud50c\ub808\uc774 \uc2dc\uc791!',
+      tut_start_playing: '\ud648\uc73c\ub85c',
       tut_you: '\ub098',
       tut_opponent: '\uc0c1\ub300'
     }
