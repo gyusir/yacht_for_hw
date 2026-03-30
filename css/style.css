@@ -1693,11 +1693,6 @@ input[type="text"]::placeholder {
   pointer-events: none;
 }
 
-.tutorial-overlay.hidden,
-.tutorial-tooltip.hidden {
-  display: none;
-}
-
 .tutorial-highlight {
   position: relative !important;
   z-index: 1001 !important;
@@ -1773,6 +1768,11 @@ input[type="text"]::placeholder {
 .btn-tutorial:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.tutorial-overlay.hidden,
+.tutorial-tooltip.hidden {
+  display: none !important;
 }
 
 .disconnect-countdown {
