@@ -8,6 +8,7 @@
     en: {
       // Login
       welcome: 'Welcome',
+      welcome_tagline: 'Welcome to Yacht Dice, the ultimate dice showdown.\nIf you win, it\'s skill. If you lose, it\'s just a mistake.',
       sign_in_desc: 'Sign in to save your game history, or play as a guest.',
       guest_name_placeholder: 'Guest name',
       play_as_guest: 'Play as Guest',
@@ -194,6 +195,7 @@
     ko: {
       // Login
       welcome: '\ud658\uc601\ud569\ub2c8\ub2e4',
+      welcome_tagline: '"\ucd5c\uace0\uc758 \ub0b4\uae30 \uac8c\uc784" \uc694\ud2b8\ub2e4\uc774\uc2a4\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4.\n\uc774\uae30\uba74 \uc2e4\ub825\uc774\uace0, \uc9c0\uba74 \uc2e4\uc218\uc785\ub2c8\ub2e4.',
       sign_in_desc: '\uac8c\uc784 \uae30\ub85d\uc744 \uc800\uc7a5\ud558\ub824\uba74 \ub85c\uadf8\uc778\ud558\uc138\uc694.\n\uac8c\uc2a4\ud2b8\ub85c\ub3c4 \ud50c\ub808\uc774 \uac00\ub2a5\ud569\ub2c8\ub2e4.',
       guest_name_placeholder: '\uac8c\uc2a4\ud2b8 \uc774\ub984',
       play_as_guest: '\uac8c\uc2a4\ud2b8\ub85c \ud50c\ub808\uc774',
