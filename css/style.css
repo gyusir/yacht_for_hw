@@ -1723,6 +1723,7 @@ input[type="text"]::placeholder {
 .tutorial-tooltip p {
   margin: 0 0 12px;
   font-size: 0.9rem;
+  white-space: pre-line;
   line-height: 1.4;
   color: var(--text);
 }
