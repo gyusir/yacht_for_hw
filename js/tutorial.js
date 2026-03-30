@@ -10,14 +10,14 @@
   var returnScreen = 'screen-login';
 
   var STEPS = [
-    { id: 'intro',    highlight: null,          msgKey: 'tut_intro',    action: 'next',   useOverlay: true },
-    { id: 'scorecard',highlight: '#scorecard',  msgKey: 'tut_scorecard',action: 'next',   useOverlay: true },
-    { id: 'dice',     highlight: null,          msgKey: 'tut_dice',     action: 'next',   useOverlay: false },
-    { id: 'roll',     highlight: '#btn-roll',   msgKey: 'tut_roll',     action: 'roll',   useOverlay: false },
-    { id: 'hold',     highlight: '.bottom-controls', msgKey: 'tut_hold', action: 'hold',  useOverlay: 'dim' },
-    { id: 'reroll',   highlight: '#btn-roll',   msgKey: 'tut_reroll',   action: 'roll',   useOverlay: false },
-    { id: 'scoring',  highlight: '#scorecard',  msgKey: 'tut_scoring',  action: 'score',  useOverlay: true },
-    { id: 'summary',  highlight: null,          msgKey: 'tut_summary',  action: 'finish', useOverlay: true }
+    { id: 'intro',    highlight: null,           msgKey: 'tut_intro',    action: 'next'   },
+    { id: 'scorecard',highlight: '#scorecard',   msgKey: 'tut_scorecard',action: 'next'   },
+    { id: 'dice',     highlight: '.dice-roll-row',msgKey: 'tut_dice',   action: 'next'   },
+    { id: 'roll',     highlight: '#btn-roll',    msgKey: 'tut_roll',    action: 'roll'   },
+    { id: 'hold',     highlight: '#dice-area',   msgKey: 'tut_hold',    action: 'hold'   },
+    { id: 'reroll',   highlight: '#btn-roll',    msgKey: 'tut_reroll',  action: 'roll'   },
+    { id: 'scoring',  highlight: '#scorecard',   msgKey: 'tut_scoring', action: 'score'  },
+    { id: 'summary',  highlight: null,           msgKey: 'tut_summary', action: 'finish' }
   ];
 
   function t(key) {
@@ -110,14 +110,7 @@
     var skipBtn = document.getElementById('tutorial-skip');
 
     var tooltip = document.getElementById('tutorial-tooltip');
-    // Overlay modes: true = fixed overlay, 'dim' = body::before dim, false = none
-    overlay.classList.add('hidden');
-    document.body.classList.remove('tutorial-dim');
-    if (step.useOverlay === true) {
-      overlay.classList.remove('hidden');
-    } else if (step.useOverlay === 'dim') {
-      document.body.classList.add('tutorial-dim');
-    }
+    overlay.classList.remove('hidden');
     tooltip.classList.remove('hidden');
     msgEl.textContent = t(step.msgKey);
 
@@ -276,6 +269,10 @@
     buildMockRoom();
     window.YachtGame.UI.showScreen('screen-game', 'yacht');
 
+    // Remove animation stacking context so z-index works against overlay
+    var gameScreen = document.getElementById('screen-game');
+    if (gameScreen) gameScreen.classList.add('no-anim');
+
     // Hide game-only buttons that don't apply in tutorial
     var btns = document.querySelectorAll('.game-only');
     for (var i = 0; i < btns.length; i++) {
@@ -297,12 +294,15 @@
     // Remove highlight
     setHighlight(null);
 
-    // Hide overlay, tooltip, dim
+    // Hide overlay, tooltip
     var overlay = document.getElementById('tutorial-overlay');
     if (overlay) overlay.classList.add('hidden');
     var tooltip = document.getElementById('tutorial-tooltip');
     if (tooltip) tooltip.classList.add('hidden');
-    document.body.classList.remove('tutorial-dim');
+
+    // Restore animation stacking context
+    var gameScreen = document.getElementById('screen-game');
+    if (gameScreen) gameScreen.classList.remove('no-anim');
 
     // Restore game-only buttons
     var btns = document.querySelectorAll('.game-only');
