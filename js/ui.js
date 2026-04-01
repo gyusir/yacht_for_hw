@@ -384,8 +384,10 @@
   var HISTORY_PAGE_SIZE = 5;
   var historyPage = 0;
   var historyGames = [];
+  var historyStats = null;
 
   function renderHistory(stats, games) {
+    historyStats = stats;
     var summaryEl = document.getElementById('stats-summary');
     var listEl = document.getElementById('history-list');
     var I18n = window.YachtGame.I18n;
@@ -427,10 +429,11 @@
       var g = pageGames[i];
       var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
       var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : 'result-tie');
-      var resultText = g.result === 'win' ? 'W' : (g.result === 'loss' ? 'L' : 'T');
+      var resultText = g.result === 'win' ? (I18n ? I18n.t('result_w') : 'W') : (g.result === 'loss' ? (I18n ? I18n.t('result_l') : 'L') : (I18n ? I18n.t('result_t') : 'T'));
+      var modeText = g.mode ? (I18n ? I18n.t('mode_' + g.mode) : g.mode) : '-';
       listHtml += '<tr>';
       listHtml += '<td>' + dateStr + '</td>';
-      listHtml += '<td>' + escapeHtml(g.mode || '-') + '</td>';
+      listHtml += '<td>' + escapeHtml(modeText) + '</td>';
       var oppName = g.opponentName || '-';
       if (I18n) {
         var lang = I18n.getLang();
@@ -539,6 +542,15 @@
     hideShortcutOverlay: hideShortcutOverlay,
     showEmoteBubble: showEmoteBubble,
     renderHistory: renderHistory,
+    refreshHistory: function () {
+      if (historyStats && historyGames) {
+        // Re-render summary with updated language
+        var savedPage = historyPage;
+        renderHistory(historyStats, historyGames);
+        historyPage = Math.min(savedPage, Math.ceil(historyGames.length / HISTORY_PAGE_SIZE) - 1);
+        renderHistoryPage();
+      }
+    },
     showConfetti: showConfetti,
     showDrawProposal: showDrawProposal,
     showDrawPending: showDrawPending

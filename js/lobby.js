@@ -59,10 +59,13 @@
     getFunctions();
     var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
+    var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     createRoomFn({
       playerName: playerName,
       gameMode: gameMode,
-      diceSkin: diceSkin
+      diceSkin: diceSkin,
+      nicknameKo: nicks ? nicks.ko : null,
+      nicknameEn: nicks ? nicks.en : null
     }).then(function (result) {
       var data = result.data;
       var code = data.roomCode;
@@ -87,10 +90,13 @@
     roomCode = roomCode.toUpperCase().trim();
     var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
+    var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     joinRoomFn({
       roomCode: roomCode,
       playerName: playerName,
-      diceSkin: diceSkin
+      diceSkin: diceSkin,
+      nicknameKo: nicks ? nicks.ko : null,
+      nicknameEn: nicks ? nicks.en : null
     }).then(function (result) {
       var data = result.data;
       var code = data.roomCode;
@@ -237,10 +243,13 @@
     getFunctions();
     var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
+    var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     joinRoomFn({
       random: true,
       playerName: playerName,
-      diceSkin: diceSkin
+      diceSkin: diceSkin,
+      nicknameKo: nicks ? nicks.ko : null,
+      nicknameEn: nicks ? nicks.en : null
     }).then(function (result) {
       var data = result.data;
       var code = data.roomCode;

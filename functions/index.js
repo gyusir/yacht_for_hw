@@ -98,6 +98,8 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   await checkRateLimit(uid, "createRoom");
   const { gameMode, diceSkin } = data;
   let playerName = data.playerName;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
 
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
@@ -118,6 +120,16 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unavailable", "Could not generate room code. Try again.");
   }
 
+  const player1Data = {
+    name: playerName,
+    uid: uid,
+    connected: true,
+    scores: buildEmptyScores(gameMode),
+    diceSkin: diceSkin || "classic"
+  };
+  if (nicknameKo) player1Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player1Data.nicknameEn = nicknameEn;
+
   const roomData = {
     gameMode: gameMode,
     status: "waiting",
@@ -133,13 +145,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
       4: { value: 0, held: false }
     },
     players: {
-      player1: {
-        name: playerName,
-        uid: uid,
-        connected: true,
-        scores: buildEmptyScores(gameMode),
-        diceSkin: diceSkin || "classic"
-      }
+      player1: player1Data
     },
     winner: ""
   };
@@ -155,6 +161,8 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   await checkRateLimit(uid, "joinRoom");
   const { roomCode, diceSkin, random } = data;
   let playerName = data.playerName;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
 
   playerName = sanitizePlayerName(playerName);
   if (!playerName) {
@@ -204,14 +212,18 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("failed-precondition", "Room is full.");
   }
 
-  const updates = {};
-  updates["players/player2"] = {
+  const player2Data = {
     name: playerName,
     uid: uid,
     connected: true,
     scores: buildEmptyScores(room.gameMode),
     diceSkin: diceSkin || "classic"
   };
+  if (nicknameKo) player2Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player2Data.nicknameEn = nicknameEn;
+
+  const updates = {};
+  updates["players/player2"] = player2Data;
   updates["status"] = "playing";
   updates["lastActivityAt"] = ServerValue.TIMESTAMP;
 

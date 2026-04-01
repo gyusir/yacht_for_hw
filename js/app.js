@@ -89,8 +89,24 @@
     I18n.setLang(newLang);
     I18n.refreshStaticText();
     updateLangButton();
-    if (document.body.classList.contains('in-game') && window.YachtGame.Game && window.YachtGame.Game.refreshUI) {
+    // Update nickname display for new language
+    if (Auth.isSignedIn() && Auth.getNickname()) {
+      var user = window.YachtGame.auth.currentUser;
+      var displayText = (user && user.displayName) || 'Player';
+      displayText += ' (' + Auth.getNickname() + ')';
+      userDisplayName.textContent = displayText;
+      playerName = Auth.getPlayerName();
+    }
+    var gameScreen = document.getElementById('screen-game');
+    var gameoverScreen = document.getElementById('screen-gameover');
+    var isInGame = (gameScreen && gameScreen.classList.contains('active')) || (gameoverScreen && gameoverScreen.classList.contains('active'));
+    if (isInGame && window.YachtGame.Game && window.YachtGame.Game.refreshUI) {
       window.YachtGame.Game.refreshUI();
+    }
+    // Re-render history page if stats screen is active
+    var statsScreen = document.getElementById('screen-history');
+    if (statsScreen && statsScreen.classList.contains('active') && window.YachtGame.UI && window.YachtGame.UI.refreshHistory) {
+      window.YachtGame.UI.refreshHistory();
     }
   });
 
@@ -110,12 +126,13 @@
       if (nick) displayText += ' (' + nick + ')';
       userDisplayName.textContent = displayText;
 
-      // Update display name when nicknames finish loading (non-blocking)
+      // Update display name and playerName when nicknames finish loading (non-blocking)
       window.YachtGame.onNicknameReady = function () {
         var updated = user.displayName || 'Player';
         var loadedNick = Auth.getNickname();
         if (loadedNick) updated += ' (' + loadedNick + ')';
         userDisplayName.textContent = updated;
+        playerName = Auth.getPlayerName();
       };
       userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
       userAvatar.src = user.photoURL || DEFAULT_AVATAR;

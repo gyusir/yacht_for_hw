@@ -9,7 +9,45 @@
   var guestName = '';
   var nicknames = null; // { ko: '...', en: '...' }
 
+  // Emulator: create account if needed, then sign in with email/password
+  function signInEmulatorTest(email, displayName, callback) {
+    var auth = window.YachtGame.auth;
+    var password = 'testpass123';
+
+    function onSignedIn(result) {
+      currentUser = result.user;
+      isGuest = false;
+      // Ensure displayName is set
+      var p = currentUser.displayName ? Promise.resolve() : currentUser.updateProfile({ displayName: displayName });
+      p.then(function () {
+        var db = window.YachtGame.db;
+        db.ref('users/' + currentUser.uid).update({
+          displayName: displayName,
+          photoURL: null
+        });
+        window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+          nicknames = nicks;
+          if (callback) callback(null, currentUser);
+        });
+      });
+    }
+
+    // Try sign in first, create if not found
+    auth.signInWithEmailAndPassword(email, password).then(onSignedIn).catch(function () {
+      auth.createUserWithEmailAndPassword(email, password).then(onSignedIn).catch(function (error) {
+        console.error('Emulator sign-in error:', error);
+        if (callback) callback(error, null);
+      });
+    });
+  }
+
   function signInWithGoogle(callback) {
+    // Emulator: show test account picker instead of Google popup
+    if (window.YachtGame.isEmulator) {
+      showEmulatorAccountPicker(callback);
+      return;
+    }
+
     var auth = window.YachtGame.auth;
     var provider = window.YachtGame.googleProvider;
 
@@ -37,6 +75,38 @@
       }
       if (callback) callback(error, null);
     });
+  }
+
+  function showEmulatorAccountPicker(callback) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:12px;padding:24px;min-width:280px;font-family:sans-serif';
+    box.innerHTML = '<h3 style="margin:0 0 16px;font-size:1.1rem">🧪 Emulator 테스트 계정</h3>';
+    var accounts = [
+      { email: 'emu-testuser@test.com', name: 'testuser' },
+      { email: 'emu-longname@test.com', name: 'testforlongusername' }
+    ];
+    accounts.forEach(function (acc) {
+      var btn = document.createElement('button');
+      btn.textContent = acc.name + ' (' + acc.email + ')';
+      btn.style.cssText = 'display:block;width:100%;padding:10px;margin:6px 0;border:1px solid #ddd;border-radius:8px;background:#f8f8f8;cursor:pointer;font-size:0.9rem';
+      btn.onmouseover = function () { btn.style.background = '#e8e8e8'; };
+      btn.onmouseout = function () { btn.style.background = '#f8f8f8'; };
+      btn.onclick = function () {
+        document.body.removeChild(overlay);
+        signInEmulatorTest(acc.email, acc.name, callback);
+      };
+      box.appendChild(btn);
+    });
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '취소';
+    cancelBtn.style.cssText = 'display:block;width:100%;padding:8px;margin-top:12px;border:none;background:none;color:#888;cursor:pointer;font-size:0.85rem';
+    cancelBtn.onclick = function () { document.body.removeChild(overlay); };
+    box.appendChild(cancelBtn);
+    overlay.appendChild(box);
+    overlay.onclick = function (e) { if (e.target === overlay) document.body.removeChild(overlay); };
+    document.body.appendChild(overlay);
   }
 
   // Handle redirect result (fallback from popup blocked)
@@ -92,7 +162,6 @@
         callback(user);
         window.YachtGame.Nickname.ensureNickname(user.uid, function (nicks) {
           nicknames = nicks;
-          // Update UI with loaded nicknames
           if (window.YachtGame.onNicknameReady) window.YachtGame.onNicknameReady(nicks);
         });
       } else if (user && user.isAnonymous) {
