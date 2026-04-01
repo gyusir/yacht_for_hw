@@ -108,6 +108,37 @@ dev에서 작업 → PR 생성
   └─ 확인 완료 → main에 merge → 프로덕션(yacht-ff0c8) 자동 배포
 ```
 
+## 로컬 CLI에서 복수 프로젝트 관리
+
+하나의 Firebase CLI 세션에서 프로덕션/스테이징 모두 접근 가능하다.
+
+### `.firebaserc` 설정
+
+```json
+{
+  "projects": {
+    "default": "yacht-ff0c8",
+    "staging": "yacht-ff0c8-dev"
+  }
+}
+```
+
+### 사용법
+
+```bash
+# 프로덕션 (기본)
+firebase deploy
+
+# 스테이징으로 전환
+firebase use staging
+firebase deploy
+
+# 또는 플래그로 직접 지정 (전환 없이)
+firebase deploy --project yacht-ff0c8-dev
+```
+
+`firebase use`로 활성 프로젝트를 전환하거나, `--project` 플래그로 매번 지정할 수 있다. 별도 로그인이나 세션 분리 불필요.
+
 ## 유지되는 것
 
 - `firebase-hosting-merge.yml` — 변경 없음
