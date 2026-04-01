@@ -109,6 +109,14 @@
       var nick = Auth.getNickname();
       if (nick) displayText += ' (' + nick + ')';
       userDisplayName.textContent = displayText;
+
+      // Update display name when nicknames finish loading (non-blocking)
+      window.YachtGame.onNicknameReady = function () {
+        var updated = user.displayName || 'Player';
+        var loadedNick = Auth.getNickname();
+        if (loadedNick) updated += ' (' + loadedNick + ')';
+        userDisplayName.textContent = updated;
+      };
       userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
       userAvatar.src = user.photoURL || DEFAULT_AVATAR;
     } else {

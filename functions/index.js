@@ -700,7 +700,7 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const historyEntry = {
         date: ServerValue.TIMESTAMP,
         mode: gameMode,
-        opponentName: oppNicknameKo || oppNicknameEn || oppDisplayName,
+        opponentName: oppDisplayName,
         myScore: myTotal,
         oppScore: oppTotal,
         result: result,
