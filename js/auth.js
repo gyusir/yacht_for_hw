@@ -87,12 +87,22 @@
     window.YachtGame.auth.onAuthStateChanged(function (user) {
       currentUser = user;
       if (user && !user.isAnonymous) {
+        // Signed-in regular user: not a guest, ensure nicknames are loaded
         isGuest = false;
         window.YachtGame.Nickname.ensureNickname(user.uid, function (nicks) {
           nicknames = nicks;
           callback(user);
         });
+      } else if (user && user.isAnonymous) {
+        // Anonymous auth: treat as guest, do not override guestName but clear nicknames
+        isGuest = true;
+        nicknames = null;
+        callback(user);
       } else {
+        // No user: clear all user/guest-related state to avoid stale data
+        isGuest = false;
+        guestName = '';
+        nicknames = null;
         callback(user);
       }
     });
