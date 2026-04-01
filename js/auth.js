@@ -7,6 +7,7 @@
   var currentUser = null;
   var isGuest = false;
   var guestName = '';
+  var nicknames = null; // { ko: '...', en: '...' }
 
   function signInWithGoogle(callback) {
     var auth = window.YachtGame.auth;
@@ -21,7 +22,10 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
-      if (callback) callback(null, currentUser);
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+        nicknames = nicks;
+        if (callback) callback(null, currentUser);
+      });
     }).catch(function (error) {
       console.error('Google sign-in error:', error.code, error.message);
       // Popup blocked or failed — fall back to redirect
@@ -45,6 +49,9 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+        nicknames = nicks;
+      });
     }
   }).catch(function (error) {
     console.error('Redirect sign-in error:', error.code, error.message);
@@ -55,6 +62,7 @@
       currentUser = null;
       isGuest = false;
       guestName = '';
+      nicknames = null;
       if (callback) callback();
     });
   }
@@ -78,8 +86,25 @@
   function onAuthStateChanged(callback) {
     window.YachtGame.auth.onAuthStateChanged(function (user) {
       currentUser = user;
-      if (user && !user.isAnonymous) isGuest = false;
-      callback(user);
+      if (user && !user.isAnonymous) {
+        isGuest = false;
+        // Non-blocking: fire callback immediately, load nicknames in background
+        callback(user);
+        window.YachtGame.Nickname.ensureNickname(user.uid, function (nicks) {
+          nicknames = nicks;
+          // Update UI with loaded nicknames
+          if (window.YachtGame.onNicknameReady) window.YachtGame.onNicknameReady(nicks);
+        });
+      } else if (user && user.isAnonymous) {
+        isGuest = true;
+        nicknames = null;
+        callback(user);
+      } else {
+        isGuest = false;
+        guestName = '';
+        nicknames = null;
+        callback(user);
+      }
     });
   }
 
@@ -87,10 +112,25 @@
     if (isGuest && guestName) return guestName;
     if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
     if (currentUser) {
-      var name = currentUser.displayName || 'Player';
-      return name.length > 12 ? name.substring(0, 12) : name;
+      var name = null;
+      if (nicknames) {
+        var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+        name = nicknames[lang] || nicknames.ko || nicknames.en;
+      }
+      name = name || currentUser.displayName || 'Player';
+      return name.length > 20 ? name.substring(0, 20) : name;
     }
     return 'Guest';
+  }
+
+  function getNickname() {
+    if (!nicknames) return null;
+    var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+    return nicknames[lang] || nicknames.ko || nicknames.en;
+  }
+
+  function getNicknames() {
+    return nicknames;
   }
 
   function getPlayerUid() {
@@ -116,6 +156,8 @@
     setGuest: setGuest,
     onAuthStateChanged: onAuthStateChanged,
     getPlayerName: getPlayerName,
+    getNickname: getNickname,
+    getNicknames: getNicknames,
     getPlayerUid: getPlayerUid,
     isSignedIn: isSignedIn,
     isGuestMode: isGuestMode,

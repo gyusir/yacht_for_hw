@@ -33,7 +33,7 @@ function sanitizePlayerName(name) {
   // Trim whitespace and collapse internal spaces
   name = name.trim().replace(/\s+/g, " ");
   if (name.length === 0) return null;
-  if (name.length > 12) name = name.substring(0, 12);
+  if (name.length > 20) name = name.substring(0, 20);
   return name;
 }
 
@@ -678,16 +678,26 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
 
-      // Use verified displayName from opponent's profile when available
+      // Read opponent nicknames (ko/en) and fall back to displayName
       let oppDisplayName = opponent.name;
+      let oppNicknameKo = null;
+      let oppNicknameEn = null;
       if (opponent.uid) {
-        const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
-        if (oppProfileSnap.exists()) {
-          oppDisplayName = oppProfileSnap.val();
+        const oppUserRef = db.ref("users/" + opponent.uid);
+        const [nickKoSnap, nickEnSnap, displayNameSnap] = await Promise.all([
+          oppUserRef.child("nickname_ko").once("value"),
+          oppUserRef.child("nickname_en").once("value"),
+          oppUserRef.child("displayName").once("value")
+        ]);
+        oppNicknameKo = nickKoSnap.exists() ? nickKoSnap.val() : null;
+        oppNicknameEn = nickEnSnap.exists() ? nickEnSnap.val() : null;
+        // Fall back to displayName for opponentName field (backward compat)
+        if (displayNameSnap.exists()) {
+          oppDisplayName = displayNameSnap.val();
         }
       }
 
-      await userRef.child("history").push({
+      const historyEntry = {
         date: ServerValue.TIMESTAMP,
         mode: gameMode,
         opponentName: oppDisplayName,
@@ -695,7 +705,11 @@ exports.onGameFinished = functions.region("asia-southeast1")
         oppScore: oppTotal,
         result: result,
         roomCode: roomCode
-      });
+      };
+      if (oppNicknameKo) historyEntry.oppNicknameKo = oppNicknameKo;
+      if (oppNicknameEn) historyEntry.oppNicknameEn = oppNicknameEn;
+
+      await userRef.child("history").push(historyEntry);
 
       await userRef.child("stats").transaction((stats) => {
         if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
