@@ -683,13 +683,17 @@ exports.onGameFinished = functions.region("asia-southeast1")
       let oppNicknameKo = null;
       let oppNicknameEn = null;
       if (opponent.uid) {
-        const oppUserSnap = await db.ref("users/" + opponent.uid).once("value");
-        const oppData = oppUserSnap.val() || {};
-        oppNicknameKo = oppData.nickname_ko || null;
-        oppNicknameEn = oppData.nickname_en || null;
+        const oppUserRef = db.ref("users/" + opponent.uid);
+        const [nickKoSnap, nickEnSnap, displayNameSnap] = await Promise.all([
+          oppUserRef.child("nickname_ko").once("value"),
+          oppUserRef.child("nickname_en").once("value"),
+          oppUserRef.child("displayName").once("value")
+        ]);
+        oppNicknameKo = nickKoSnap.exists() ? nickKoSnap.val() : null;
+        oppNicknameEn = nickEnSnap.exists() ? nickEnSnap.val() : null;
         // Fall back to displayName for opponentName field (backward compat)
-        if (oppData.displayName) {
-          oppDisplayName = oppData.displayName;
+        if (displayNameSnap.exists()) {
+          oppDisplayName = displayNameSnap.val();
         }
       }
 
