@@ -33,7 +33,7 @@ function sanitizePlayerName(name) {
   // Trim whitespace and collapse internal spaces
   name = name.trim().replace(/\s+/g, " ");
   if (name.length === 0) return null;
-  if (name.length > 12) name = name.substring(0, 12);
+  if (name.length > 20) name = name.substring(0, 20);
   return name;
 }
 
@@ -98,6 +98,8 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   await checkRateLimit(uid, "createRoom");
   const { gameMode, diceSkin } = data;
   let playerName = data.playerName;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
 
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
@@ -118,6 +120,16 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unavailable", "Could not generate room code. Try again.");
   }
 
+  const player1Data = {
+    name: playerName,
+    uid: uid,
+    connected: true,
+    scores: buildEmptyScores(gameMode),
+    diceSkin: diceSkin || "classic"
+  };
+  if (nicknameKo) player1Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player1Data.nicknameEn = nicknameEn;
+
   const roomData = {
     gameMode: gameMode,
     status: "waiting",
@@ -133,13 +145,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
       4: { value: 0, held: false }
     },
     players: {
-      player1: {
-        name: playerName,
-        uid: uid,
-        connected: true,
-        scores: buildEmptyScores(gameMode),
-        diceSkin: diceSkin || "classic"
-      }
+      player1: player1Data
     },
     winner: ""
   };
@@ -155,6 +161,8 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   await checkRateLimit(uid, "joinRoom");
   const { roomCode, diceSkin, random } = data;
   let playerName = data.playerName;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
 
   playerName = sanitizePlayerName(playerName);
   if (!playerName) {
@@ -204,14 +212,18 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("failed-precondition", "Room is full.");
   }
 
-  const updates = {};
-  updates["players/player2"] = {
+  const player2Data = {
     name: playerName,
     uid: uid,
     connected: true,
     scores: buildEmptyScores(room.gameMode),
     diceSkin: diceSkin || "classic"
   };
+  if (nicknameKo) player2Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player2Data.nicknameEn = nicknameEn;
+
+  const updates = {};
+  updates["players/player2"] = player2Data;
   updates["status"] = "playing";
   updates["lastActivityAt"] = ServerValue.TIMESTAMP;
 
@@ -678,16 +690,26 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
 
-      // Use verified displayName from opponent's profile when available
+      // Read opponent nicknames (ko/en) and fall back to displayName
       let oppDisplayName = opponent.name;
+      let oppNicknameKo = null;
+      let oppNicknameEn = null;
       if (opponent.uid) {
-        const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
-        if (oppProfileSnap.exists()) {
-          oppDisplayName = oppProfileSnap.val();
+        const oppUserRef = db.ref("users/" + opponent.uid);
+        const [nickKoSnap, nickEnSnap, displayNameSnap] = await Promise.all([
+          oppUserRef.child("nickname_ko").once("value"),
+          oppUserRef.child("nickname_en").once("value"),
+          oppUserRef.child("displayName").once("value")
+        ]);
+        oppNicknameKo = nickKoSnap.exists() ? nickKoSnap.val() : null;
+        oppNicknameEn = nickEnSnap.exists() ? nickEnSnap.val() : null;
+        // Fall back to displayName for opponentName field (backward compat)
+        if (displayNameSnap.exists()) {
+          oppDisplayName = displayNameSnap.val();
         }
       }
 
-      await userRef.child("history").push({
+      const historyEntry = {
         date: ServerValue.TIMESTAMP,
         mode: gameMode,
         opponentName: oppDisplayName,
@@ -695,7 +717,11 @@ exports.onGameFinished = functions.region("asia-southeast1")
         oppScore: oppTotal,
         result: result,
         roomCode: roomCode
-      });
+      };
+      if (oppNicknameKo) historyEntry.oppNicknameKo = oppNicknameKo;
+      if (oppNicknameEn) historyEntry.oppNicknameEn = oppNicknameEn;
+
+      await userRef.child("history").push(historyEntry);
 
       await userRef.child("stats").transaction((stats) => {
         if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };

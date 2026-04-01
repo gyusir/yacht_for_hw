@@ -149,6 +149,12 @@
     var myData = roomData.players.player1;
     var oppData = roomData.players.player2;
 
+    // Keep player name in sync with current language
+    var Auth = window.YachtGame.Auth;
+    if (Auth && Auth.getPlayerName) {
+      myData.name = Auth.getPlayerName() || myData.name;
+    }
+
     // Game over check
     if (roomData.status === 'finished') {
       UI.showScreen('screen-gameover');
@@ -782,6 +788,20 @@
     destroy: destroy,
     getPendingCategory: function () { return pendingCategory; },
     isRolling: function () { return isAnimating; },
-    refreshUI: function () { onStateUpdate(); }
+    refreshUI: function () {
+      if (!roomData) return;
+      // Game over: only re-render game over screen (avoid re-triggering saveResult)
+      if (roomData.status === 'finished') {
+        var Auth = window.YachtGame.Auth;
+        var myName = (Auth && Auth.getPlayerName) ? Auth.getPlayerName() : (roomData.players.player1.name || 'You');
+        window.YachtGame.UI.renderGameOver(
+          myName, roomData.players.player2.name,
+          roomData.players.player1.scores || {}, roomData.players.player2.scores || {},
+          roomData.gameMode, roomData.winner, 'player1'
+        );
+        return;
+      }
+      onStateUpdate();
+    }
   };
 })();

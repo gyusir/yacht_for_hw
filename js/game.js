@@ -8,6 +8,16 @@
   var roomCode = null;
   var localPlayerKey = null;
   var opponentKey = null;
+
+  // Resolve player display name using language-specific nickname if available
+  function resolvePlayerName(pData, fallback) {
+    if (!pData) return fallback || 'Player';
+    var I18n = window.YachtGame.I18n;
+    if (I18n && pData.nicknameKo && pData.nicknameEn) {
+      return I18n.getLang() === 'ko' ? pData.nicknameKo : pData.nicknameEn;
+    }
+    return pData.name || fallback || 'Player';
+  }
   var gameMode = null;
   var roomListener = null;
   var lastRoomData = null;
@@ -157,8 +167,13 @@
       UI.showScreen('screen-gameover');
       var p1 = room.players.player1;
       var p2 = room.players.player2;
+      var goP1Name = resolvePlayerName(p1, 'Player 1');
+      var goP2Name = resolvePlayerName(p2, 'Player 2');
+      var Auth = window.YachtGame.Auth;
+      if (localPlayerKey === 'player1' && Auth && Auth.getPlayerName) goP1Name = Auth.getPlayerName() || goP1Name;
+      if (localPlayerKey === 'player2' && Auth && Auth.getPlayerName) goP2Name = Auth.getPlayerName() || goP2Name;
       UI.renderGameOver(
-        p1.name, p2.name,
+        goP1Name, goP2Name,
         p1.scores || {}, p2.scores || {},
         gameMode, room.winner, localPlayerKey
       );
@@ -193,7 +208,7 @@
     }
 
     // Update turn indicator
-    UI.updateTurnIndicator(isMyTurn, oppData.name || 'Opponent');
+    UI.updateTurnIndicator(isMyTurn, resolvePlayerName(oppData, 'Opponent'));
 
     // Update roll counter
     UI.updateRollCounter(room.rollCount || 0);
@@ -218,15 +233,22 @@
 
     // Render scorecard
     var currentDice = Dice.getDiceValues(diceState);
+    var Auth = window.YachtGame.Auth;
+    var p1Data = room.players.player1;
+    var p2Data = room.players.player2;
+    var p1Name = resolvePlayerName(p1Data, 'Player 1');
+    var p2Name = resolvePlayerName(p2Data, 'Player 2');
+    // Override my own name with Auth (has latest language nickname)
+    if (localPlayerKey === 'player1' && Auth && Auth.getPlayerName) p1Name = Auth.getPlayerName() || p1Name;
+    if (localPlayerKey === 'player2' && Auth && Auth.getPlayerName) p2Name = Auth.getPlayerName() || p2Name;
     UI.renderScorecard(
-      (room.players.player1 && room.players.player1.scores) || {},
-      (room.players.player2 && room.players.player2.scores) || {},
+      (p1Data && p1Data.scores) || {},
+      (p2Data && p2Data.scores) || {},
       gameMode,
       currentDice,
       isMyTurn,
       localPlayerKey,
-      (room.players.player1 && room.players.player1.name) || 'Player 1',
-      (room.players.player2 && room.players.player2.name) || 'Player 2',
+      p1Name, p2Name,
       myData.lastCategory || null,
       oppData.lastCategory || null,
       room.rollCount > 0,
@@ -358,15 +380,22 @@
           ds.push({ value: dd.value, held: hd[k] === true });
         }
         var currentDice = Dice.getDiceValues(ds);
+        var _Auth = window.YachtGame.Auth;
+        var _oppKey = localPlayerKey === 'player1' ? 'player2' : 'player1';
+        var _p1Data = lastRoomData.players.player1;
+        var _p2Data = lastRoomData.players.player2;
+        var _p1Name = resolvePlayerName(_p1Data, 'Player 1');
+        var _p2Name = resolvePlayerName(_p2Data, 'Player 2');
+        if (localPlayerKey === 'player1' && _Auth && _Auth.getPlayerName) _p1Name = _Auth.getPlayerName() || _p1Name;
+        if (localPlayerKey === 'player2' && _Auth && _Auth.getPlayerName) _p2Name = _Auth.getPlayerName() || _p2Name;
         window.YachtGame.UI.renderScorecard(
-          (lastRoomData.players.player1 && lastRoomData.players.player1.scores) || {},
-          (lastRoomData.players.player2 && lastRoomData.players.player2.scores) || {},
+          (_p1Data && _p1Data.scores) || {},
+          (_p2Data && _p2Data.scores) || {},
           lastRoomData.gameMode,
           currentDice,
           isMyTurn,
           localPlayerKey,
-          (lastRoomData.players.player1 && lastRoomData.players.player1.name) || 'Player 1',
-          (lastRoomData.players.player2 && lastRoomData.players.player2.name) || 'Player 2',
+          _p1Name, _p2Name,
           (lastRoomData.players[localPlayerKey] && lastRoomData.players[localPlayerKey].lastCategory) || null,
           (lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] && lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'].lastCategory) || null,
           lastRoomData.rollCount > 0,
@@ -577,6 +606,23 @@
     refreshUI: function () {
       if (!lastRoomData) return;
       var room = lastRoomData;
+
+      // Game over screen refresh
+      if (room.status === 'finished') {
+        var _p1 = room.players.player1;
+        var _p2 = room.players.player2;
+        var _Auth = window.YachtGame.Auth;
+        var _p1N = resolvePlayerName(_p1, 'Player 1');
+        var _p2N = resolvePlayerName(_p2, 'Player 2');
+        if (localPlayerKey === 'player1' && _Auth && _Auth.getPlayerName) _p1N = _Auth.getPlayerName() || _p1N;
+        if (localPlayerKey === 'player2' && _Auth && _Auth.getPlayerName) _p2N = _Auth.getPlayerName() || _p2N;
+        window.YachtGame.UI.renderGameOver(
+          _p1N, _p2N,
+          _p1.scores || {}, _p2.scores || {},
+          room.gameMode, room.winner, localPlayerKey
+        );
+        return;
+      }
       var myData = room.players[localPlayerKey] || {};
       var oppKey = localPlayerKey === 'player1' ? 'player2' : 'player1';
       var oppData = room.players[oppKey] || {};
@@ -588,10 +634,17 @@
         diceState.push({ value: d.value || 0, held: !!h });
       }
       var currentDice = window.YachtGame.Dice.getDiceValues(diceState);
+      var Auth = window.YachtGame.Auth;
+      var p1Data = room.players.player1;
+      var p2Data = room.players.player2;
+      var p1Name = resolvePlayerName(p1Data, 'Player 1');
+      var p2Name = resolvePlayerName(p2Data, 'Player 2');
+      if (localPlayerKey === 'player1' && Auth && Auth.getPlayerName) p1Name = Auth.getPlayerName() || p1Name;
+      if (localPlayerKey === 'player2' && Auth && Auth.getPlayerName) p2Name = Auth.getPlayerName() || p2Name;
       window.YachtGame.UI.renderScorecard(
-        myData.scores || {}, oppData.scores || {},
+        (p1Data && p1Data.scores) || {}, (p2Data && p2Data.scores) || {},
         room.gameMode, currentDice, isMyTurn, localPlayerKey,
-        myData.name || 'Player 1', oppData.name || 'Player 2',
+        p1Name, p2Name,
         myData.lastCategory || null, oppData.lastCategory || null,
         room.rollCount > 0,
         (myData.diceSkin) || 'classic', (oppData.diceSkin) || 'classic'

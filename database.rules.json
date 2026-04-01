@@ -96,6 +96,17 @@
         "photoURL": {
           ".write": "auth != null && auth.uid === $uid"
         },
+        "nickname": {
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "nickname_ko": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "nickname_en": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
         "preferences": {
           ".write": "auth != null && auth.uid === $uid"
         }

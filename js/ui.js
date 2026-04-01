@@ -136,10 +136,14 @@
     html += '<th>' + (I18n ? I18n.t('category') : 'Category') + '</th>';
     html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">';
     html += '<span class="header-die-wrap' + (isMyTurn ? ' header-die-spin' : '') + '">' + myDieHTML + '</span> ';
-    html += escapeHtml(myName || 'You') + '</th>';
+    html += '<span class="name-full">' + escapeHtml(myName || 'You') + '</span>';
+    html += '<span class="name-short">' + escapeHtml(shortName(myName) || 'You') + '</span>';
+    html += '</th>';
     html += '<th class="opponent-header' + (!isMyTurn ? ' current-turn' : '') + '">';
     html += '<span class="header-die-wrap' + (!isMyTurn ? ' header-die-spin' : '') + '">' + oppDieHTML + '</span> ';
-    html += escapeHtml(oppName || 'Opponent') + '</th>';
+    html += '<span class="name-full">' + escapeHtml(oppName || 'Opponent') + '</span>';
+    html += '<span class="name-short">' + escapeHtml(shortName(oppName) || 'Opp') + '</span>';
+    html += '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
 
@@ -308,6 +312,16 @@
     scoresEl.innerHTML = html;
   }
 
+  // "용감한 여우#42" → "여우#42", "Brave Fox#42" → "Fox#42"
+  function shortName(name) {
+    if (!name) return name;
+    // Only shorten names that match the auto-nickname pattern "adj noun#num"
+    var autoNicknamePattern = /^[^\s#]+\s+[^\s#]+#\d+$/;
+    if (!autoNicknamePattern.test(name)) return name;
+    var idx = name.indexOf(' ');
+    return idx >= 0 ? name.substring(idx + 1) : name;
+  }
+
   function escapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str;
@@ -370,8 +384,10 @@
   var HISTORY_PAGE_SIZE = 5;
   var historyPage = 0;
   var historyGames = [];
+  var historyStats = null;
 
   function renderHistory(stats, games) {
+    historyStats = stats;
     var summaryEl = document.getElementById('stats-summary');
     var listEl = document.getElementById('history-list');
     var I18n = window.YachtGame.I18n;
@@ -413,11 +429,17 @@
       var g = pageGames[i];
       var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
       var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : 'result-tie');
-      var resultText = g.result === 'win' ? 'W' : (g.result === 'loss' ? 'L' : 'T');
+      var resultText = g.result === 'win' ? (I18n ? I18n.t('result_w') : 'W') : (g.result === 'loss' ? (I18n ? I18n.t('result_l') : 'L') : (I18n ? I18n.t('result_t') : 'T'));
+      var modeText = g.mode ? (I18n ? I18n.t('mode_' + g.mode) : g.mode) : '-';
       listHtml += '<tr>';
       listHtml += '<td>' + dateStr + '</td>';
-      listHtml += '<td>' + escapeHtml(g.mode || '-') + '</td>';
-      listHtml += '<td>' + escapeHtml(g.opponentName || '-') + '</td>';
+      listHtml += '<td>' + escapeHtml(modeText) + '</td>';
+      var oppName = g.opponentName || '-';
+      if (I18n) {
+        var lang = I18n.getLang();
+        oppName = (lang === 'ko' ? g.oppNicknameKo : g.oppNicknameEn) || g.oppNicknameKo || g.oppNicknameEn || g.opponentName || '-';
+      }
+      listHtml += '<td>' + escapeHtml(oppName) + '</td>';
       listHtml += '<td>' + g.myScore + ' - ' + g.oppScore + '</td>';
       listHtml += '<td class="' + resultClass + '">' + resultText + '</td>';
       listHtml += '</tr>';
@@ -520,6 +542,15 @@
     hideShortcutOverlay: hideShortcutOverlay,
     showEmoteBubble: showEmoteBubble,
     renderHistory: renderHistory,
+    refreshHistory: function () {
+      if (historyStats && historyGames) {
+        // Re-render summary with updated language
+        var savedPage = historyPage;
+        renderHistory(historyStats, historyGames);
+        historyPage = Math.min(savedPage, Math.ceil(historyGames.length / HISTORY_PAGE_SIZE) - 1);
+        renderHistoryPage();
+      }
+    },
     showConfetti: showConfetti,
     showDrawProposal: showDrawProposal,
     showDrawPending: showDrawPending

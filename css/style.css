@@ -2055,8 +2055,13 @@ input[type="text"]::placeholder {
   to { opacity: 0; transform: translateY(-16px); }
 }
 
+/* Nickname: full vs short for mobile */
+.name-short { display: none; }
+
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
+  .name-full { display: none; }
+  .name-short { display: inline; }
   header {
     padding: 12px 16px 0;
   }
