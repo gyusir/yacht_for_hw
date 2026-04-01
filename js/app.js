@@ -105,7 +105,10 @@
       guestSection.classList.add('hidden-section');
       divider.classList.add('hidden-section');
       signedInProfile.classList.add('visible');
-      userDisplayName.textContent = user.displayName || 'Player';
+      var displayText = user.displayName || 'Player';
+      var nick = Auth.getNickname();
+      if (nick) displayText += ' (' + nick + ')';
+      userDisplayName.textContent = displayText;
       userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
       userAvatar.src = user.photoURL || DEFAULT_AVATAR;
     } else {

@@ -7,6 +7,7 @@
   var currentUser = null;
   var isGuest = false;
   var guestName = '';
+  var nickname = null;
 
   function signInWithGoogle(callback) {
     var auth = window.YachtGame.auth;
@@ -21,7 +22,10 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
-      if (callback) callback(null, currentUser);
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nick) {
+        nickname = nick;
+        if (callback) callback(null, currentUser);
+      });
     }).catch(function (error) {
       console.error('Google sign-in error:', error.code, error.message);
       // Popup blocked or failed — fall back to redirect
@@ -45,6 +49,9 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nick) {
+        nickname = nick;
+      });
     }
   }).catch(function (error) {
     console.error('Redirect sign-in error:', error.code, error.message);
@@ -55,6 +62,7 @@
       currentUser = null;
       isGuest = false;
       guestName = '';
+      nickname = null;
       if (callback) callback();
     });
   }
@@ -78,8 +86,15 @@
   function onAuthStateChanged(callback) {
     window.YachtGame.auth.onAuthStateChanged(function (user) {
       currentUser = user;
-      if (user && !user.isAnonymous) isGuest = false;
-      callback(user);
+      if (user && !user.isAnonymous) {
+        isGuest = false;
+        window.YachtGame.Nickname.ensureNickname(user.uid, function (nick) {
+          nickname = nick;
+          callback(user);
+        });
+      } else {
+        callback(user);
+      }
     });
   }
 
@@ -87,10 +102,14 @@
     if (isGuest && guestName) return guestName;
     if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
     if (currentUser) {
-      var name = currentUser.displayName || 'Player';
+      var name = nickname || currentUser.displayName || 'Player';
       return name.length > 12 ? name.substring(0, 12) : name;
     }
     return 'Guest';
+  }
+
+  function getNickname() {
+    return nickname;
   }
 
   function getPlayerUid() {
@@ -116,6 +135,7 @@
     setGuest: setGuest,
     onAuthStateChanged: onAuthStateChanged,
     getPlayerName: getPlayerName,
+    getNickname: getNickname,
     getPlayerUid: getPlayerUid,
     isSignedIn: isSignedIn,
     isGuestMode: isGuestMode,

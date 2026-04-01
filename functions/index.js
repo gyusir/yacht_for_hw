@@ -678,12 +678,17 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
 
-      // Use verified displayName from opponent's profile when available
+      // Use nickname from opponent's profile when available, fall back to displayName
       let oppDisplayName = opponent.name;
       if (opponent.uid) {
-        const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
-        if (oppProfileSnap.exists()) {
-          oppDisplayName = oppProfileSnap.val();
+        const nickSnap = await db.ref("users/" + opponent.uid + "/nickname").once("value");
+        if (nickSnap.exists()) {
+          oppDisplayName = nickSnap.val();
+        } else {
+          const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
+          if (oppProfileSnap.exists()) {
+            oppDisplayName = oppProfileSnap.val();
+          }
         }
       }
 

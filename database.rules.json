@@ -96,6 +96,10 @@
         "photoURL": {
           ".write": "auth != null && auth.uid === $uid"
         },
+        "nickname": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
         "preferences": {
           ".write": "auth != null && auth.uid === $uid"
         }
