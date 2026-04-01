@@ -417,7 +417,12 @@
       listHtml += '<tr>';
       listHtml += '<td>' + dateStr + '</td>';
       listHtml += '<td>' + escapeHtml(g.mode || '-') + '</td>';
-      listHtml += '<td>' + escapeHtml(g.opponentName || '-') + '</td>';
+      var oppName = g.opponentName || '-';
+      if (I18n) {
+        var lang = I18n.getLang();
+        oppName = (lang === 'ko' ? g.oppNicknameKo : g.oppNicknameEn) || g.oppNicknameKo || g.oppNicknameEn || g.opponentName || '-';
+      }
+      listHtml += '<td>' + escapeHtml(oppName) + '</td>';
       listHtml += '<td>' + g.myScore + ' - ' + g.oppScore + '</td>';
       listHtml += '<td class="' + resultClass + '">' + resultText + '</td>';
       listHtml += '</tr>';

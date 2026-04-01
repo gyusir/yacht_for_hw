@@ -67,34 +67,54 @@
     return adj + ' ' + noun + '#' + num;
   }
 
+  // Generate both ko and en nicknames for a uid
+  function generateBoth(uid) {
+    return {
+      ko: generate(uid, 'ko'),
+      en: generate(uid, 'en')
+    };
+  }
+
+  // Ensure both nickname_ko and nickname_en exist in DB; returns { ko, en }
   function ensureNickname(uid, callback) {
     var db = window.YachtGame.db;
-    var ref = db.ref('users/' + uid + '/nickname');
+    var userRef = db.ref('users/' + uid);
 
-    ref.once('value').then(function (snap) {
-      if (snap.exists()) {
-        callback(snap.val());
+    userRef.once('value').then(function (snap) {
+      var data = snap.val() || {};
+      var ko = data.nickname_ko;
+      var en = data.nickname_en;
+
+      if (ko && en) {
+        callback({ ko: ko, en: en });
       } else {
-        var I18n = window.YachtGame.I18n;
-        var lang = (I18n && I18n.getLang) ? I18n.getLang() : 'en';
-        var nick = generate(uid, lang);
-        ref.set(nick).then(function () {
-          callback(nick);
+        // Generate missing nicknames
+        var generated = generateBoth(uid);
+        var updates = {};
+        if (!ko) { ko = generated.ko; updates.nickname_ko = ko; }
+        if (!en) { en = generated.en; updates.nickname_en = en; }
+
+        // Also migrate old single nickname field if present
+        if (data.nickname) {
+          updates.nickname = null; // remove legacy field
+        }
+
+        userRef.update(updates).then(function () {
+          callback({ ko: ko, en: en });
         }).catch(function () {
-          // If write fails, still return the generated nickname for this session
-          callback(nick);
+          callback({ ko: ko, en: en });
         });
       }
     }).catch(function () {
       // DB read failed — generate locally for this session
-      var I18n = window.YachtGame.I18n;
-      var lang = (I18n && I18n.getLang) ? I18n.getLang() : 'en';
-      callback(generate(uid, lang));
+      var generated = generateBoth(uid);
+      callback(generated);
     });
   }
 
   window.YachtGame.Nickname = {
     generate: generate,
+    generateBoth: generateBoth,
     ensureNickname: ensureNickname
   };
 })();

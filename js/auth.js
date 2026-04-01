@@ -7,7 +7,7 @@
   var currentUser = null;
   var isGuest = false;
   var guestName = '';
-  var nickname = null;
+  var nicknames = null; // { ko: '...', en: '...' }
 
   function signInWithGoogle(callback) {
     var auth = window.YachtGame.auth;
@@ -22,8 +22,8 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
-      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nick) {
-        nickname = nick;
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+        nicknames = nicks;
         if (callback) callback(null, currentUser);
       });
     }).catch(function (error) {
@@ -49,8 +49,8 @@
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
       });
-      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nick) {
-        nickname = nick;
+      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+        nicknames = nicks;
       });
     }
   }).catch(function (error) {
@@ -62,7 +62,7 @@
       currentUser = null;
       isGuest = false;
       guestName = '';
-      nickname = null;
+      nicknames = null;
       if (callback) callback();
     });
   }
@@ -88,8 +88,8 @@
       currentUser = user;
       if (user && !user.isAnonymous) {
         isGuest = false;
-        window.YachtGame.Nickname.ensureNickname(user.uid, function (nick) {
-          nickname = nick;
+        window.YachtGame.Nickname.ensureNickname(user.uid, function (nicks) {
+          nicknames = nicks;
           callback(user);
         });
       } else {
@@ -102,14 +102,25 @@
     if (isGuest && guestName) return guestName;
     if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
     if (currentUser) {
-      var name = nickname || currentUser.displayName || 'Player';
+      var name = null;
+      if (nicknames) {
+        var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+        name = nicknames[lang] || nicknames.ko || nicknames.en;
+      }
+      name = name || currentUser.displayName || 'Player';
       return name.length > 12 ? name.substring(0, 12) : name;
     }
     return 'Guest';
   }
 
   function getNickname() {
-    return nickname;
+    if (!nicknames) return null;
+    var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+    return nicknames[lang] || nicknames.ko || nicknames.en;
+  }
+
+  function getNicknames() {
+    return nicknames;
   }
 
   function getPlayerUid() {
@@ -136,6 +147,7 @@
     onAuthStateChanged: onAuthStateChanged,
     getPlayerName: getPlayerName,
     getNickname: getNickname,
+    getNicknames: getNicknames,
     getPlayerUid: getPlayerUid,
     isSignedIn: isSignedIn,
     isGuestMode: isGuestMode,

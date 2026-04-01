@@ -678,29 +678,34 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
 
-      // Use nickname from opponent's profile when available, fall back to displayName
+      // Read opponent nicknames (ko/en) and fall back to displayName
       let oppDisplayName = opponent.name;
+      let oppNicknameKo = null;
+      let oppNicknameEn = null;
       if (opponent.uid) {
-        const nickSnap = await db.ref("users/" + opponent.uid + "/nickname").once("value");
-        if (nickSnap.exists()) {
-          oppDisplayName = nickSnap.val();
-        } else {
-          const oppProfileSnap = await db.ref("users/" + opponent.uid + "/displayName").once("value");
-          if (oppProfileSnap.exists()) {
-            oppDisplayName = oppProfileSnap.val();
-          }
+        const oppUserSnap = await db.ref("users/" + opponent.uid).once("value");
+        const oppData = oppUserSnap.val() || {};
+        oppNicknameKo = oppData.nickname_ko || null;
+        oppNicknameEn = oppData.nickname_en || null;
+        // Fall back to displayName for opponentName field (backward compat)
+        if (oppData.displayName) {
+          oppDisplayName = oppData.displayName;
         }
       }
 
-      await userRef.child("history").push({
+      const historyEntry = {
         date: ServerValue.TIMESTAMP,
         mode: gameMode,
-        opponentName: oppDisplayName,
+        opponentName: oppNicknameKo || oppNicknameEn || oppDisplayName,
         myScore: myTotal,
         oppScore: oppTotal,
         result: result,
         roomCode: roomCode
-      });
+      };
+      if (oppNicknameKo) historyEntry.oppNicknameKo = oppNicknameKo;
+      if (oppNicknameEn) historyEntry.oppNicknameEn = oppNicknameEn;
+
+      await userRef.child("history").push(historyEntry);
 
       await userRef.child("stats").transaction((stats) => {
         if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
