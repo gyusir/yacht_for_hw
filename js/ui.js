@@ -315,6 +315,9 @@
   // "용감한 여우#42" → "여우#42", "Brave Fox#42" → "Fox#42"
   function shortName(name) {
     if (!name) return name;
+    // Only shorten names that match the auto-nickname pattern "adj noun#num"
+    var autoNicknamePattern = /^[^\s#]+\s+[^\s#]+#\d+$/;
+    if (!autoNicknamePattern.test(name)) return name;
     var idx = name.indexOf(' ');
     return idx >= 0 ? name.substring(idx + 1) : name;
   }
