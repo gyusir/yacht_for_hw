@@ -4,41 +4,90 @@
 
   window.YachtGame = window.YachtGame || {};
 
+  // Index-aligned: ko[i] and en[i] have the same meaning
   var ADJECTIVES = {
     ko: [
-      '귀여운', '용감한', '빠른', '조용한', '똑똑한',
-      '신나는', '멋진', '작은', '큰', '밝은',
-      '따뜻한', '시원한', '강한', '즐거운', '씩씩한',
-      '활발한', '재밌는', '느긋한', '날쌘', '영리한',
-      '당당한', '상냥한', '든든한', '행복한', '유쾌한',
-      '대담한', '단단한', '소중한', '반짝이는', '부드러운'
+      '용감한',   // 0  Brave
+      '빠른',     // 1  Swift
+      '똑똑한',   // 2  Smart
+      '조용한',   // 3  Calm
+      '귀여운',   // 4  Cute
+      '행복한',   // 5  Happy
+      '강한',     // 6  Tough
+      '밝은',     // 7  Vivid
+      '멋진',     // 8  Cool
+      '날쌘',     // 9  Quick
+      '따뜻한',   // 10 Warm
+      '영리한',   // 11 Witty
+      '대담한',   // 12 Bold
+      '당당한',   // 13 Proud
+      '씩씩한',   // 14 Hardy
+      '작은',     // 15 Tiny
+      '느긋한',   // 16 Mellow
+      '상냥한',   // 17 Kind
+      '즐거운',   // 18 Jolly
+      '유쾌한',   // 19 Merry
+      '신비한',   // 20 Mystic
+      '활발한',   // 21 Peppy
+      '재밌는',   // 22 Funny
+      '든든한',   // 23 Solid
+      '부드러운', // 24 Gentle
+      '소중한',   // 25 Dear
+      '단단한',   // 26 Firm
+      '시원한',   // 27 Fresh
+      '신나는',   // 28 Eager
+      '반짝이는'  // 29 Shiny
     ],
     en: [
-      'Bold', 'Brave', 'Cool', 'Fast', 'Kind',
-      'Lucky', 'Quick', 'Sharp', 'Smart', 'Calm',
-      'Happy', 'Jolly', 'Keen', 'Neat', 'Shy',
-      'Sly', 'Warm', 'Wise', 'Wild', 'Zany',
-      'Agile', 'Swift', 'Proud', 'Tiny', 'Fair',
-      'Grand', 'Merry', 'Noble', 'Vivid', 'Witty'
+      'Brave',  'Swift',  'Smart',  'Calm',   'Cute',
+      'Happy',  'Tough',  'Vivid',  'Cool',   'Quick',
+      'Warm',   'Witty',  'Bold',   'Proud',  'Hardy',
+      'Tiny',   'Mellow', 'Kind',   'Jolly',  'Merry',
+      'Mystic', 'Peppy',  'Funny',  'Solid',  'Gentle',
+      'Dear',   'Firm',   'Fresh',  'Eager',  'Shiny'
     ]
   };
 
   var NOUNS = {
     ko: [
-      '다람쥐', '고양이', '강아지', '토끼', '펭귄',
-      '여우', '호랑이', '곰', '독수리', '돌고래',
-      '사자', '판다', '올빼미', '수달', '앵무새',
-      '기린', '거북이', '하마', '물범', '오리',
-      '참새', '매', '늑대', '사슴', '두루미',
-      '표범', '오소리', '나비', '코알라', '햄스터'
+      '여우',     // 0  Fox
+      '올빼미',   // 1  Owl
+      '고양이',   // 2  Cat
+      '곰',       // 3  Bear
+      '사슴',     // 4  Deer
+      '늑대',     // 5  Wolf
+      '매',       // 6  Hawk
+      '비둘기',   // 7  Dove
+      '물범',     // 8  Seal
+      '퓨마',     // 9  Puma
+      '사자',     // 10 Lion
+      '백조',     // 11 Swan
+      '토끼',     // 12 Hare
+      '참새',     // 13 Wren
+      '펭귄',     // 14 Puffin
+      '수달',     // 15 Otter
+      '호랑이',   // 16 Tiger
+      '판다',     // 17 Panda
+      '돌고래',   // 18 Orca
+      '독수리',   // 19 Eagle
+      '다람쥐',   // 20 Chipmk
+      '강아지',   // 21 Puppy
+      '앵무새',   // 22 Parrot
+      '코알라',   // 23 Koala
+      '기린',     // 24 Giraffe
+      '거북이',   // 25 Turtle
+      '햄스터',   // 26 Hamstr
+      '나비',     // 27 Moth
+      '오리',     // 28 Duck
+      '두루미'    // 29 Crane
     ],
     en: [
-      'Fox', 'Owl', 'Cat', 'Bear', 'Deer',
-      'Wolf', 'Hawk', 'Dove', 'Seal', 'Puma',
-      'Lion', 'Lynx', 'Swan', 'Crow', 'Hare',
-      'Wren', 'Moth', 'Pike', 'Lark', 'Vole',
-      'Mink', 'Jay', 'Ram', 'Orca', 'Colt',
-      'Fawn', 'Dace', 'Koi', 'Toad', 'Newt'
+      'Fox',    'Owl',    'Cat',    'Bear',   'Deer',
+      'Wolf',   'Hawk',   'Dove',   'Seal',   'Puma',
+      'Lion',   'Swan',   'Hare',   'Wren',   'Penguin',
+      'Otter',  'Tiger',  'Panda',  'Orca',   'Eagle',
+      'Chipmk', 'Puppy',  'Parrot', 'Koala',  'Giraffe',
+      'Turtle', 'Hamster','Moth',   'Duck',   'Crane'
     ]
   };
 

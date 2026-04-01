@@ -33,7 +33,7 @@ function sanitizePlayerName(name) {
   // Trim whitespace and collapse internal spaces
   name = name.trim().replace(/\s+/g, " ");
   if (name.length === 0) return null;
-  if (name.length > 12) name = name.substring(0, 12);
+  if (name.length > 20) name = name.substring(0, 20);
   return name;
 }
 

@@ -108,7 +108,7 @@
         name = nicknames[lang] || nicknames.ko || nicknames.en;
       }
       name = name || currentUser.displayName || 'Player';
-      return name.length > 12 ? name.substring(0, 12) : name;
+      return name.length > 20 ? name.substring(0, 20) : name;
     }
     return 'Guest';
   }
