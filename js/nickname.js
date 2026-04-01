@@ -62,32 +62,32 @@
       '퓨마',     // 9  Puma
       '사자',     // 10 Lion
       '백조',     // 11 Swan
-      '토끼',     // 12 Hare
-      '참새',     // 13 Wren
-      '펭귄',     // 14 Puffin
+      '토끼',     // 12 Rabbit
+      '참새',     // 13 Sparrow
+      '펭귄',     // 14 Penguin
       '수달',     // 15 Otter
       '호랑이',   // 16 Tiger
       '판다',     // 17 Panda
-      '돌고래',   // 18 Orca
+      '돌고래',   // 18 Dolphin
       '독수리',   // 19 Eagle
-      '다람쥐',   // 20 Chipmk
+      '다람쥐',   // 20 Squirrel
       '강아지',   // 21 Puppy
       '앵무새',   // 22 Parrot
       '코알라',   // 23 Koala
       '기린',     // 24 Giraffe
       '거북이',   // 25 Turtle
-      '햄스터',   // 26 Hamstr
-      '나비',     // 27 Moth
+      '햄스터',   // 26 Hamster
+      '나비',     // 27 Butterfly
       '오리',     // 28 Duck
       '두루미'    // 29 Crane
     ],
     en: [
-      'Fox',    'Owl',    'Cat',    'Bear',   'Deer',
-      'Wolf',   'Hawk',   'Dove',   'Seal',   'Puma',
-      'Lion',   'Swan',   'Hare',   'Wren',   'Penguin',
-      'Otter',  'Tiger',  'Panda',  'Orca',   'Eagle',
-      'Chipmk', 'Puppy',  'Parrot', 'Koala',  'Giraffe',
-      'Turtle', 'Hamster','Moth',   'Duck',   'Crane'
+      'Fox',      'Owl',      'Cat',       'Bear',     'Deer',
+      'Wolf',     'Hawk',     'Dove',      'Seal',     'Puma',
+      'Lion',     'Swan',     'Rabbit',    'Sparrow',  'Penguin',
+      'Otter',    'Tiger',    'Panda',     'Dolphin',  'Eagle',
+      'Squirrel', 'Puppy',    'Parrot',    'Koala',    'Giraffe',
+      'Turtle',   'Hamster',  'Butterfly', 'Duck',     'Crane'
     ]
   };
 
