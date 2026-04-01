@@ -136,10 +136,14 @@
     html += '<th>' + (I18n ? I18n.t('category') : 'Category') + '</th>';
     html += '<th class="my-header' + (isMyTurn ? ' current-turn' : '') + '">';
     html += '<span class="header-die-wrap' + (isMyTurn ? ' header-die-spin' : '') + '">' + myDieHTML + '</span> ';
-    html += escapeHtml(myName || 'You') + '</th>';
+    html += '<span class="name-full">' + escapeHtml(myName || 'You') + '</span>';
+    html += '<span class="name-short">' + escapeHtml(shortName(myName) || 'You') + '</span>';
+    html += '</th>';
     html += '<th class="opponent-header' + (!isMyTurn ? ' current-turn' : '') + '">';
     html += '<span class="header-die-wrap' + (!isMyTurn ? ' header-die-spin' : '') + '">' + oppDieHTML + '</span> ';
-    html += escapeHtml(oppName || 'Opponent') + '</th>';
+    html += '<span class="name-full">' + escapeHtml(oppName || 'Opponent') + '</span>';
+    html += '<span class="name-short">' + escapeHtml(shortName(oppName) || 'Opp') + '</span>';
+    html += '</th>';
     html += '</tr></thead>';
     html += '<tbody>';
 
@@ -306,6 +310,13 @@
     html += '<td>' + p2Total + '</td></tr>';
     html += '</tbody></table>';
     scoresEl.innerHTML = html;
+  }
+
+  // "용감한 여우#42" → "여우#42", "Brave Fox#42" → "Fox#42"
+  function shortName(name) {
+    if (!name) return name;
+    var idx = name.indexOf(' ');
+    return idx >= 0 ? name.substring(idx + 1) : name;
   }
 
   function escapeHtml(str) {
