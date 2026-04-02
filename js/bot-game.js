@@ -730,7 +730,10 @@
     var uid = Auth ? Auth.getPlayerUid() : 'guest';
     var diceSkin = DiceSkins ? DiceSkins.getCurrentSkin() : 'classic';
 
-    var botName = diff === 'gambler' ? 'Gambler Bot' : 'Basic Bot';
+    var I18n = window.YachtGame.I18n;
+    var botName = diff === 'gambler'
+      ? (I18n ? I18n.t('gambler_bot') : 'Gambler Bot')
+      : (I18n ? I18n.t('basic_bot') : 'Basic Bot');
 
     roomData = {
       gameMode: gameMode,
