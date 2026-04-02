@@ -265,7 +265,9 @@
   });
 
   btnCreate.addEventListener('click', function () {
+    var originalText = btnCreate.textContent;
     btnCreate.disabled = true;
+    btnCreate.textContent = '...';
     lobbyError.hidden = true;
 
     var gameMode = 'yacht';
@@ -275,6 +277,7 @@
 
     Lobby.createRoom(playerName, gameMode, function (result) {
       btnCreate.disabled = false;
+      btnCreate.textContent = originalText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;
@@ -298,11 +301,14 @@
     var code = roomCodeInput.value.trim();
     if (code.length < 6) return;
 
+    var originalJoinText = btnJoin.textContent;
     btnJoin.disabled = true;
+    btnJoin.textContent = '...';
     lobbyError.hidden = true;
 
     Lobby.joinRoom(playerName, code, function (result) {
       btnJoin.disabled = false;
+      btnJoin.textContent = originalJoinText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;
@@ -325,11 +331,14 @@
       lobbyError.hidden = false;
       return;
     }
+    var originalRandomText = btnRandomJoin.textContent;
     btnRandomJoin.disabled = true;
+    btnRandomJoin.textContent = '...';
     lobbyError.hidden = true;
 
     Lobby.findRandomRoom(playerName, function (result) {
       btnRandomJoin.disabled = false;
+      btnRandomJoin.textContent = originalRandomText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;
