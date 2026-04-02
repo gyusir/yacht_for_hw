@@ -93,6 +93,16 @@ header h1 {
   margin-bottom: 0;
 }
 
+.app-version {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-left: 4px;
+  font-weight: 400;
+  position: relative;
+  top: 1px;
+}
+
 .header-controls {
   display: none;
   gap: 6px;
@@ -856,14 +866,38 @@ input[type="text"]::placeholder {
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  font-size: 2rem;
+  line-height: 32px;
+  text-align: center;
+  animation: diceSpin 1s linear infinite;
 }
 
-@keyframes spin {
+.spinner::after {
+  content: '\2684';
+  animation: diceFace 1.5s steps(1) infinite;
+}
+
+@keyframes diceSpin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes diceFace {
+  0%   { content: '\2680'; }
+  16%  { content: '\2681'; }
+  33%  { content: '\2682'; }
+  50%  { content: '\2683'; }
+  66%  { content: '\2684'; }
+  83%  { content: '\2685'; }
+}
+
+.btn-dice-spinner {
+  display: inline-block;
+  animation: diceSpin 1s linear infinite;
+}
+
+.btn-dice-spinner::after {
+  content: '\2684';
+  animation: diceFace 1.5s steps(1) infinite;
 }
 
 /* ===== Game Layout ===== */
@@ -942,6 +976,7 @@ input[type="text"]::placeholder {
 
 .die.rolling {
   animation: diceShake 0.4s ease;
+  opacity: 0.5;
 }
 
 @keyframes diceShake {

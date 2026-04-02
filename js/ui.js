@@ -45,16 +45,21 @@
     var target = document.getElementById(screenId);
     if (target) target.classList.add('active');
 
-    var titleEl = document.querySelector('h1');
+    var titleSpan = document.querySelector('h1 [data-i18n="title_yacht"]');
     var I18n = window.YachtGame.I18n;
     if (screenId === 'screen-game') {
       document.body.classList.add('in-game');
-      if (titleEl) {
-        titleEl.textContent = I18n ? (gameMode === 'yahtzee' ? I18n.t('title_yahtzee') : I18n.t('title_yacht')) : 'Yacht Dice';
+      if (titleSpan) {
+        var gameTitle = I18n ? (gameMode === 'yahtzee' ? I18n.t('title_yahtzee') : I18n.t('title_yacht')) : 'Yacht Dice';
+        titleSpan.textContent = gameTitle;
+        titleSpan.setAttribute('data-i18n', gameMode === 'yahtzee' ? 'title_yahtzee' : 'title_yacht');
       }
     } else {
       document.body.classList.remove('in-game');
-      if (titleEl) titleEl.textContent = I18n ? I18n.t('title_yacht') : 'Yacht Dice';
+      if (titleSpan) {
+        titleSpan.textContent = I18n ? I18n.t('title_yacht') : 'Yacht Dice';
+        titleSpan.setAttribute('data-i18n', 'title_yacht');
+      }
     }
   }
 

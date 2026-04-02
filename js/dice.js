@@ -153,11 +153,33 @@
     return values;
   }
 
+  // Stagger stop: each die stops at a random order with delay between them
+  var STAGGER_DELAY = 500; // ms between each die stopping
+
+  function staggerStop(spinTimers, dieEls, finalValues, callback) {
+    if (!spinTimers.length) { if (callback) callback(); return; }
+    var shuffled = spinTimers.slice().sort(function () { return Math.random() - 0.5; });
+    var completed = 0;
+    for (var i = 0; i < shuffled.length; i++) {
+      (function (entry, delay) {
+        setTimeout(function () {
+          if (entry.timer) clearInterval(entry.timer);
+          if (entry.running !== undefined) entry.running = false;
+          dieEls[entry.idx].classList.remove('rolling');
+          if (finalValues) renderDie(dieEls[entry.idx], finalValues[entry.idx]);
+          completed++;
+          if (completed === shuffled.length && callback) callback();
+        }, delay);
+      })(shuffled[i], i * STAGGER_DELAY);
+    }
+  }
+
   window.YachtGame.Dice = {
     renderDie: renderDie,
     renderAll: renderAll,
     setInteractive: setInteractive,
     animateRoll: animateRoll,
-    getDiceValues: getDiceValues
+    getDiceValues: getDiceValues,
+    staggerStop: staggerStop
   };
 })();

@@ -284,26 +284,22 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 50);
+        }, 80);
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
-    // Stop after 400ms and show final values
+    // Stop after 400ms with stagger and show final values
     addTimer(function () {
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      Dice.staggerStop(spinTimers, dieEls, newValues, function () {
+        for (var i = 0; i < 5; i++) {
+          roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
+        }
+        roomData.rollCount = (roomData.rollCount || 0) + 1;
 
-      // Update state
-      for (var i = 0; i < 5; i++) {
-        roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
-      }
-      roomData.rollCount = (roomData.rollCount || 0) + 1;
-
-      isAnimating = false;
-      onStateUpdate();
+        isAnimating = false;
+        onStateUpdate();
+      });
     }, 400);
   }
 
@@ -484,7 +480,7 @@
     // Game start emote on first bot turn
     if (turnCount === 1) tryBotEmote('game_start');
 
-    var thinkDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(600, 1000);
+    var thinkDelay = difficulty === 'gambler' ? randRange(1500, 2200) : randRange(1000, 1600);
     addTimer(function () { botRoll(); }, thinkDelay);
   }
 
@@ -525,28 +521,25 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 50);
+        }, 80);
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
     addTimer(function () {
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      Dice.staggerStop(spinTimers, dieEls, newValues, function () {
+        for (var i = 0; i < 5; i++) {
+          roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
+        }
+        roomData.rollCount = (roomData.rollCount || 0) + 1;
+        isAnimating = false;
 
-      for (var i = 0; i < 5; i++) {
-        roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
-      }
-      roomData.rollCount = (roomData.rollCount || 0) + 1;
-      isAnimating = false;
+        onStateUpdate();
 
-      onStateUpdate();
-
-      // Bot evaluates after rolling
-      var evalDelay = difficulty === 'gambler' ? randRange(700, 1000) : randRange(400, 700);
-      addTimer(function () { botEvaluate(); }, evalDelay);
+        // Bot evaluates after rolling
+        var evalDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(800, 1200);
+        addTimer(function () { botEvaluate(); }, evalDelay);
+      });
     }, 400);
   }
 
@@ -562,12 +555,12 @@
       // Decide which dice to hold
       var holds = BotAI.chooseHolds(diceValues, botScores, roomData.gameMode, difficulty, roomData.rollCount);
       botApplyHolds(holds, function () {
-        var rerollDelay = difficulty === 'gambler' ? randRange(500, 800) : randRange(300, 500);
+        var rerollDelay = difficulty === 'gambler' ? randRange(800, 1200) : randRange(600, 1000);
         addTimer(function () { botRoll(); }, rerollDelay);
       });
     } else {
       // Select category
-      var selectDelay = difficulty === 'gambler' ? randRange(800, 1200) : randRange(500, 800);
+      var selectDelay = difficulty === 'gambler' ? randRange(1200, 1800) : randRange(900, 1400);
       addTimer(function () { botSelectCategory(); }, selectDelay);
     }
   }
@@ -844,6 +837,12 @@
     isRolling: function () { return isAnimating; },
     refreshUI: function () {
       if (!roomData) return;
+      // Update bot name for current language
+      var I18n = window.YachtGame.I18n;
+      if (I18n && roomData.players && roomData.players.player2) {
+        roomData.players.player2.name = difficulty === 'gambler'
+          ? I18n.t('gambler_bot') : I18n.t('basic_bot');
+      }
       // Game over: only re-render game over screen (avoid re-triggering saveResult)
       if (roomData.status === 'finished') {
         var Auth = window.YachtGame.Auth;

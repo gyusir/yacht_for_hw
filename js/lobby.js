@@ -6,6 +6,23 @@
 
   var db = null;
   var presenceRef = null;
+
+  // Map server error messages to i18n keys
+  var ERROR_MAP = {
+    'Room not found.': 'toast_room_not_found',
+    'Room is full.': 'toast_room_full',
+    'Room is already in a game.': 'toast_room_in_game',
+    'Too many requests. Please wait.': 'toast_rate_limit'
+  };
+
+  function translateError(msg, fallbackKey) {
+    var I18n = window.YachtGame.I18n;
+    if (!I18n) return msg;
+    var key = ERROR_MAP[msg];
+    if (key) return I18n.t(key);
+    if (fallbackKey) return I18n.t(fallbackKey);
+    return msg;
+  }
   var presenceCallback = null;
   var lastCleanupTime = 0;
 
@@ -84,7 +101,7 @@
 
       callback({ roomCode: code, playerKey: playerKey });
     }).catch(function (error) {
-      callback({ error: error.message || 'Failed to create room.' });
+      callback({ error: translateError(error.message, 'toast_create_failed') });
     });
   }
 
@@ -113,7 +130,7 @@
 
       callback({ roomCode: code, playerKey: playerKey, gameMode: data.gameMode });
     }).catch(function (error) {
-      callback({ error: error.message || 'Failed to join room.' });
+      callback({ error: translateError(error.message, 'toast_join_failed') });
     });
   }
 
@@ -278,7 +295,7 @@
         matched: data.matched
       });
     }).catch(function (error) {
-      callback({ error: error.message || 'Random match failed.' });
+      callback({ error: translateError(error.message, 'toast_random_failed') });
     });
   }
 
