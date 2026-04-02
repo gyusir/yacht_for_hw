@@ -211,10 +211,31 @@ body.in-game .screen {
   font-weight: 400;
   font-size: 0.9rem;
   color: var(--text-muted);
-  margin: 0 0 12px 0;
+  margin: 0;
 }
 
 .screen-nickname:empty {
+  display: none;
+}
+
+.stats-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stats-header-row h2 {
+  margin-bottom: 0;
+}
+
+.stats-nickname-inline {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.stats-nickname-inline:empty {
   display: none;
 }
 
@@ -375,6 +396,14 @@ input[type="text"]::placeholder {
 
 [data-theme="dark"] .btn-google:hover {
   background: #333358;
+}
+
+.google-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 12px !important;
+  opacity: 0.7;
+  white-space: pre-line;
 }
 
 .google-icon {
@@ -1943,16 +1972,22 @@ input[type="text"]::placeholder {
 .tutorial-buttons {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
 }
 
 .btn-tutorial-next {
   padding: 8px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-tutorial-skip {
   padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);

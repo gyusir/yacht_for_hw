@@ -303,10 +303,16 @@
     window.YachtGame.UI.showScreen(returnScreen);
   }
 
+  function refreshLang() {
+    if (!active || currentStep < 0) return;
+    showTooltip(STEPS[currentStep]);
+  }
+
   window.YachtGame.Tutorial = {
     start: start,
     isActive: function () { return active; },
     cleanup: cleanup,
+    refreshLang: refreshLang,
     _advance: advance
   };
 })();
