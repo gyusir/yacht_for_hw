@@ -679,6 +679,39 @@
     });
   }
 
+  function saveResultBeacon() {
+    if (resultSaved) return;
+    if (!roomData || roomData.status === 'finished') return;
+    resultSaved = true;
+
+    var Auth = window.YachtGame.Auth;
+    if (!Auth || !Auth.isSignedIn()) return;
+
+    var cachedToken = window.YachtGame._cachedIdToken;
+    if (!cachedToken) return;
+
+    var beaconUrl = window.YachtGame.beaconUrl;
+    if (!beaconUrl) return;
+
+    var Scoring = window.YachtGame.Scoring;
+    var myScores = roomData.players.player1.scores || {};
+    var botScores = roomData.players.player2.scores || {};
+    var myTotal = Scoring.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
+    var botTotal = Scoring.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
+
+    var payload = JSON.stringify({
+      idToken: cachedToken,
+      gameMode: roomData.gameMode,
+      botDifficulty: difficulty,
+      myScore: myTotal,
+      oppScore: botTotal,
+      result: 'loss'
+    });
+
+    var blob = new Blob([payload], { type: 'text/plain' });
+    navigator.sendBeacon(beaconUrl, blob);
+  }
+
   // ─── Public Interface ───
 
   function init(gameMode, diff, playerName) {
@@ -803,6 +836,7 @@
     leaveGame: leaveGame,
     getGameMode: getGameMode,
     destroy: destroy,
+    saveResultBeacon: saveResultBeacon,
     getPendingCategory: function () { return pendingCategory; },
     isRolling: function () { return isAnimating; },
     refreshUI: function () {

@@ -440,8 +440,12 @@
     for (var i = 0; i < pageGames.length; i++) {
       var g = pageGames[i];
       var dateStr = g.date ? new Date(g.date).toLocaleDateString() : '-';
-      var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : 'result-tie');
-      var resultText = g.result === 'win' ? (I18n ? I18n.t('result_w') : 'W') : (g.result === 'loss' ? (I18n ? I18n.t('result_l') : 'L') : (I18n ? I18n.t('result_t') : 'T'));
+      var resultClass = g.result === 'win' ? 'result-win' : (g.result === 'loss' ? 'result-loss' : (g.result === 'invalid' ? 'result-invalid' : 'result-tie'));
+      var resultText;
+      if (g.result === 'win') resultText = I18n ? I18n.t('result_w') : 'W';
+      else if (g.result === 'loss') resultText = I18n ? I18n.t('result_l') : 'L';
+      else if (g.result === 'invalid') resultText = I18n ? I18n.t('result_inv') : 'INV';
+      else resultText = I18n ? I18n.t('result_t') : 'T';
       var modeText = g.mode ? (I18n ? I18n.t('mode_' + g.mode) : g.mode) : '-';
       listHtml += '<tr>';
       listHtml += '<td>' + dateStr + '</td>';

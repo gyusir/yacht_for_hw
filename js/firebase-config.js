@@ -34,3 +34,8 @@ if (location.hostname === 'localhost' && new URLSearchParams(location.search).ha
   window.YachtGame.db.useEmulator('localhost', 9000);
   window.YachtGame.functions.useEmulator('localhost', 5001);
 }
+
+// Beacon URL for sendBeacon (bot game tab close)
+window.YachtGame.beaconUrl = window.YachtGame.isEmulator
+  ? 'http://localhost:5001/yacht-ff0c8/asia-northeast3/saveBotGameResultBeacon'
+  : 'https://asia-northeast3-yacht-ff0c8.cloudfunctions.net/saveBotGameResultBeacon';

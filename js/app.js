@@ -34,9 +34,33 @@
     }
   });
 
+  // --- Cache ID token for sendBeacon usage ---
+  firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+      user.getIdToken().then(function (token) {
+        window.YachtGame._cachedIdToken = token;
+      });
+    } else {
+      window.YachtGame._cachedIdToken = null;
+    }
+  });
+  // Refresh token every 50 minutes (tokens expire after 1 hour)
+  setInterval(function () {
+    var user = firebase.auth().currentUser;
+    if (user) {
+      user.getIdToken(true).then(function (token) {
+        window.YachtGame._cachedIdToken = token;
+      });
+    }
+  }, 3000000);
+
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
+      // Save bot game result as loss via sendBeacon before destroy
+      if (window.YachtGame._isBotGame && window.YachtGame.BotGame && window.YachtGame.BotGame.saveResultBeacon) {
+        window.YachtGame.BotGame.saveResultBeacon();
+      }
       if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
         window.YachtGame.Game.destroy();
       }
