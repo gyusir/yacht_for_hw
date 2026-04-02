@@ -35,6 +35,7 @@
       skin_vs_bot: 'vs',
       my_stats: '\uD83D\uDCCA Stats',
       back_to_login: 'Back to Login',
+      feedback: 'Feedback',
       session_notice: '* Closing the tab ends the session.\n  Keep the tab open to stay connected.',
 
       // History
@@ -268,6 +269,7 @@
       skin_vs_bot: 'vs',
       my_stats: '\uD83D\uDCCA \ub0b4 \uc804\uc801',
       back_to_login: '\ub85c\uadf8\uc778\uc73c\ub85c \ub3cc\uc544\uac00\uae30',
+      feedback: '\ud53c\ub4dc\ubc31',
       session_notice: '* \ud0ed\uc744 \ub2eb\uc73c\uba74 \uc138\uc158\uc774 \uc885\ub8cc\ub429\ub2c8\ub2e4.\n  \ud0ed\uc744 \uc5f4\uc5b4\ub450\uba74 \uc720\uc9c0\ub429\ub2c8\ub2e4.',
 
       // History
