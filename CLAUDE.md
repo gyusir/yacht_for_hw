@@ -23,8 +23,11 @@
 | `bot-ai.js` | Bot AI 의사결정. DP 룩업 테이블 기반 최적 전략 (Gambler=최적, Basic=±1 노이즈) |
 | `bot-game.js` | Bot 대전 컨트롤러. 로컬 게임 상태, 턴 흐름, 애니메이션, 이모트 |
 | `history.js` | 전적 저장·조회 (로그인 유저 전용) |
-| `ui.js` | 화면 전환, 스코어카드 렌더링, 토스트, 오버레이 |
-| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키 |
+| `i18n.js` | 영어/한국어 이중 언어. `I18n.t(key)` / `I18n.getLang()` |
+| `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
+| `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
+| `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
+| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지 |
 
 ### Bot AI (`data/`, `tools/`)
 | 파일 | 역할 |
@@ -36,7 +39,7 @@
 ### Backend (`functions/`)
 | 파일 | 역할 |
 |---|---|
-| `index.js` | Cloud Functions: createRoom, joinRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, onGameFinished |
+| `index.js` | Cloud Functions: createRoom, joinRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, onGameFinished |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
 ### Key Constraints

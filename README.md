@@ -10,12 +10,16 @@
 - **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 빠른 매치(랜덤 참가)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
-- **주사위 스킨** — 6종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram), 게임 수 기반 잠금해제
-- **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환
-- **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원
-- **재접속** — 탭 복귀 시 자동 재접속
+- **주사위 스킨** — 8종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), 게임 수 / Bot 승리 기반 잠금해제
+- **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환 (WCAG AA 대비 준수)
+- **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원, 서버사이드 레이트 제한
+- **재접속** — 탭 복귀 시 자동 재접속, 동시 탭 충돌 감지
+- **오프라인 감지** — 네트워크 끊김 시 게임 액션 차단 + 토스트 알림
 - **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) 두 난이도, Expectimax DP 기반
-- **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트
+- **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
+- **다국어** — 영어/한국어 이중 언어 지원, 실시간 전환
+- **튜토리얼** — 인터랙티브 단계별 게임 안내
+- **접근성** — aria-label, 키보드 내비게이션, 스크린리더 지원
 - **빌드 없음** — 순수 HTML, CSS, JavaScript (번들러/프레임워크 없음)
 
 ## Tech Stack
@@ -47,15 +51,18 @@ yacht_for_hw/
 │   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략)
 │   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트)
 │   ├── history.js            # 전적 저장·조회
-│   ├── ui.js                 # 화면 전환, 스코어카드, 토스트
-│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 키보드 단축키
+│   ├── i18n.js               # 영어/한국어 이중 언어
+│   ├── nickname.js           # 닉네임 생성·관리 (언어별)
+│   ├── tutorial.js           # 인터랙티브 튜토리얼
+│   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
+│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지
 ├── data/
 │   ├── dp_yacht.json         # Yacht 모드 DP 룩업 테이블 (36KB)
 │   └── dp_yahtzee.json       # Yahtzee 모드 DP 룩업 테이블 (11MB)
 ├── tools/
 │   └── generate_dp.py        # Expectimax DP 테이블 생성기 (Python/NumPy/Numba)
 ├── functions/
-│   ├── index.js              # Cloud Functions (방 관리, 주사위, 점수 검증)
+│   ├── index.js              # Cloud Functions (방 관리, 주사위, 점수 검증, 무승부, Bot 결과)
 │   ├── scoring.js            # 서버사이드 점수 계산 로직
 │   └── package.json
 ├── .github/workflows/
@@ -119,10 +126,10 @@ cd functions && npm install && cd ..
 firebase emulators:start
 ```
 
-- 게임: http://localhost:5000
+- 게임: http://localhost:5002?emulator=true
 - Emulator UI: http://localhost:4000
 
-Claude Code 사용 시 `/localtest` 명령어로 emulator를 실행할 수 있다.
+Claude Code 사용 시 `/localtest` 명령어로 emulator를, `/localtest hosting`으로 hosting만 실행할 수 있다.
 
 ### Deploy
 
