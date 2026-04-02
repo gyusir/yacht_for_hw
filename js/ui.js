@@ -84,9 +84,10 @@
     toast.className = 'toast';
     toast.textContent = message;
     container.appendChild(toast);
+    var duration = Math.max(3100, 1500 + message.length * 50);
     setTimeout(function () {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 3100);
+    }, duration);
   }
 
   // Disconnect overlay
