@@ -237,13 +237,16 @@
 
   // Listen for auth state changes
   Auth.onAuthStateChanged(function (user) {
-    // Skip UI changes for anonymous (guest) auth users
-    if (user && user.isAnonymous) return;
+    // Hide stats button for anonymous (guest) auth users
+    if (user && user.isAnonymous) {
+      if (btnMyStats) btnMyStats.style.display = 'none';
+      return;
+    }
 
     showLoginScreen(user);
     // Show My Stats button in lobby if signed in (non-anonymous)
     if (btnMyStats) {
-      btnMyStats.hidden = !(user && !user.isAnonymous);
+      btnMyStats.style.display = (user && !user.isAnonymous) ? '' : 'none';
     }
     if (user) {
       DiceSkins.loadSkin();
@@ -292,6 +295,7 @@
       if (error) return;
       playerName = Auth.getPlayerName();
       updateScreenNicknames();
+      if (btnMyStats) btnMyStats.style.display = 'none';
       DiceSkins.applySkin('classic');
       UI.showScreen('screen-lobby');
       Lobby.cleanupStaleRooms();

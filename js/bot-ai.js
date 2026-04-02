@@ -12,7 +12,11 @@
 
   // ─── Configuration ───
 
-  var BASIC_NOISE = 4; // ±4 EV noise for Basic difficulty
+  // Basic difficulty: "smart with occasional lapses"
+  // - Plays optimally when one option is clearly better (gap > CLOSE_THRESHOLD)
+  // - When options are close, sometimes picks a suboptimal one (MISTAKE_RATE)
+  var CLOSE_THRESHOLD = 8;  // EV difference considered "close"
+  var MISTAKE_RATE = 0.25;  // 25% chance to pick suboptimal when close
 
   // ─── DP Table State ───
 
@@ -251,12 +255,7 @@
 
   // ─── DP-Based Decision Functions ───
 
-  function addNoise(ev, noise) {
-    if (noise <= 0) return ev;
-    return ev + (Math.random() * 2 - 1) * noise;
-  }
-
-  function dpChooseCategory(dice, scores, gameMode, noise) {
+  function dpChooseCategory(dice, scores, gameMode, basic) {
     var S = getScoring();
     var cats = S.getCategories(gameMode);
     var state = scoresToState(scores, gameMode);
@@ -267,8 +266,7 @@
     var isAllSame = (sd[0] === sd[4]);
     var bonus = (isYahtzeeMode && state.yzFlag && isAllSame) ? 100 : 0;
 
-    var bestCat = null;
-    var bestVal = -Infinity;
+    var candidates = [];
 
     var bits = state.mask;
     while (bits !== 0) {
@@ -290,24 +288,32 @@
       }
 
       var futureEV = dpLookup(entry, nextMask, nextUpper, nextYzFlag);
-      var val = addNoise(totalScore + futureEV, noise);
-      if (val > bestVal) {
-        bestVal = val;
-        bestCat = cats[ci];
-      }
+      candidates.push({ cat: cats[ci], val: totalScore + futureEV });
     }
-    return bestCat;
+
+    candidates.sort(function (a, b) { return b.val - a.val; });
+    if (!basic || candidates.length <= 1) return candidates[0].cat;
+
+    // Basic: pick from close alternatives with MISTAKE_RATE
+    var best = candidates[0].val;
+    var close = [candidates[0]];
+    for (var i = 1; i < candidates.length; i++) {
+      if (best - candidates[i].val <= CLOSE_THRESHOLD) close.push(candidates[i]);
+      else break;
+    }
+    if (close.length > 1 && Math.random() < MISTAKE_RATE) {
+      return close[1 + Math.floor(Math.random() * (close.length - 1))].cat;
+    }
+    return candidates[0].cat;
   }
 
-  function dpChooseHolds(dice, scores, gameMode, rollCount, noise) {
+  function dpChooseHolds(dice, scores, gameMode, rollCount, basic) {
     var state = scoresToState(scores, gameMode);
     var phases = computePhases(state.mask, state.upper, state.yzFlag, gameMode);
-    var rollsLeft = 3 - rollCount; // after current roll: 1 or 2 more rolls
-    // Use val1 for rollsLeft=2 (2 more rerolls), val0 for rollsLeft=1 (1 more reroll)
+    var rollsLeft = 3 - rollCount;
     var valueTable = rollsLeft >= 2 ? phases.val1 : phases.val0;
 
-    var bestHolds = [false, false, false, false, false];
-    var bestEV = -Infinity;
+    var candidates = [];
 
     var seenKept = {};
     for (var hm = 0; hm < 32; hm++) {
@@ -319,10 +325,7 @@
       }
       var keptSorted = kept.slice().sort(function (a, b) { return a - b; });
       var keptKey = keptSorted.join(',');
-      if (seenKept[keptKey] !== undefined) {
-        // Same kept multiset — check if this EV was better
-        continue;
-      }
+      if (seenKept[keptKey] !== undefined) continue;
 
       var outcomes = ROLL_OUTCOMES[rerollCount];
       var ev = 0;
@@ -333,17 +336,27 @@
       }
       seenKept[keptKey] = true;
 
-      var noisyEV = addNoise(ev, noise);
-      if (noisyEV > bestEV) {
-        bestEV = noisyEV;
-        for (var b = 0; b < 5; b++) bestHolds[b] = (hm & (1 << b)) !== 0;
-      }
+      var holds = [];
+      for (var b = 0; b < 5; b++) holds.push((hm & (1 << b)) !== 0);
+      candidates.push({ holds: holds, ev: ev });
     }
 
-    return bestHolds;
+    candidates.sort(function (a, b) { return b.ev - a.ev; });
+    if (!basic || candidates.length <= 1) return candidates[0].holds;
+
+    var best = candidates[0].ev;
+    var close = [candidates[0]];
+    for (var i = 1; i < candidates.length; i++) {
+      if (best - candidates[i].ev <= CLOSE_THRESHOLD) close.push(candidates[i]);
+      else break;
+    }
+    if (close.length > 1 && Math.random() < MISTAKE_RATE) {
+      return close[1 + Math.floor(Math.random() * (close.length - 1))].holds;
+    }
+    return candidates[0].holds;
   }
 
-  function dpShouldReroll(dice, scores, gameMode, rollCount, noise) {
+  function dpShouldReroll(dice, scores, gameMode, rollCount, basic) {
     if (rollCount >= 3) return false;
 
     var state = scoresToState(scores, gameMode);
@@ -351,14 +364,18 @@
     var sd = sortedDice(dice);
     var di = diceToIndex(sd);
 
-    // val0[di] = best value choosing a category NOW (no more rolls)
-    // val1[di] = best value with 1 more reroll available (includes hold-all option)
-    // val1[di] >= val0[di] always (since hold-all is one of the options in val1)
-    // Reroll if the value with more rolls > value of stopping now
     var currentVal = phases.val0[di];
-    var rerollVal = phases.val1[di]; // val1 always includes hold-all = val0
+    var rerollVal = phases.val1[di];
+    var gap = rerollVal - currentVal;
 
-    return addNoise(rerollVal, noise) > addNoise(currentVal, noise) + 0.01;
+    if (!basic) return gap > 0.01;
+
+    // Basic: if gap is large, always make the right call
+    if (gap > CLOSE_THRESHOLD) return true;   // clearly better to reroll
+    if (gap < -CLOSE_THRESHOLD) return false;  // clearly better to stop (shouldn't happen since val1 >= val0)
+    // Close call: sometimes make the wrong decision
+    if (Math.random() < MISTAKE_RATE) return gap <= 0.01; // flip the decision
+    return gap > 0.01;
   }
 
   // ─── DP Table Loader ───
@@ -442,28 +459,27 @@
 
   function chooseHolds(dice, scores, gameMode, difficulty, rollCount) {
     if (rollCount >= 3) return [true, true, true, true, true];
-    var noise = difficulty === 'gambler' ? 0 : BASIC_NOISE;
+    var basic = difficulty !== 'gambler';
     if (!isReady(gameMode)) {
-      // Fallback: hold highest-count dice
       return [false, false, false, false, false];
     }
-    return dpChooseHolds(dice, scores, gameMode, rollCount, noise);
+    return dpChooseHolds(dice, scores, gameMode, rollCount, basic);
   }
 
   function chooseCategory(dice, scores, gameMode, difficulty, oppScores) {
-    var noise = difficulty === 'gambler' ? 0 : BASIC_NOISE;
+    var basic = difficulty !== 'gambler';
     if (!isReady(gameMode)) {
       return fallbackChooseCategory(dice, scores, gameMode);
     }
-    return dpChooseCategory(dice, scores, gameMode, noise);
+    return dpChooseCategory(dice, scores, gameMode, basic);
   }
 
   function shouldReroll(dice, scores, gameMode, difficulty, rollCount) {
-    var noise = difficulty === 'gambler' ? 0 : BASIC_NOISE;
+    var basic = difficulty !== 'gambler';
     if (!isReady(gameMode)) {
       return rollCount < 3 && Math.random() < 0.5;
     }
-    return dpShouldReroll(dice, scores, gameMode, rollCount, noise);
+    return dpShouldReroll(dice, scores, gameMode, rollCount, basic);
   }
 
   window.YachtGame.BotAI = {

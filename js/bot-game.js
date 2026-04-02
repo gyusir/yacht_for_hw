@@ -484,7 +484,7 @@
     // Game start emote on first bot turn
     if (turnCount === 1) tryBotEmote('game_start');
 
-    var thinkDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(600, 1000);
+    var thinkDelay = difficulty === 'gambler' ? randRange(1500, 2200) : randRange(1000, 1600);
     addTimer(function () { botRoll(); }, thinkDelay);
   }
 
@@ -545,7 +545,7 @@
       onStateUpdate();
 
       // Bot evaluates after rolling
-      var evalDelay = difficulty === 'gambler' ? randRange(700, 1000) : randRange(400, 700);
+      var evalDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(800, 1200);
       addTimer(function () { botEvaluate(); }, evalDelay);
     }, 400);
   }
@@ -562,12 +562,12 @@
       // Decide which dice to hold
       var holds = BotAI.chooseHolds(diceValues, botScores, roomData.gameMode, difficulty, roomData.rollCount);
       botApplyHolds(holds, function () {
-        var rerollDelay = difficulty === 'gambler' ? randRange(500, 800) : randRange(300, 500);
+        var rerollDelay = difficulty === 'gambler' ? randRange(800, 1200) : randRange(600, 1000);
         addTimer(function () { botRoll(); }, rerollDelay);
       });
     } else {
       // Select category
-      var selectDelay = difficulty === 'gambler' ? randRange(800, 1200) : randRange(500, 800);
+      var selectDelay = difficulty === 'gambler' ? randRange(1200, 1800) : randRange(900, 1400);
       addTimer(function () { botSelectCategory(); }, selectDelay);
     }
   }
