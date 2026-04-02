@@ -19,7 +19,7 @@
       // Lobby
       lobby: 'Lobby',
       lobby_desc: 'Create a new room or join an existing one.',
-      enter_room_code: 'Enter Room code',
+      enter_room_code: 'Room code',
       join: 'Join',
       or: 'or',
       create_room: 'Create\nRoom',
@@ -29,7 +29,7 @@
       skin_unlock_hint: 'Play games to unlock skins. Beat bots to claim theirs.',
       skin_play_unlock: '\uD83C\uDFB2 Play to Unlock',
       skin_bot_unlock: '\uD83E\uDD16 Win Bot to Unlock',
-      my_stats: '\uD83D\uDCCA My Stats',
+      my_stats: '\uD83D\uDCCA Stats',
       back_to_login: 'Back to Login',
       session_notice: '* Closing the tab ends the session.\n  Keep the tab open to stay connected.',
 
@@ -180,7 +180,7 @@
 
       // Tutorial
       tutorial: 'Tutorial',
-      tutorial_btn: '\ud83d\udcd6 How to Play',
+      tutorial_btn: '\ud83d\udcd6 Tutorial',
       tut_intro: 'Welcome to Yacht Dice! Let\'s learn how to play.',
       tut_scorecard: 'This is the scorecard. Fill all categories to finish the game.',
       tut_dice: 'These are your 5 dice and the Roll button.\nYou get 3 rolls per turn.',

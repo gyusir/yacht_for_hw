@@ -126,7 +126,7 @@
     var oppName = myPlayerKey === 'player1' ? player2Name : player1Name;
 
     var html = '<table>';
-    html += '<colgroup><col style="width:40%"><col style="width:30%"><col style="width:30%"></colgroup>';
+    html += '<colgroup><col style="width:30%"><col style="width:35%"><col style="width:35%"></colgroup>';
     var DiceSkins = window.YachtGame.DiceSkins;
     var myDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(myDiceSkin) : '';
     var oppDieHTML = DiceSkins && DiceSkins.renderMiniDieHTML ? DiceSkins.renderMiniDieHTML(oppDiceSkin) : '';
