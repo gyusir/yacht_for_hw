@@ -272,7 +272,7 @@
       result_criteria_win: '\ub192\uc740 \uc810\uc218 \ub610\ub294 \uc0c1\ub300 \uae30\uad8c',
       result_criteria_loss: '\uc0c1\ub300\ubcf4\ub2e4 \ub0ae\uc740 \uc810\uc218 \ub610\ub294 \uae30\uad8c',
       result_criteria_tie: '\ub3d9\uc810 \ub610\ub294 \uc591\uce21 \ub3d9\uc758',
-      result_criteria_invalid: '\ucd5c\uc18c \uc810\uc218 \ubbf8\ub2ec (Yacht 50 / Yahtzee 100)',
+      result_criteria_invalid: '\ucd5c\uc18c \uc810\uc218 \ubbf8\ub2ec (\uc694\ud2b8 50 / \uc57c\ucc0c 100)',
       result_criteria_invalid2: '\ubb34\ud6a8\ub294 \uc2b9\ub960\uc5d0 \ubbf8\ud3ec\ud568',
       mode_yacht: '\uc694\ud2b8',
       mode_yahtzee: '\uc57c\ucc0c',
