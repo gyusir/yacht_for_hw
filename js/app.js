@@ -34,9 +34,33 @@
     }
   });
 
+  // --- Cache ID token for sendBeacon usage ---
+  firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+      user.getIdToken().then(function (token) {
+        window.YachtGame._cachedIdToken = token;
+      });
+    } else {
+      window.YachtGame._cachedIdToken = null;
+    }
+  });
+  // Refresh token every 50 minutes (tokens expire after 1 hour)
+  setInterval(function () {
+    var user = firebase.auth().currentUser;
+    if (user) {
+      user.getIdToken(true).then(function (token) {
+        window.YachtGame._cachedIdToken = token;
+      });
+    }
+  }, 3000000);
+
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
+      // Save bot game result as loss via sendBeacon before destroy
+      if (window.YachtGame._isBotGame && window.YachtGame.BotGame && window.YachtGame.BotGame.saveResultBeacon) {
+        window.YachtGame.BotGame.saveResultBeacon();
+      }
       if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
         window.YachtGame.Game.destroy();
       }
@@ -307,6 +331,7 @@
 
       displayRoomCode.textContent = result.roomCode;
       currentWaitingRoomCode = result.roomCode;
+      document.getElementById('screen-waiting').setAttribute('data-wait-type', 'private');
       UI.showScreen('screen-waiting');
 
       // Wait for opponent
@@ -342,31 +367,57 @@
   });
 
   // --- Quick Match (Random Join) ---
+  var btnRandomStart = document.getElementById('btn-random-start');
+  var btnBackLobbyRandom = document.getElementById('btn-back-lobby-random');
+
   btnRandomJoin.addEventListener('click', function () {
-    // Ensure playerName is set (may be empty after back-navigation)
-    if (!playerName) {
-      playerName = Auth.getPlayerName();
-    }
+    if (!playerName) playerName = Auth.getPlayerName();
     if (!playerName) {
       lobbyError.textContent = 'Please set a name first.';
       lobbyError.hidden = false;
       return;
     }
-    var originalRandomText = btnRandomJoin.textContent;
-    btnRandomJoin.disabled = true;
-    btnRandomJoin.textContent = '...';
     lobbyError.hidden = true;
+    UI.showScreen('screen-random-setup');
+  });
 
-    Lobby.findRandomRoom(playerName, function (result) {
-      btnRandomJoin.disabled = false;
-      btnRandomJoin.textContent = originalRandomText;
+  btnBackLobbyRandom.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
+  });
+
+  btnRandomStart.addEventListener('click', function () {
+    var randomModeRadios = document.querySelectorAll('input[name="random-mode"]');
+    var gameMode = 'yahtzee';
+    for (var i = 0; i < randomModeRadios.length; i++) {
+      if (randomModeRadios[i].checked) gameMode = randomModeRadios[i].value;
+    }
+
+    var originalText = btnRandomStart.textContent;
+    btnRandomStart.disabled = true;
+    btnRandomStart.textContent = '...';
+
+    Lobby.findRandomRoom(playerName, gameMode, function (result) {
+      btnRandomStart.disabled = false;
+      btnRandomStart.textContent = originalText;
       if (result.error) {
-        lobbyError.textContent = result.error;
-        lobbyError.hidden = false;
+        UI.showToast(result.error);
         return;
       }
-      UI.showToast('Joined room ' + result.roomCode);
-      Game.init(result.roomCode, result.playerKey);
+
+      if (result.matched) {
+        UI.showToast(I18n.t('random_matched'));
+        Game.init(result.roomCode, result.playerKey);
+      } else {
+        currentWaitingRoomCode = result.roomCode;
+        document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
+        UI.showScreen('screen-waiting');
+
+        cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
+          cancelOpponentListener = null;
+          UI.showToast(player2.name + ' joined!');
+          Game.init(result.roomCode, result.playerKey);
+        });
+      }
     });
   });
 
@@ -524,8 +575,9 @@
       cancelOpponentListener();
       cancelOpponentListener = null;
     }
-    var code = displayRoomCode.textContent;
+    var code = currentWaitingRoomCode || displayRoomCode.textContent;
     Lobby.cancelRoom(code);
+    currentWaitingRoomCode = null;
     UI.showScreen('screen-lobby');
   });
 
@@ -794,7 +846,10 @@
       Game.init(session.roomCode, session.playerKey);
       UI.showToast('Reconnected to game!');
     } else if (session && session.status === 'waiting') {
+      var waitType = session.roomType || 'private';
+      document.getElementById('screen-waiting').setAttribute('data-wait-type', waitType);
       displayRoomCode.textContent = session.roomCode;
+      currentWaitingRoomCode = session.roomCode;
       UI.showScreen('screen-waiting');
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;

@@ -7,7 +7,7 @@
 ## Features
 
 - **두 가지 게임 모드** — Yacht / Yahtzee 선택
-- **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 빠른 매치(랜덤 참가)
+- **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
 - **주사위 스킨** — 8종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), 게임 수 / Bot 승리 기반 잠금해제
@@ -17,6 +17,7 @@
 - **오프라인 감지** — 네트워크 끊김 시 게임 액션 차단 + 토스트 알림
 - **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) 두 난이도, Expectimax DP 기반
 - **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
+- **어뷰징 방지** — 봇 게임 탭 닫기 시 패배 저장(sendBeacon), 최소 점수 미달 게임 무효 처리(승률 미반영)
 - **다국어** — 영어/한국어 이중 언어 지원, 실시간 전환
 - **튜토리얼** — 인터랙티브 단계별 게임 안내
 - **접근성** — aria-label, 키보드 내비게이션, 스크린리더 지원
@@ -41,7 +42,7 @@ yacht_for_hw/
 ├── css/
 │   └── style.css             # 전체 스타일 (테마, 스킨, 반응형)
 ├── js/
-│   ├── firebase-config.js    # Firebase 초기화 + localhost emulator 자동 연결
+│   ├── firebase-config.js    # Firebase 초기화 + localhost emulator 자동 연결 + sendBeacon URL
 │   ├── auth.js               # Google 로그인 / 게스트 모드
 │   ├── lobby.js              # 방 생성·참가, 프레즌스, 재접속
 │   ├── game.js               # 게임 상태 머신, 턴 관리, Firebase 동기화
@@ -49,20 +50,20 @@ yacht_for_hw/
 │   ├── dice.js               # 주사위 렌더링, 굴림 애니메이션
 │   ├── dice-skins.js         # 스킨 시스템 (잠금해제, 선택, 저장)
 │   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략)
-│   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트)
+│   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트, 탭 닫기 패배 저장)
 │   ├── history.js            # 전적 저장·조회
 │   ├── i18n.js               # 영어/한국어 이중 언어
 │   ├── nickname.js           # 닉네임 생성·관리 (언어별)
 │   ├── tutorial.js           # 인터랙티브 튜토리얼
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
-│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지
+│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱
 ├── data/
 │   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
 ├── tools/
 │   └── generate_dp.py        # Expectimax DP 테이블 생성기 (Python/NumPy/Numba)
 ├── functions/
-│   ├── index.js              # Cloud Functions (방 관리, 주사위, 점수 검증, 무승부, Bot 결과)
+│   ├── index.js              # Cloud Functions (방 관리, 랜덤 매치, 주사위, 점수 검증, 무승부, Bot 결과, 무효 판정)
 │   ├── scoring.js            # 서버사이드 점수 계산 로직
 │   └── package.json
 ├── .github/workflows/
@@ -79,7 +80,7 @@ yacht_for_hw/
 
 1. 로그인 화면에서 **Google 로그인** 또는 **게스트 이름 입력**
 2. 로비에서 **Create Room** → 게임 모드 선택 → 6자리 코드를 상대에게 공유
-3. 상대는 **Join** → 코드 입력으로 참가 (또는 **Quick Match**로 랜덤 매칭)
+3. 상대는 **Join** → 코드 입력으로 참가 (또는 **Random Match** → 게임 모드 선택 → 상대 찾기)
 4. 턴마다 주사위를 최대 3회 굴리고, 클릭(또는 1~5키)으로 홀드/해제, 스코어카드에서 카테고리 선택
 5. 모든 카테고리가 채워지면 종료 — 합산 점수가 높은 쪽이 승리
 

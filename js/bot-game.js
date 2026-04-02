@@ -679,6 +679,39 @@
     });
   }
 
+  function saveResultBeacon() {
+    if (resultSaved) return;
+    if (!roomData || roomData.status === 'finished') return;
+    resultSaved = true;
+
+    var Auth = window.YachtGame.Auth;
+    if (!Auth || !Auth.isSignedIn()) return;
+
+    var cachedToken = window.YachtGame._cachedIdToken;
+    if (!cachedToken) return;
+
+    var beaconUrl = window.YachtGame.beaconUrl;
+    if (!beaconUrl) return;
+
+    var Scoring = window.YachtGame.Scoring;
+    var myScores = roomData.players.player1.scores || {};
+    var botScores = roomData.players.player2.scores || {};
+    var myTotal = Scoring.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
+    var botTotal = Scoring.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
+
+    var payload = JSON.stringify({
+      idToken: cachedToken,
+      gameMode: roomData.gameMode,
+      botDifficulty: difficulty,
+      myScore: myTotal,
+      oppScore: botTotal,
+      result: 'loss'
+    });
+
+    var blob = new Blob([payload], { type: 'text/plain' });
+    navigator.sendBeacon(beaconUrl, blob);
+  }
+
   // ─── Public Interface ───
 
   function init(gameMode, diff, playerName) {
@@ -697,7 +730,10 @@
     var uid = Auth ? Auth.getPlayerUid() : 'guest';
     var diceSkin = DiceSkins ? DiceSkins.getCurrentSkin() : 'classic';
 
-    var botName = diff === 'gambler' ? 'Gambler Bot' : 'Basic Bot';
+    var I18n = window.YachtGame.I18n;
+    var botName = diff === 'gambler'
+      ? (I18n ? I18n.t('gambler_bot') : 'Gambler Bot')
+      : (I18n ? I18n.t('basic_bot') : 'Basic Bot');
 
     roomData = {
       gameMode: gameMode,
@@ -753,6 +789,19 @@
   function leaveGame() {
     if (roomData && roomData.status === 'playing') {
       roomData.status = 'finished';
+      roomData.winner = 'player2';
+      var myData = roomData.players.player1;
+      var oppData = roomData.players.player2;
+      var Auth = window.YachtGame.Auth;
+      var myName = (Auth && Auth.getPlayerName && Auth.getPlayerName()) || myData.name;
+      window.YachtGame.UI.showScreen('screen-gameover');
+      window.YachtGame.UI.renderGameOver(
+        myName, oppData.name,
+        myData.scores || {}, oppData.scores || {},
+        roomData.gameMode, 'player2', 'player1'
+      );
+      saveResult();
+      return;
     }
     destroy();
     window.YachtGame.Lobby.clearSession();
@@ -790,6 +839,7 @@
     leaveGame: leaveGame,
     getGameMode: getGameMode,
     destroy: destroy,
+    saveResultBeacon: saveResultBeacon,
     getPendingCategory: function () { return pendingCategory; },
     isRolling: function () { return isAnimating; },
     refreshUI: function () {

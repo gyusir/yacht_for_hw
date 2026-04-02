@@ -133,6 +133,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   if (nicknameEn) player1Data.nicknameEn = nicknameEn;
 
   const roomData = {
+    type: "private",
     gameMode: gameMode,
     status: "waiting",
     createdAt: ServerValue.TIMESTAMP,
@@ -161,7 +162,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
 exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
   await checkRateLimit(uid, "joinRoom");
-  const { roomCode, diceSkin, random } = data;
+  const { roomCode, diceSkin } = data;
   let playerName = data.playerName;
   const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
   const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
@@ -171,33 +172,10 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
   }
 
-  let targetCode = roomCode;
-
-  if (random) {
-    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(10).once("value");
-    if (!snap.exists()) {
-      throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
-    }
-    const now = Date.now();
-    const available = [];
-    snap.forEach((child) => {
-      const room = child.val();
-      if (!room.players || room.players.player2) return;
-      if (room.players.player1 && room.players.player1.uid === uid) return;
-      if (room.players.player1 && room.players.player1.connected === false) return;
-      if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
-      available.push(child.key);
-    });
-    if (available.length === 0) {
-      throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
-    }
-    targetCode = available[crypto.randomInt(0, available.length)];
-  }
-
-  if (!targetCode || typeof targetCode !== "string") {
+  if (!roomCode || typeof roomCode !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Room code required.");
   }
-  targetCode = targetCode.toUpperCase().trim();
+  const targetCode = roomCode.toUpperCase().trim();
 
   const roomRef = db.ref("rooms/" + targetCode);
   const snap = await roomRef.once("value");
@@ -233,6 +211,137 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   return { roomCode: targetCode, playerKey: "player2", gameMode: room.gameMode };
 });
 
+// ─── findOrCreateRandomRoom ───
+
+exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  await checkRateLimit(uid, "joinRoom");
+  const { diceSkin } = data;
+  let playerName = data.playerName;
+  let gameMode = data.gameMode;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
+
+  const isAny = gameMode === "any";
+  if (!isAny && gameMode !== "yacht" && gameMode !== "yahtzee") {
+    gameMode = "yahtzee";
+  }
+  playerName = sanitizePlayerName(playerName);
+  if (!playerName) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
+  }
+
+  // Search for existing random waiting rooms
+  const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(20).once("value");
+  const now = Date.now();
+  const available = [];
+  if (snap.exists()) {
+    snap.forEach((child) => {
+      const room = child.val();
+      if (room.type !== "random") return;
+      if (!room.players || room.players.player2) return;
+      if (room.players.player1 && room.players.player1.uid === uid) return;
+      if (room.players.player1 && room.players.player1.connected === false) return;
+      if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
+      // gameMode filtering: "any" matches all, otherwise must match room or room is "any"
+      if (!isAny && room.gameMode !== gameMode && room.requestedMode !== "any") return;
+      available.push(child.key);
+    });
+  }
+
+  // Try to join an available random room using transaction
+  for (let i = 0; i < available.length; i++) {
+    const targetCode = available[crypto.randomInt(0, available.length)];
+    const roomRef = db.ref("rooms/" + targetCode);
+
+    const result = await roomRef.transaction((room) => {
+      if (!room) return room;
+      if (room.status !== "waiting" || room.type !== "random") return;
+      if (room.players && room.players.player2) return;
+      if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
+
+      // If room creator chose "any", joiner's specific mode wins (or yahtzee if both "any")
+      if (room.requestedMode === "any" && !isAny) {
+        room.gameMode = gameMode;
+        if (room.players && room.players.player1) {
+          room.players.player1.scores = buildEmptyScores(gameMode);
+        }
+      }
+
+      const p2 = {
+        name: playerName,
+        uid: uid,
+        connected: true,
+        scores: buildEmptyScores(room.gameMode),
+        diceSkin: diceSkin || "classic"
+      };
+      if (nicknameKo) p2.nicknameKo = nicknameKo;
+      if (nicknameEn) p2.nicknameEn = nicknameEn;
+
+      room.players.player2 = p2;
+      room.status = "playing";
+      room.lastActivityAt = { ".sv": "timestamp" };
+      return room;
+    });
+
+    if (result.committed && result.snapshot.val() && result.snapshot.val().status === "playing") {
+      return { roomCode: targetCode, playerKey: "player2", gameMode: result.snapshot.val().gameMode, matched: true };
+    }
+    // Transaction failed (room was taken), try next
+    available.splice(available.indexOf(targetCode), 1);
+  }
+
+  // No available room found — create a new random room
+  let code, exists;
+  for (let attempt = 0; attempt < ROOM_CODE_MAX_RETRIES; attempt++) {
+    code = generateRoomCode();
+    const codeSnap = await db.ref("rooms/" + code).once("value");
+    if (!codeSnap.exists()) { exists = false; break; }
+    exists = true;
+  }
+  if (exists) {
+    throw new functions.https.HttpsError("unavailable", "Could not generate room code. Try again.");
+  }
+
+  // "any" mode: store as yahtzee by default, but track requestedMode for matching
+  const actualGameMode = isAny ? "yahtzee" : gameMode;
+
+  const player1Data = {
+    name: playerName,
+    uid: uid,
+    connected: true,
+    scores: buildEmptyScores(actualGameMode),
+    diceSkin: diceSkin || "classic"
+  };
+  if (nicknameKo) player1Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player1Data.nicknameEn = nicknameEn;
+
+  const roomData = {
+    type: "random",
+    gameMode: actualGameMode,
+    requestedMode: isAny ? "any" : gameMode,
+    status: "waiting",
+    createdAt: ServerValue.TIMESTAMP,
+    lastActivityAt: ServerValue.TIMESTAMP,
+    currentTurn: "player1",
+    rollCount: 0,
+    dice: {
+      0: { value: 0, held: false },
+      1: { value: 0, held: false },
+      2: { value: 0, held: false },
+      3: { value: 0, held: false },
+      4: { value: 0, held: false }
+    },
+    players: {
+      player1: player1Data
+    },
+    winner: ""
+  };
+
+  await db.ref("rooms/" + code).set(roomData);
+  return { roomCode: code, playerKey: "player1", gameMode: gameMode, matched: false };
+});
+
 // ─── updateGameMode ───
 
 exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
@@ -253,6 +362,9 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
   const room = snap.val();
   if (room.status !== "waiting") {
     throw new functions.https.HttpsError("failed-precondition", "Game already started.");
+  }
+  if (room.type === "random") {
+    throw new functions.https.HttpsError("failed-precondition", "Cannot change mode for random match.");
   }
   if (!room.players || !room.players.player1 || room.players.player1.uid !== uid) {
     throw new functions.https.HttpsError("permission-denied", "Only the host can change mode.");
@@ -574,38 +686,44 @@ exports.claimDisconnectWin = regionFn.https.onCall(async (data, context) => {
 
 // ─── saveBotGameResult ───
 
-exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
-  const uid = requireAuth(context);
-  const { gameMode, botDifficulty, myScore, oppScore, result } = data;
+// ─── Minimum score thresholds for valid games ───
 
+const MIN_VALID_SCORE = { yacht: 50, yahtzee: 100 };
+
+function isValidGame(gameMode, myScore, oppScore) {
+  const threshold = MIN_VALID_SCORE[gameMode] || 0;
+  return myScore >= threshold && oppScore >= threshold;
+}
+
+// ─── Shared bot result save helper ───
+
+async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, result) {
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid game mode.");
+    throw new Error("Invalid game mode.");
   }
   if (botDifficulty !== "basic" && botDifficulty !== "gambler") {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid bot difficulty.");
+    throw new Error("Invalid bot difficulty.");
   }
   if (typeof myScore !== "number" || typeof oppScore !== "number") {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid scores.");
+    throw new Error("Invalid scores.");
   }
   if (result !== "win" && result !== "loss" && result !== "tie") {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid result.");
+    throw new Error("Invalid result.");
   }
 
-  // Score-result consistency check
-  if (result === "win" && myScore <= oppScore) {
-    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
-  }
-  if (result === "loss" && myScore >= oppScore) {
-    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
-  }
-  if (result === "tie" && myScore !== oppScore) {
-    throw new functions.https.HttpsError("invalid-argument", "Score does not match result.");
-  }
+  // Determine result: forfeit (loss) is always respected, otherwise use scores
+  let actualResult;
+  if (result === "loss") {
+    // Forfeit or tab close — always a loss regardless of scores
+    actualResult = "loss";
+  } else if (myScore > oppScore) actualResult = "win";
+  else if (myScore < oppScore) actualResult = "loss";
+  else actualResult = "tie";
 
   // Score range validation
   const maxScore = gameMode === "yacht" ? 305 : 1575;
   if (myScore < 0 || myScore > maxScore || oppScore < 0 || oppScore > maxScore) {
-    throw new functions.https.HttpsError("invalid-argument", "Score out of range.");
+    throw new Error("Score out of range.");
   }
 
   const userRef = db.ref("users/" + uid);
@@ -614,12 +732,16 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
   const lastGameSnap = await userRef.child("lastBotGame").once("value");
   const lastGame = lastGameSnap.val() || 0;
   if (Date.now() - lastGame < 30000) {
-    throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
+    throw new Error("Too many requests. Please wait.");
   }
   await userRef.child("lastBotGame").set(ServerValue.TIMESTAMP);
 
   const profileSnap = await userRef.child("displayName").once("value");
-  if (!profileSnap.exists()) return { success: false };
+  if (!profileSnap.exists()) return false;
+
+  // Override result to "invalid" if scores below threshold
+  const valid = isValidGame(gameMode, myScore, oppScore);
+  const finalResult = valid ? actualResult : "invalid";
 
   const botName = botDifficulty === "gambler" ? "Gambler Bot" : "Basic Bot";
 
@@ -629,24 +751,68 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
     opponentName: botName,
     myScore: myScore,
     oppScore: oppScore,
-    result: result,
+    result: finalResult,
     roomCode: "BOT"
   });
 
-  await userRef.child("stats").transaction((stats) => {
-    if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
-    stats.totalGames = (stats.totalGames || 0) + 1;
-    if (result === "win") {
-      stats.wins = (stats.wins || 0) + 1;
-      if (!stats.botWins) stats.botWins = {};
-      stats.botWins[botDifficulty] = (stats.botWins[botDifficulty] || 0) + 1;
-    }
-    else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
-    else stats.ties = (stats.ties || 0) + 1;
-    return stats;
-  });
+  if (valid) {
+    await userRef.child("stats").transaction((stats) => {
+      if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
+      stats.totalGames = (stats.totalGames || 0) + 1;
+      if (actualResult === "win") {
+        stats.wins = (stats.wins || 0) + 1;
+        if (!stats.botWins) stats.botWins = {};
+        stats.botWins[botDifficulty] = (stats.botWins[botDifficulty] || 0) + 1;
+      }
+      else if (actualResult === "loss") stats.losses = (stats.losses || 0) + 1;
+      else stats.ties = (stats.ties || 0) + 1;
+      return stats;
+    });
+  }
 
-  return { success: true };
+  return true;
+}
+
+exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  try {
+    const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result);
+    return { success: ok };
+  } catch (e) {
+    throw new functions.https.HttpsError("invalid-argument", e.message);
+  }
+});
+
+// ─── saveBotGameResultBeacon (HTTP endpoint for sendBeacon) ───
+
+exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.status(204).send("");
+    return;
+  }
+  res.set("Access-Control-Allow-Origin", "*");
+
+  if (req.method !== "POST") { res.status(405).send("Method not allowed"); return; }
+
+  // sendBeacon sends text/plain to avoid CORS preflight, so parse manually
+  let body = req.body || {};
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch (_) { res.status(400).json({ error: "Invalid JSON" }); return; }
+  }
+  const { idToken, gameMode, botDifficulty, myScore, oppScore, result } = body;
+  if (!idToken) { res.status(401).json({ error: "No token" }); return; }
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result);
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ─── onGameFinished (DB trigger) ───
@@ -688,6 +854,10 @@ exports.onGameFinished = functions.region("asia-southeast1")
       else if (winner === "tie") result = "tie";
       else result = "loss";
 
+      // Override to "invalid" if scores below threshold
+      const valid = isValidGame(gameMode, myTotal, oppTotal);
+      const finalResult = valid ? result : "invalid";
+
       const userRef = db.ref("users/" + player.uid);
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
@@ -712,7 +882,7 @@ exports.onGameFinished = functions.region("asia-southeast1")
         opponentName: oppDisplayName,
         myScore: myTotal,
         oppScore: oppTotal,
-        result: result,
+        result: finalResult,
         roomCode: roomCode
       };
       if (oppNicknameKo) historyEntry.oppNicknameKo = oppNicknameKo;
@@ -720,14 +890,16 @@ exports.onGameFinished = functions.region("asia-southeast1")
 
       await userRef.child("history").push(historyEntry);
 
-      await userRef.child("stats").transaction((stats) => {
-        if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
-        stats.totalGames = (stats.totalGames || 0) + 1;
-        if (result === "win") stats.wins = (stats.wins || 0) + 1;
-        else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
-        else stats.ties = (stats.ties || 0) + 1;
-        return stats;
-      });
+      if (valid) {
+        await userRef.child("stats").transaction((stats) => {
+          if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
+          stats.totalGames = (stats.totalGames || 0) + 1;
+          if (result === "win") stats.wins = (stats.wins || 0) + 1;
+          else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
+          else stats.ties = (stats.ties || 0) + 1;
+          return stats;
+        });
+      }
     });
 
     await Promise.all(playerUpdates);

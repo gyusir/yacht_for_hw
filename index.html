@@ -19,7 +19,7 @@
 <body>
   <header>
     <div class="header-top">
-      <h1>Yacht Dice</h1>
+      <h1 data-i18n="title_yacht">Yacht Dice</h1>
       <div class="header-top-controls">
         <button id="lang-toggle" class="btn-icon" title="Language" aria-label="Toggle language">KO</button>
         <button id="theme-toggle" aria-label="Toggle theme">
@@ -124,27 +124,28 @@
   </section>
 
   <!-- Screen: Waiting Room -->
-  <section id="screen-waiting" class="screen">
+  <section id="screen-waiting" class="screen" data-wait-type="private">
     <div class="card">
-      <h2 data-i18n="waiting_room">Waiting Room</h2>
-      <div class="room-code-display">
+      <h2 class="wait-private-only" data-i18n="waiting_room">Waiting Room</h2>
+      <h2 class="wait-random-only" data-i18n="random_match">Random Match</h2>
+      <div class="room-code-display wait-private-only">
         <p data-i18n="share_code">Share this code with your friend:</p>
         <div class="code-box">
           <span id="display-room-code"></span>
           <button id="btn-copy-code" class="btn-icon" title="Copy code">&#128203;</button>
         </div>
       </div>
-      <div id="mode-select" class="mode-select">
+      <div id="mode-select" class="mode-select wait-private-only">
         <p data-i18n="select_game_mode">Select game mode:</p>
         <div class="mode-options">
           <label class="mode-option">
             <input type="radio" name="mode" value="yahtzee" checked>
-            <span class="mode-label">Yahtzee</span>
+            <span class="mode-label" data-i18n="mode_yahtzee">Yahtzee</span>
             <span class="mode-desc" data-i18n="yahtzee_desc">13 categories, bonus scoring</span>
           </label>
           <label class="mode-option">
             <input type="radio" name="mode" value="yacht">
-            <span class="mode-label">Yacht</span>
+            <span class="mode-label" data-i18n="mode_yacht">Yacht</span>
             <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
           </label>
 
@@ -152,10 +153,40 @@
       </div>
       <div class="waiting-spinner">
         <div class="spinner"></div>
-        <p data-i18n="waiting_for_opponent">Waiting for opponent...</p>
+        <p class="wait-private-only" data-i18n="waiting_for_opponent">Waiting for opponent...</p>
+        <p class="wait-random-only" data-i18n="random_searching">Searching for an opponent...</p>
       </div>
       <button id="btn-back-lobby-waiting" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
+    </div>
+  </section>
+
+  <!-- Screen: Random Match Setup -->
+  <section id="screen-random-setup" class="screen">
+    <div class="card">
+      <h2 data-i18n="random_match_title">Random Match</h2>
+      <div class="mode-select">
+        <p data-i18n="select_game_mode">Select game mode:</p>
+        <div class="mode-options">
+          <label class="mode-option">
+            <input type="radio" name="random-mode" value="yahtzee" checked>
+            <span class="mode-label" data-i18n="mode_yahtzee">Yahtzee</span>
+            <span class="mode-desc" data-i18n="yahtzee_desc">13 categories, bonus scoring</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="random-mode" value="yacht">
+            <span class="mode-label" data-i18n="mode_yacht">Yacht</span>
+            <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="random-mode" value="any">
+            <span class="mode-label" data-i18n="any_mode">Any</span>
+            <span class="mode-desc" data-i18n="any_mode_desc">Match with any game mode</span>
+          </label>
+        </div>
+      </div>
+      <button id="btn-random-start" class="btn-primary btn-full-width" data-i18n="find_opponent">Find Opponent</button>
+      <button id="btn-back-lobby-random" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">← Back to Lobby</button>
     </div>
   </section>
 
@@ -168,12 +199,12 @@
         <div class="mode-options">
           <label class="mode-option">
             <input type="radio" name="bot-mode" value="yahtzee" checked>
-            <span class="mode-label">Yahtzee</span>
+            <span class="mode-label" data-i18n="mode_yahtzee">Yahtzee</span>
             <span class="mode-desc" data-i18n="yahtzee_desc">13 categories, bonus scoring</span>
           </label>
           <label class="mode-option">
             <input type="radio" name="bot-mode" value="yacht">
-            <span class="mode-label">Yacht</span>
+            <span class="mode-label" data-i18n="mode_yacht">Yacht</span>
             <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
           </label>
         </div>
