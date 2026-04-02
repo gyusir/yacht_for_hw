@@ -57,8 +57,8 @@ yacht_for_hw/
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
 │   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지
 ├── data/
-│   ├── dp_yacht.json         # Yacht 모드 DP 룩업 테이블 (36KB)
-│   └── dp_yahtzee.json       # Yahtzee 모드 DP 룩업 테이블 (11MB)
+│   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
+│   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
 ├── tools/
 │   └── generate_dp.py        # Expectimax DP 테이블 생성기 (Python/NumPy/Numba)
 ├── functions/
@@ -162,12 +162,12 @@ python3 tools/generate_dp.py yacht
 python3 tools/generate_dp.py yahtzee
 ```
 
-결과물은 `data/dp_yacht.json`, `data/dp_yahtzee.json`에 저장된다.
+결과물은 `data/dp_yacht.bin`, `data/dp_yahtzee.bin`에 Uint16 바이너리로 저장된다.
 
 | 모드 | 상태 수 | 최적 EV | 파일 크기 |
 |---|---|---|---|
-| Yacht | 4,096 | 166.96 | 36KB |
-| Yahtzee | 1,048,576 | 253.97 | 11MB |
+| Yacht | 4,096 | 166.96 | 8KB |
+| Yahtzee | 1,048,576 | 253.97 | 2MB |
 
 ### Dice Skin 추가
 

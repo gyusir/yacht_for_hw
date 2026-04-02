@@ -9,8 +9,7 @@ Dependencies: pip install numpy numba
 import sys
 import os
 import time
-import json
-import base64
+import struct
 import numpy as np
 from itertools import combinations_with_replacement
 from math import factorial
@@ -483,32 +482,20 @@ print(f"Dice prob sum: {DICE_PROBS.sum():.10f}")
 
 output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 os.makedirs(output_dir, exist_ok=True)
-output_file = os.path.join(output_dir, f'dp_{GAME_MODE}.json')
+output_file = os.path.join(output_dir, f'dp_{GAME_MODE}.bin')
 
+# Quantize to Uint16: [maxValue: Float32LE (4 bytes)] [dp: Uint16LE × N]
 if GAME_MODE == 'yacht':
-    result = {
-        'mode': 'yacht',
-        'categories': CATEGORIES,
-        'numCategories': NUM_CATS,
-        'maskStride': 1,
-        'upperStride': 0,
-        'maxUpper': 0,
-        'dp': [round(float(dp[m]), 4) for m in range(TOTAL_MASKS)]
-    }
+    dp_flat = np.array([float(dp[m]) for m in range(TOTAL_MASKS)], dtype=np.float64)
 else:
-    result = {
-        'mode': 'yahtzee',
-        'categories': CATEGORIES,
-        'numCategories': NUM_CATS,
-        'maxUpper': MAX_UPPER,
-        'maskStride': MASK_STRIDE,
-        'upperStride': UPPER_STRIDE,
-        'dpSize': DP_SIZE,
-        'dp': base64.b64encode(dp.tobytes()).decode('ascii')
-    }
+    dp_flat = dp
 
-with open(output_file, 'w') as f:
-    json.dump(result, f)
+max_val = float(dp_flat.max())
+quantized = np.round(dp_flat / max_val * 65535).astype(np.uint16)
+
+with open(output_file, 'wb') as f:
+    f.write(struct.pack('<f', max_val))
+    f.write(quantized.tobytes())
 
 fsize = os.path.getsize(output_file)
 unit = 'KB' if fsize < 1024 * 1024 else 'MB'
