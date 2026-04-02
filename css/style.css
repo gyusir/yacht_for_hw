@@ -1956,7 +1956,7 @@ input[type="text"]::placeholder {
 }
 
 /* ===== Session Notice ===== */
-.session-notice {
+.card > p.session-notice {
   margin-top: 16px;
   font-size: 0.75rem;
   color: var(--text-muted);
