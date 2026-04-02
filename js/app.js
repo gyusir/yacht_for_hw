@@ -91,7 +91,16 @@
     var nick = Auth.getNickname();
     if (lobbyNicknameEl) {
       if (nick && I18n) {
-        lobbyNicknameEl.textContent = I18n.getLang() === 'ko' ? nick + '\ub2d8, \uc548\ub155\ud558\uc138\uc694.' : 'Hello, ' + nick;
+        var b = document.createElement('strong');
+        b.textContent = nick;
+        if (I18n.getLang() === 'ko') {
+          lobbyNicknameEl.textContent = '';
+          lobbyNicknameEl.appendChild(b);
+          lobbyNicknameEl.appendChild(document.createTextNode('\ub2d8, \uc548\ub155\ud558\uc138\uc694.'));
+        } else {
+          lobbyNicknameEl.textContent = 'Hello, ';
+          lobbyNicknameEl.appendChild(b);
+        }
       } else {
         lobbyNicknameEl.textContent = nick || '';
       }

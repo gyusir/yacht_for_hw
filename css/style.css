@@ -199,7 +199,6 @@ body.in-game .header-controls {
 }
 
 .card > p.screen-nickname {
-  font-style: italic;
   font-weight: 400;
   font-size: 0.9rem;
   color: var(--text-muted);
