@@ -2187,6 +2187,11 @@ input[type="text"]::placeholder {
   animation: die-spin 4s linear infinite;
 }
 
+/* ===== Mobile: remove 300ms tap delay ===== */
+button, .die, .score-cell, .skin-option, .emote-btn {
+  touch-action: manipulation;
+}
+
 /* ===== Utility Classes (CSP: no inline styles) ===== */
 #room-code-input { text-transform: uppercase; }
 .btn-full-width { width: 100%; }
