@@ -82,6 +82,7 @@
       getFunctions();
       claimDisconnectWinFn({ roomCode: roomCode }).catch(function (err) {
         console.error('claimDisconnectWin error:', err);
+        window.YachtGame.UI.showToast('승리 처리에 실패했습니다');
       });
     }, DISCONNECT_TIMEOUT * 1000);
   }
@@ -554,6 +555,7 @@
       // Call Cloud Function for safe forfeit
       leaveGameFn({ roomCode: roomCode }).catch(function (error) {
         console.error('leaveGame error:', error);
+        window.YachtGame.UI.showToast('게임 나가기에 실패했습니다');
       });
     }
     destroy();
@@ -605,6 +607,7 @@
     getFunctions();
     proposeDrawFn({ roomCode: roomCode }).catch(function (err) {
       console.error('proposeDraw error:', err);
+      window.YachtGame.UI.showToast('무승부 제안에 실패했습니다');
     });
   }
 
@@ -613,6 +616,7 @@
     getFunctions();
     respondToDrawFn({ roomCode: roomCode, accept: accept }).catch(function (err) {
       console.error('respondToDraw error:', err);
+      window.YachtGame.UI.showToast('무승부 응답에 실패했습니다');
     });
   }
 

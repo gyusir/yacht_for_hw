@@ -674,6 +674,8 @@
       result: result
     }).catch(function (err) {
       console.error('saveBotGameResult error:', err);
+      resultSaved = false;
+      window.YachtGame.UI.showToast('결과 저장에 실패했습니다');
     });
   }
 
