@@ -310,25 +310,39 @@
     // Start spinning animation on unheld dice (no final value yet)
     var dieEls = document.querySelectorAll('.die');
     var spinTimers = [];
+
+    function stopAllSpinners() {
+      for (var s = 0; s < spinTimers.length; s++) {
+        spinTimers[s].running = false;
+        dieEls[spinTimers[s].idx].classList.remove('rolling');
+      }
+    }
+
     for (var i = 0; i < 5; i++) {
       if (heldFlags[i]) continue;
       (function (idx) {
         var el = dieEls[idx];
         el.classList.add('rolling');
-        var timer = setInterval(function () {
-          window.YachtGame.Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 50);
-        spinTimers.push({ idx: idx, timer: timer });
+        var entry = { idx: idx, running: true };
+        var lastRender = 0;
+
+        function spin(timestamp) {
+          if (!entry.running) return;
+          if (timestamp - lastRender >= 50) {
+            window.YachtGame.Dice.renderDie(el, Math.ceil(Math.random() * 6));
+            lastRender = timestamp;
+          }
+          requestAnimationFrame(spin);
+        }
+        requestAnimationFrame(spin);
+        spinTimers.push(entry);
       })(i);
     }
 
     var rollRequestPending = true;
     var rollSafetyTimer = setTimeout(function () {
       // Safety: stop spinning and render from lastRoomData
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      stopAllSpinners();
       // Only allow re-roll if the server request already completed
       if (!rollRequestPending) {
         isRolling = false;
@@ -351,10 +365,7 @@
       var serverDice = result.data.dice;
 
       // Stop spinning and render server's actual values
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      stopAllSpinners();
 
       // Render all dice with server values (use heldDice as source of truth for held state)
       var hd = lastRoomData ? (lastRoomData.heldDice || {}) : {};
@@ -406,10 +417,7 @@
     }).catch(function (error) {
       rollRequestPending = false;
       clearTimeout(rollSafetyTimer);
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      stopAllSpinners();
       isRolling = false;
       console.error('rollDice error:', error);
       window.YachtGame.UI.showToast('Roll failed: ' + (error.message || 'Unknown error'));
