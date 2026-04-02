@@ -30,6 +30,9 @@
   var celebratedBonuses = {};
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
+  var isOnline = true;
+  var connectedRef = null;
+  var connectedCallback = null;
 
   // Cloud Functions references
   var rollDiceFn = null;
@@ -79,6 +82,7 @@
       getFunctions();
       claimDisconnectWinFn({ roomCode: roomCode }).catch(function (err) {
         console.error('claimDisconnectWin error:', err);
+        window.YachtGame.UI.showToast('승리 처리에 실패했습니다');
       });
     }, DISCONNECT_TIMEOUT * 1000);
   }
@@ -92,6 +96,12 @@
 
     // Show game screen immediately (don't wait for first Firebase callback)
     window.YachtGame.UI.showScreen('screen-game');
+
+    // Track online/offline status
+    connectedRef = window.YachtGame.db.ref('.info/connected');
+    connectedCallback = connectedRef.on('value', function (snap) {
+      isOnline = snap.val() === true;
+    });
 
     // Listen for room changes
     roomListener = roomRef.on('value', onRoomUpdate);
@@ -284,6 +294,7 @@
 
   function rollDice() {
     if (!lastRoomData || isRolling) return;
+    if (!isOnline) { window.YachtGame.UI.showToast('오프라인 상태입니다'); return; }
 
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
@@ -426,6 +437,7 @@
 
   function toggleHold(index) {
     if (!lastRoomData) return;
+    if (!isOnline) return;
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
     if ((room.rollCount || 0) < 1) return; // Can't hold before first roll
@@ -481,6 +493,7 @@
 
   function confirmCategory(category) {
     if (!lastRoomData) return;
+    if (!isOnline) { window.YachtGame.UI.showToast('오프라인 상태입니다'); return; }
     var myScores = lastRoomData.players[localPlayerKey].scores || {};
     if (myScores[category] !== null && myScores[category] !== undefined) return;
 
@@ -560,6 +573,12 @@
     if (roomRef && emoteListener) {
       roomRef.child('emotes/' + opponentKey).off('value', emoteListener);
     }
+    if (connectedRef && connectedCallback) {
+      connectedRef.off('value', connectedCallback);
+    }
+    connectedRef = null;
+    connectedCallback = null;
+    isOnline = true;
     // Room cleanup is now handled by the server-side onGameFinished trigger
     roomRef = null;
     roomCode = null;
@@ -587,6 +606,7 @@
     getFunctions();
     proposeDrawFn({ roomCode: roomCode }).catch(function (err) {
       console.error('proposeDraw error:', err);
+      window.YachtGame.UI.showToast('무승부 제안에 실패했습니다');
     });
   }
 
@@ -595,6 +615,7 @@
     getFunctions();
     respondToDrawFn({ roomCode: roomCode, accept: accept }).catch(function (err) {
       console.error('respondToDraw error:', err);
+      window.YachtGame.UI.showToast('무승부 응답에 실패했습니다');
     });
   }
 

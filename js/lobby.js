@@ -222,6 +222,7 @@
     getFunctions();
     updateGameModeFn({ roomCode: roomCode, gameMode: gameMode }).catch(function (error) {
       console.error('updateGameMode error:', error);
+      window.YachtGame.UI.showToast('게임 모드 변경에 실패했습니다');
     });
   }
 
@@ -235,6 +236,7 @@
 
     cancelRoomFn({ roomCode: roomCode }).catch(function (error) {
       console.error('cancelRoom error:', error);
+      window.YachtGame.UI.showToast('방 취소에 실패했습니다');
     });
 
     cleanupPresence();

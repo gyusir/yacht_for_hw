@@ -15,6 +15,7 @@
   var timerIds = [];
   var idleTimerId = null;
   var lastBotEmoteTime = 0;
+  var resultSaved = false;
   var turnCount = 0;
 
   var BOT_EMOTE_COOLDOWN = 4000;
@@ -643,7 +644,9 @@
   // ─── History Save ───
 
   function saveResult() {
+    if (resultSaved) return;
     if (!roomData || roomData.status !== 'finished') return;
+    resultSaved = true;
 
     var Auth = window.YachtGame.Auth;
     if (!Auth || !Auth.isSignedIn()) return;
@@ -671,6 +674,8 @@
       result: result
     }).catch(function (err) {
       console.error('saveBotGameResult error:', err);
+      resultSaved = false;
+      window.YachtGame.UI.showToast('결과 저장에 실패했습니다');
     });
   }
 
@@ -680,6 +685,7 @@
     difficulty = diff;
     turnCount = 0;
     lastBotEmoteTime = 0;
+    resultSaved = false;
     lastCelebrationKey = null;
     celebratedBonuses = {};
     pendingCategory = null;
