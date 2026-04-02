@@ -284,26 +284,22 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 50);
+        }, 80);
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
-    // Stop after 400ms and show final values
+    // Stop after 400ms with stagger and show final values
     addTimer(function () {
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      Dice.staggerStop(spinTimers, dieEls, newValues, function () {
+        for (var i = 0; i < 5; i++) {
+          roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
+        }
+        roomData.rollCount = (roomData.rollCount || 0) + 1;
 
-      // Update state
-      for (var i = 0; i < 5; i++) {
-        roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
-      }
-      roomData.rollCount = (roomData.rollCount || 0) + 1;
-
-      isAnimating = false;
-      onStateUpdate();
+        isAnimating = false;
+        onStateUpdate();
+      });
     }, 400);
   }
 
@@ -525,28 +521,25 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 50);
+        }, 80);
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
     addTimer(function () {
-      for (var s = 0; s < spinTimers.length; s++) {
-        clearInterval(spinTimers[s].timer);
-        dieEls[spinTimers[s].idx].classList.remove('rolling');
-      }
+      Dice.staggerStop(spinTimers, dieEls, newValues, function () {
+        for (var i = 0; i < 5; i++) {
+          roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
+        }
+        roomData.rollCount = (roomData.rollCount || 0) + 1;
+        isAnimating = false;
 
-      for (var i = 0; i < 5; i++) {
-        roomData.dice[i] = { value: newValues[i], held: hd[i] === true };
-      }
-      roomData.rollCount = (roomData.rollCount || 0) + 1;
-      isAnimating = false;
+        onStateUpdate();
 
-      onStateUpdate();
-
-      // Bot evaluates after rolling
-      var evalDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(800, 1200);
-      addTimer(function () { botEvaluate(); }, evalDelay);
+        // Bot evaluates after rolling
+        var evalDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(800, 1200);
+        addTimer(function () { botEvaluate(); }, evalDelay);
+      });
     }, 400);
   }
 
@@ -844,6 +837,12 @@
     isRolling: function () { return isAnimating; },
     refreshUI: function () {
       if (!roomData) return;
+      // Update bot name for current language
+      var I18n = window.YachtGame.I18n;
+      if (I18n && roomData.players && roomData.players.player2) {
+        roomData.players.player2.name = difficulty === 'gambler'
+          ? I18n.t('gambler_bot') : I18n.t('basic_bot');
+      }
       // Game over: only re-render game over screen (avoid re-triggering saveResult)
       if (roomData.status === 'finished') {
         var Auth = window.YachtGame.Auth;

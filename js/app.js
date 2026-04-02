@@ -25,7 +25,7 @@
   // --- Detect duplicate tab sessions ---
   window.addEventListener('storage', function (e) {
     if (e.key === 'yacht-active-session' && e.newValue && document.body.classList.contains('in-game')) {
-      UI.showToast('다른 탭에서 새 게임이 시작되었습니다');
+      UI.showToast(I18n ? I18n.t('toast_duplicate_tab') : 'New game started in another tab.');
       if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
         window.YachtGame.Game.destroy();
       }
@@ -263,7 +263,7 @@
     Auth.signInWithGoogle(function (error, user) {
       btnGoogleSignin.disabled = false;
       if (error) {
-        UI.showToast('Sign-in failed: ' + (error.message || 'Unknown error'));
+        UI.showToast((I18n ? I18n.t('toast_signin_failed') : 'Sign-in failed') + ': ' + (error.message || (I18n ? I18n.t('toast_unknown_error') : 'Unknown error')));
       }
     });
   });
@@ -325,8 +325,7 @@
   btnCreate.addEventListener('click', function () {
     var originalText = btnCreate.textContent;
     btnCreate.disabled = true;
-    btnCreate.textContent = '...';
-    lobbyError.hidden = true;
+    btnCreate.innerHTML = '<span class="btn-dice-spinner"></span>';
 
     var gameMode = 'yacht';
     for (var i = 0; i < modeRadios.length; i++) {
@@ -337,8 +336,7 @@
       btnCreate.disabled = false;
       btnCreate.textContent = originalText;
       if (result.error) {
-        lobbyError.textContent = result.error;
-        lobbyError.hidden = false;
+        UI.showToast(result.error);
         return;
       }
 
@@ -350,7 +348,7 @@
       // Wait for opponent
       cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' joined!');
+        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(result.roomCode, result.playerKey);
       });
     });
@@ -362,19 +360,17 @@
 
     var originalJoinText = btnJoin.textContent;
     btnJoin.disabled = true;
-    btnJoin.textContent = '...';
-    lobbyError.hidden = true;
+    btnJoin.innerHTML = '<span class="btn-dice-spinner"></span>';
 
     Lobby.joinRoom(playerName, code, function (result) {
       btnJoin.disabled = false;
       btnJoin.textContent = originalJoinText;
       if (result.error) {
-        lobbyError.textContent = result.error;
-        lobbyError.hidden = false;
+        UI.showToast(result.error);
         return;
       }
 
-      UI.showToast('Joined room ' + result.roomCode);
+      UI.showToast((I18n ? I18n.t('toast_joined_room') : 'Joined room') + ' ' + result.roomCode);
       Game.init(result.roomCode, result.playerKey);
     });
   });
@@ -386,11 +382,9 @@
   btnRandomJoin.addEventListener('click', function () {
     if (!playerName) playerName = Auth.getPlayerName();
     if (!playerName) {
-      lobbyError.textContent = 'Please set a name first.';
-      lobbyError.hidden = false;
+      UI.showToast(I18n ? I18n.t('toast_name_required') : 'Please set a name first.');
       return;
     }
-    lobbyError.hidden = true;
     UI.showScreen('screen-random-setup');
   });
 
@@ -407,7 +401,7 @@
 
     var originalText = btnRandomStart.textContent;
     btnRandomStart.disabled = true;
-    btnRandomStart.textContent = '...';
+    btnRandomStart.innerHTML = '<span class="btn-dice-spinner"></span>';
 
     Lobby.findRandomRoom(playerName, gameMode, function (result) {
       btnRandomStart.disabled = false;
@@ -427,7 +421,7 @@
 
         cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
           cancelOpponentListener = null;
-          UI.showToast(player2.name + ' joined!');
+          UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
           Game.init(result.roomCode, result.playerKey);
         });
       }
@@ -438,11 +432,9 @@
   btnBotPlay.addEventListener('click', function () {
     if (!playerName) playerName = Auth.getPlayerName();
     if (!playerName) {
-      lobbyError.textContent = 'Please set a name first.';
-      lobbyError.hidden = false;
+      UI.showToast(I18n ? I18n.t('toast_name_required') : 'Please set a name first.');
       return;
     }
-    lobbyError.hidden = true;
     UI.showScreen('screen-bot-setup');
   });
 
@@ -472,7 +464,7 @@
     var code = displayRoomCode.textContent;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(code).then(function () {
-        UI.showToast('Code copied!');
+        UI.showToast(I18n ? I18n.t('toast_code_copied') : 'Code copied!');
       });
     } else {
       var textArea = document.createElement('textarea');
@@ -701,7 +693,6 @@
     window.YachtGame._isBotGame = false;
     Lobby.clearSession();
     UI.showScreen('screen-lobby');
-    lobbyError.hidden = true;
     refreshSkinSelector();
     Lobby.cleanupStaleRooms();
   });
@@ -857,7 +848,7 @@
     if (session && session.status === 'playing') {
       playerName = Auth.isSignedIn() ? Auth.getPlayerName() : 'Reconnected';
       Game.init(session.roomCode, session.playerKey);
-      UI.showToast('Reconnected to game!');
+      UI.showToast(I18n ? I18n.t('toast_reconnected') : 'Reconnected to game!');
     } else if (session && session.status === 'waiting') {
       var waitType = session.roomType || 'private';
       document.getElementById('screen-waiting').setAttribute('data-wait-type', waitType);
@@ -866,7 +857,7 @@
       UI.showScreen('screen-waiting');
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' joined!');
+        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(session.roomCode, session.playerKey);
       });
     }

@@ -231,7 +231,33 @@
       diceState.push({ value: d.value, held: heldData[i] === true });
     }
 
-    if (!isRolling) {
+    // Opponent roll animation: show spinning before revealing values
+    var oppRolled = !isMyTurn && prevRoom && prevRoom.currentTurn === room.currentTurn &&
+        (room.rollCount || 0) > (prevRoom.rollCount || 0);
+    if (oppRolled && !isRolling) {
+      isRolling = true;
+      var dieEls = document.querySelectorAll('.die');
+      var oppSpinTimers = [];
+      for (var i = 0; i < 5; i++) {
+        if (heldData[i] === true) continue;
+        (function (idx) {
+          var el = dieEls[idx];
+          el.classList.add('rolling');
+          var timer = setInterval(function () {
+            Dice.renderDie(el, Math.ceil(Math.random() * 6));
+          }, 80);
+          oppSpinTimers.push({ idx: idx, timer: timer });
+        })(i);
+      }
+      var oppFinalValues = [];
+      for (var fi = 0; fi < 5; fi++) oppFinalValues.push(diceState[fi].value);
+      setTimeout(function () {
+        Dice.staggerStop(oppSpinTimers, dieEls, oppFinalValues, function () {
+          Dice.renderAll(diceState);
+          isRolling = false;
+        });
+      }, 400);
+    } else if (!isRolling) {
       Dice.renderAll(diceState);
     }
 
@@ -339,7 +365,7 @@
 
         function spin(timestamp) {
           if (!entry.running) return;
-          if (timestamp - lastRender >= 50) {
+          if (timestamp - lastRender >= 80) {
             window.YachtGame.Dice.renderDie(el, Math.ceil(Math.random() * 6));
             lastRender = timestamp;
           }
@@ -375,18 +401,18 @@
       clearTimeout(rollSafetyTimer);
       var serverDice = result.data.dice;
 
-      // Stop spinning and render server's actual values
-      stopAllSpinners();
-
-      // Render all dice with server values (use heldDice as source of truth for held state)
+      // Stop spinning with stagger and render server's actual values
       var hd = lastRoomData ? (lastRoomData.heldDice || {}) : {};
       var finalState = [];
+      var finalValues = [];
       for (var j = 0; j < 5; j++) {
         var sd = serverDice[j] || { value: 0, held: false };
         finalState.push({ value: sd.value, held: hd[j] === true });
+        finalValues.push(sd.value);
       }
-      window.YachtGame.Dice.renderAll(finalState);
-      isRolling = false;
+      window.YachtGame.Dice.staggerStop(spinTimers, dieEls, finalValues, function () {
+        window.YachtGame.Dice.renderAll(finalState);
+        isRolling = false;
       // Re-enable roll button and re-render scorecard so focus logic runs correctly
       if (lastRoomData) {
         var newRollCount = lastRoomData.rollCount || 0;
@@ -425,6 +451,7 @@
           (lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] && lastRoomData.players[localPlayerKey === 'player1' ? 'player2' : 'player1'].diceSkin) || 'classic'
         );
       }
+      });
     }).catch(function (error) {
       rollRequestPending = false;
       clearTimeout(rollSafetyTimer);

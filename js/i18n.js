@@ -130,6 +130,23 @@
       confirm_yes: 'Yes',
       confirm_no: 'Cancel',
 
+      // Toast messages
+      toast_duplicate_tab: 'New game started in another tab.',
+      toast_signin_failed: 'Sign-in failed',
+      toast_unknown_error: 'Unknown error',
+      toast_joined_room: 'Joined room',
+      toast_name_required: 'Please set a name first.',
+      toast_code_copied: 'Code copied!',
+      toast_reconnected: 'Reconnected to game!',
+      toast_player_joined: 'joined!',
+      toast_room_not_found: 'Room not found.',
+      toast_room_full: 'Room is full.',
+      toast_room_in_game: 'Room is already in a game.',
+      toast_create_failed: 'Failed to create room.',
+      toast_join_failed: 'Failed to join room.',
+      toast_random_failed: 'Random match failed.',
+      toast_rate_limit: 'Too many requests. Please wait.',
+
       // Draw
       draw_proposal_msg: 'Opponent proposes a draw. Accept?',
       draw_proposed: 'Draw proposed. Waiting for response...',
@@ -229,7 +246,7 @@
       guest_name_placeholder: '\uac8c\uc2a4\ud2b8 \uc774\ub984',
       play_as_guest: '\uac8c\uc2a4\ud2b8\ub85c \ud50c\ub808\uc774',
       sign_in_google: 'Google\ub85c \ub85c\uadf8\uc778',
-      google_disclaimer: '*\uad6c\uae00 \ub85c\uadf8\uc778 \uc2dc \uc790\ub3d9\uc73c\ub85c \ub2c9\ub124\uc784\uc774 \ubd80\uc5ec\ub3fc\uc694.\n\uc2e4\uba85\uc740 \ub178\ucd9c\ub418\uc9c0 \uc54a\uc544\uc694.',
+      google_disclaimer: '*\uad6c\uae00 \ub85c\uadf8\uc778 \uc2dc \uc790\ub3d9\uc73c\ub85c \ub2c9\ub124\uc784\uc774 \ubd80\uc5ec\ub3fc\uc694.\n\u00A0\u00A0\uc2e4\uba85\uc740 \ub178\ucd9c\ub418\uc9c0 \uc54a\uc544\uc694.',
       sign_out: '\ub85c\uadf8\uc544\uc6c3',
       continue_btn: '\uacc4\uc18d\ud558\uae30',
 
@@ -347,9 +364,26 @@
       confirm_no: '\ucde8\uc18c',
 
       // Draw
+      // Toast messages
+      toast_duplicate_tab: '\ub2e4\ub978 \ud0ed\uc5d0\uc11c \uc0c8 \uac8c\uc784\uc774 \uc2dc\uc791\ub418\uc5c8\uc2b5\ub2c8\ub2e4.',
+      toast_signin_failed: '\ub85c\uadf8\uc778 \uc2e4\ud328',
+      toast_unknown_error: '\uc54c \uc218 \uc5c6\ub294 \uc624\ub958',
+      toast_joined_room: '\ubc29 \ucc38\uc5ec',
+      toast_name_required: '\uba3c\uc800 \uc774\ub984\uc744 \uc124\uc815\ud574\uc8fc\uc138\uc694.',
+      toast_code_copied: '\ucf54\ub4dc\uac00 \ubcf5\uc0ac\ub418\uc5c8\uc2b5\ub2c8\ub2e4!',
+      toast_reconnected: '\uac8c\uc784\uc5d0 \uc7ac\uc811\uc18d\ub418\uc5c8\uc2b5\ub2c8\ub2e4!',
+      toast_player_joined: '\ub2d8\uc774 \ucc38\uc5ec\ud588\uc2b5\ub2c8\ub2e4!',
+      toast_room_not_found: '\ubc29\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.',
+      toast_room_full: '\ubc29\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.',
+      toast_room_in_game: '\uc774\ubbf8 \uac8c\uc784 \uc911\uc778 \ubc29\uc785\ub2c8\ub2e4.',
+      toast_create_failed: '\ubc29 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
+      toast_join_failed: '\ubc29 \ucc38\uc5ec\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
+      toast_random_failed: '\ub79c\ub364 \ub9e4\uce58\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
+      toast_rate_limit: '\uc694\uccad\uc774 \ub108\ubb34 \ub9ce\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694.',
+
       draw_proposal_msg: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc218\ub77d\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?',
       draw_proposed: '\ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc751\ub2f5 \ub300\uae30 \uc911...',
-      bot_no_draw: '로봇은 무승부를 모릅니다 🤖',
+      bot_no_draw: '로봇은 무승부를 몰라요🤖',
       draw_declined: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uac70\uc808\ud588\uc2b5\ub2c8\ub2e4.',
       accept: '\uc218\ub77d',
       decline: '\uac70\uc808',
