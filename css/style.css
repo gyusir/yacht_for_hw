@@ -2186,3 +2186,10 @@ input[type="text"]::placeholder {
 .header-die-wrap.header-die-spin .cube-inner {
   animation: die-spin 4s linear infinite;
 }
+
+/* ===== Utility Classes (CSP: no inline styles) ===== */
+#room-code-input { text-transform: uppercase; }
+.btn-full-width { width: 100%; }
+.btn-mt-16 { margin-top: 16px; }
+.btn-mt-12 { margin-top: 12px; }
+.bot-difficulty-mb { margin-bottom: 16px; }

@@ -81,7 +81,7 @@
       <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
-          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off">
           <button id="btn-join" class="btn-secondary" disabled data-i18n="join">Join</button>
         </div>
         <p id="lobby-error" class="error-text" hidden></p>
@@ -106,7 +106,7 @@
           <div class="skin-options" id="skin-options-bot"></div>
         </div>
       </div>
-      <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_login">Back to Login</button>
+      <button id="btn-back-login" class="btn-secondary btn-full-width btn-mt-16" data-i18n="back_to_login">Back to Login</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
@@ -119,7 +119,7 @@
       <div id="stats-summary" class="stats-summary"></div>
       <h3 class="history-title" data-i18n="recent_games">Recent Games</h3>
       <div id="history-list" class="history-list"></div>
-      <button id="btn-back-lobby" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_lobby">Back to Lobby</button>
+      <button id="btn-back-lobby" class="btn-secondary btn-full-width btn-mt-16" data-i18n="back_to_lobby">Back to Lobby</button>
     </div>
   </section>
 
@@ -154,7 +154,7 @@
         <div class="spinner"></div>
         <p data-i18n="waiting_for_opponent">Waiting for opponent...</p>
       </div>
-      <button id="btn-back-lobby-waiting" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
+      <button id="btn-back-lobby-waiting" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
@@ -178,7 +178,7 @@
           </label>
         </div>
       </div>
-      <div class="bot-difficulty" style="margin-bottom:16px;">
+      <div class="bot-difficulty bot-difficulty-mb">
         <label class="bot-option">
           <input type="radio" name="bot-difficulty" value="basic" checked>
           <span class="bot-label" data-i18n="basic">Basic</span>
@@ -190,8 +190,8 @@
           <span class="bot-desc" data-i18n="gambler_desc">\ucd5c\uc801\ud654\ub41c \uc804\ub7b5 AI</span>
         </label>
       </div>
-      <button id="btn-bot-start" class="btn-primary" style="width:100%;" data-i18n="start_game">Start Game</button>
-      <button id="btn-back-lobby-bot" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
+      <button id="btn-bot-start" class="btn-primary btn-full-width" data-i18n="start_game">Start Game</button>
+      <button id="btn-back-lobby-bot" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
     </div>
   </section>
 
