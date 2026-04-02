@@ -198,12 +198,12 @@ body.in-game .header-controls {
   margin-bottom: 0;
 }
 
-.screen-nickname {
+.card > p.screen-nickname {
   font-style: italic;
   font-weight: 400;
   font-size: 0.9rem;
   color: var(--text-muted);
-  margin: 0 0 4px;
+  margin: 0;
 }
 
 .screen-nickname:empty {
@@ -229,6 +229,7 @@ body.in-game .header-controls {
 
 .card > p {
   color: var(--text-muted);
+  margin-top: 0;
   margin-bottom: 20px;
   font-size: 0.95rem;
   white-space: pre-line;
