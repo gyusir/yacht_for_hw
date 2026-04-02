@@ -21,7 +21,7 @@
     <div class="header-top">
       <h1>Yacht Dice</h1>
       <div class="header-top-controls">
-        <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
+        <button id="lang-toggle" class="btn-icon" title="Language" aria-label="Toggle language">KO</button>
         <button id="theme-toggle" aria-label="Toggle theme">
           <span class="icon-sun">&#9728;</span>
           <span class="icon-moon">&#9790;</span>
@@ -29,10 +29,10 @@
       </div>
     </div>
     <div class="header-controls game-only">
-      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts">Shortcut</button>
-      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules">Rule</button>
-      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw">Draw</button>
-      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave">Quit</button>
+      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts" aria-label="Keyboard shortcuts">Shortcut</button>
+      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules" aria-label="Game rules">Rule</button>
+      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw" aria-label="Propose draw">Draw</button>
+      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave" aria-label="Leave game">Quit</button>
     </div>
   </header>
 
@@ -209,14 +209,14 @@
       <div class="bottom-controls">
         <!-- Dice + Roll Row -->
         <div class="dice-roll-row">
-          <div id="dice-area" class="dice-area">
-            <div class="die" data-index="0"></div>
-            <div class="die" data-index="1"></div>
-            <div class="die" data-index="2"></div>
-            <div class="die" data-index="3"></div>
-            <div class="die" data-index="4"></div>
+          <div id="dice-area" class="dice-area" role="group" aria-label="Dice">
+            <div class="die" data-index="0" role="button" tabindex="0" aria-label="Die 1"></div>
+            <div class="die" data-index="1" role="button" tabindex="0" aria-label="Die 2"></div>
+            <div class="die" data-index="2" role="button" tabindex="0" aria-label="Die 3"></div>
+            <div class="die" data-index="3" role="button" tabindex="0" aria-label="Die 4"></div>
+            <div class="die" data-index="4" role="button" tabindex="0" aria-label="Die 5"></div>
           </div>
-          <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll (0/3)</button>
+          <button id="btn-roll" class="btn-primary btn-roll" disabled aria-label="Roll dice">Roll (0/3)</button>
         </div>
 
         <!-- Emote Bar -->
@@ -339,7 +339,7 @@
   </div>
 
   <!-- Toast Container -->
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" integrity="sha384-ajMUFBUFMCyjh8uxJg6bkGcKe9RTolyjwbxB3yES0QQMenP3Oztj/W9vA2SJPcIh" crossorigin="anonymous"></script>
