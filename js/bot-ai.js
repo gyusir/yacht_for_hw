@@ -376,41 +376,33 @@
       return;
     }
 
+    var META = {
+      yacht:   { mode: 'yacht',   numCategories: 12, maskStride: 1,   upperStride: 0, maxUpper: 0  },
+      yahtzee: { mode: 'yahtzee', numCategories: 13, maskStride: 128, upperStride: 2, maxUpper: 63 }
+    };
+
     dpLoading[gameMode] = true;
-    var url = './data/dp_' + gameMode + '.json';
+    var url = './data/dp_' + gameMode + '.bin';
 
     fetch(url)
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
+        return res.arrayBuffer();
       })
-      .then(function (data) {
-        var meta = {
-          mode: data.mode,
-          categories: data.categories,
-          numCategories: data.numCategories,
-          maskStride: data.maskStride || 1,
-          upperStride: data.upperStride || 0,
-          maxUpper: data.maxUpper || 0
-        };
-
-        var dpArray;
-        if (Array.isArray(data.dp)) {
-          // Yacht: plain array
-          dpArray = new Float64Array(data.dp);
-        } else {
-          // Yahtzee: base64 encoded Float64Array
-          var binary = atob(data.dp);
-          var bytes = new Uint8Array(binary.length);
-          for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          dpArray = new Float64Array(bytes.buffer);
+      .then(function (buf) {
+        var maxValue = new Float32Array(buf, 0, 1)[0];
+        var raw = new Uint16Array(buf, 4);
+        var dpArray = new Float64Array(raw.length);
+        var scale = maxValue / 65535;
+        for (var i = 0; i < raw.length; i++) {
+          dpArray[i] = raw[i] * scale;
         }
 
-        dpData[gameMode] = { dp: dpArray, meta: meta };
+        dpData[gameMode] = { dp: dpArray, meta: META[gameMode] };
         dpLoading[gameMode] = false;
         console.log('[BotAI] DP table loaded:', gameMode,
           '(' + (dpArray.length) + ' entries,',
-          (dpArray.length * 8 / 1024 / 1024).toFixed(1) + ' MB)');
+          (raw.length * 2 / 1024).toFixed(0) + ' KB transferred)');
         if (callback) callback(true);
         var cbs = dpCallbacks[gameMode] || [];
         for (var i = 0; i < cbs.length; i++) cbs[i](true);

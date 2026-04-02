@@ -32,8 +32,8 @@
 ### Bot AI (`data/`, `tools/`)
 | 파일 | 역할 |
 |---|---|
-| `data/dp_yacht.json` | Yacht 모드 DP 룩업 테이블 (4,096 상태, 36KB) |
-| `data/dp_yahtzee.json` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, 11MB) |
+| `data/dp_yacht.bin` | Yacht 모드 DP 룩업 테이블 (4,096 상태, Uint16, 8KB) |
+| `data/dp_yahtzee.bin` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, Uint16, 2MB) |
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
 
 ### Backend (`functions/`)
@@ -131,8 +131,8 @@
 
 Expectimax 알고리즘으로 모든 게임 상태의 최적 기대값(EV)을 사전 계산한 테이블. `tools/generate_dp.py`로 생성한다.
 
-- **Yacht**: `dp[mask]` — 4,096 상태 (Float64Array, 36KB)
-- **Yahtzee**: `dp[mask * 128 + upper * 2 + yzFlag]` — 1,048,576 상태 (Float64Array → base64, 11MB)
+- **Yacht**: `dp[mask]` — 4,096 상태 (Uint16 → Float64, 8KB)
+- **Yahtzee**: `dp[mask * 128 + upper * 2 + yzFlag]` — 1,048,576 상태 (Uint16 → Float64, 2MB)
   - `mask`: 비어있는 카테고리 비트마스크 (bit i=1이면 카테고리 i 미사용)
   - `upper`: 상단 섹션 합계 (0~63으로 클램핑)
   - `yzFlag`: Yahtzee를 50점으로 채웠는지 여부 (0 또는 1)
