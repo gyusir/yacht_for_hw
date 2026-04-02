@@ -33,7 +33,6 @@
   // --- DOM Elements ---
   var themeToggle = document.getElementById('theme-toggle');
   var btnGoogleSignin = document.getElementById('btn-google-signin');
-  var nameInput = document.getElementById('player-name');
   var btnGuest = document.getElementById('btn-guest');
   var signedInProfile = document.getElementById('signed-in-profile');
   var userAvatar = document.getElementById('user-avatar');
@@ -70,6 +69,20 @@
 
   var playerName = '';
   var currentWaitingRoomCode = null;
+  var lobbyNicknameEl = document.getElementById('lobby-nickname');
+  var statsNicknameEl = document.getElementById('stats-nickname');
+
+  function updateScreenNicknames() {
+    var nick = Auth.getNickname();
+    if (lobbyNicknameEl) {
+      if (nick && I18n) {
+        lobbyNicknameEl.textContent = I18n.getLang() === 'ko' ? nick + '\ub2d8, \uc548\ub155\ud558\uc138\uc694.' : 'Hello, ' + nick;
+      } else {
+        lobbyNicknameEl.textContent = nick || '';
+      }
+    }
+    if (statsNicknameEl) statsNicknameEl.textContent = nick || '';
+  }
   var cancelOpponentListener = null;
 
   // --- Theme Toggle ---
@@ -90,13 +103,16 @@
     I18n.refreshStaticText();
     updateLangButton();
     // Update nickname display for new language
-    if (Auth.isSignedIn() && Auth.getNickname()) {
-      var user = window.YachtGame.auth.currentUser;
-      var displayText = (user && user.displayName) || 'Player';
-      displayText += ' (' + Auth.getNickname() + ')';
-      userDisplayName.textContent = displayText;
+    if (Auth.getNickname()) {
       playerName = Auth.getPlayerName();
+      if (Auth.isSignedIn()) {
+        var user = window.YachtGame.auth.currentUser;
+        var displayText = (user && user.displayName) || 'Player';
+        displayText += ' (' + Auth.getNickname() + ')';
+        userDisplayName.textContent = displayText;
+      }
     }
+    updateScreenNicknames();
     var gameScreen = document.getElementById('screen-game');
     var gameoverScreen = document.getElementById('screen-gameover');
     var isInGame = (gameScreen && gameScreen.classList.contains('active')) || (gameoverScreen && gameoverScreen.classList.contains('active'));
@@ -133,6 +149,7 @@
         if (loadedNick) updated += ' (' + loadedNick + ')';
         userDisplayName.textContent = updated;
         playerName = Auth.getPlayerName();
+        updateScreenNicknames();
       };
       userAvatar.onerror = function () { userAvatar.onerror = null; userAvatar.src = DEFAULT_AVATAR; };
       userAvatar.src = user.photoURL || DEFAULT_AVATAR;
@@ -204,28 +221,20 @@
   // Continue (signed in)
   btnContinueSigned.addEventListener('click', function () {
     playerName = Auth.getPlayerName();
+    updateScreenNicknames();
     UI.showScreen('screen-lobby');
     refreshSkinSelector();
     Lobby.cleanupStaleRooms();
   });
 
   // --- Guest Flow ---
-  nameInput.addEventListener('input', function () {
-    btnGuest.disabled = nameInput.value.trim().length === 0;
-  });
-
-  nameInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && nameInput.value.trim().length > 0) {
-      btnGuest.click();
-    }
-  });
-
   btnGuest.addEventListener('click', function () {
-    playerName = nameInput.value.trim();
-    if (!playerName) return;
     btnGuest.disabled = true;
-    Auth.setGuest(playerName, function () {
+    Auth.setGuest(function (error) {
       btnGuest.disabled = false;
+      if (error) return;
+      playerName = Auth.getPlayerName();
+      updateScreenNicknames();
       DiceSkins.applySkin('classic');
       UI.showScreen('screen-lobby');
       Lobby.cleanupStaleRooms();
