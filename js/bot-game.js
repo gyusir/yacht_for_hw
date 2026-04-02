@@ -355,7 +355,7 @@
   }
 
   function selectCategory(playerKey, category) {
-    if (!roomData) return;
+    if (!roomData || !roomData.players || !roomData.players[playerKey]) return;
     var Scoring = window.YachtGame.Scoring;
 
     var diceValues = getDiceValues();

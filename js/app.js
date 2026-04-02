@@ -25,6 +25,9 @@
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
+      if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
+        window.YachtGame.Game.destroy();
+      }
       e.preventDefault();
       e.returnValue = '';
     }

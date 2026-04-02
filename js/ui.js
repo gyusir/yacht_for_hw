@@ -4,6 +4,38 @@
 
   window.YachtGame = window.YachtGame || {};
 
+  var scorecardDelegated = false;
+
+  function initScorecardDelegation() {
+    if (scorecardDelegated) return;
+    var container = document.getElementById('scorecard');
+    if (!container) return;
+    scorecardDelegated = true;
+
+    container.addEventListener('click', function (e) {
+      var cell = e.target.closest('.score-cell.preview');
+      if (!cell) return;
+      var cat = cell.dataset.category;
+      if (!cat || !window.YachtGame.Game) return;
+
+      window.YachtGame.Game.confirmCategory(cat);
+
+      var oldFocus = document.querySelectorAll('.kb-focus');
+      for (var j = 0; j < oldFocus.length; j++) oldFocus[j].classList.remove('kb-focus');
+      cell.classList.add('kb-focus');
+
+      var previews = container.querySelectorAll('.score-cell.preview');
+      for (var k = 0; k < previews.length; k++) {
+        if (previews[k] === cell) {
+          if (typeof window.YachtGame._setKbFocusIndex === 'function') {
+            window.YachtGame._setKbFocusIndex(k);
+          }
+          break;
+        }
+      }
+    });
+  }
+
   // Screen management
   function showScreen(screenId, gameMode) {
     var screens = document.querySelectorAll('.screen');
@@ -192,28 +224,7 @@
 
     html += '</tbody></table>';
     container.innerHTML = html;
-
-    // Attach click handlers to MY preview cells only
-    if (isMyTurn && hasRolled) {
-      var myPreviewCells = container.querySelectorAll('.score-cell.preview');
-      for (var i = 0; i < myPreviewCells.length; i++) {
-        (function (cell, cellIndex) {
-          cell.addEventListener('click', function () {
-            var cat = cell.dataset.category;
-            if (cat && window.YachtGame.Game) {
-              window.YachtGame.Game.confirmCategory(cat);
-              // Move kb-focus to clicked cell
-              var oldFocus = document.querySelectorAll('.kb-focus');
-              for (var j = 0; j < oldFocus.length; j++) oldFocus[j].classList.remove('kb-focus');
-              cell.classList.add('kb-focus');
-              if (typeof window.YachtGame._setKbFocusIndex === 'function') {
-                window.YachtGame._setKbFocusIndex(cellIndex);
-              }
-            }
-          });
-        })(myPreviewCells[i], i);
-      }
-    }
+    initScorecardDelegation();
   }
 
   function showScoreConfirmHint(category) {

@@ -18,6 +18,7 @@
 
   var dpData = {};       // { yacht: { dp, meta }, yahtzee: { dp, meta } }
   var dpLoading = {};    // { yacht: true/false, yahtzee: true/false }
+  var dpCallbacks = {};  // { yacht: [cb1, cb2], yahtzee: [...] }
 
   // Phase cache (recomputed per turn)
   var phaseCache = { mask: -1, upper: -1, yzFlag: -1, gameMode: '', val0: null, val1: null };
@@ -368,13 +369,10 @@
       return;
     }
     if (dpLoading[gameMode]) {
-      // Already loading, wait
-      var checkInterval = setInterval(function () {
-        if (dpData[gameMode] || !dpLoading[gameMode]) {
-          clearInterval(checkInterval);
-          if (callback) callback(!!dpData[gameMode]);
-        }
-      }, 100);
+      if (callback) {
+        if (!dpCallbacks[gameMode]) dpCallbacks[gameMode] = [];
+        dpCallbacks[gameMode].push(callback);
+      }
       return;
     }
 
@@ -414,11 +412,17 @@
           '(' + (dpArray.length) + ' entries,',
           (dpArray.length * 8 / 1024 / 1024).toFixed(1) + ' MB)');
         if (callback) callback(true);
+        var cbs = dpCallbacks[gameMode] || [];
+        for (var i = 0; i < cbs.length; i++) cbs[i](true);
+        dpCallbacks[gameMode] = [];
       })
       .catch(function (err) {
         console.error('[BotAI] Failed to load DP table:', err);
         dpLoading[gameMode] = false;
         if (callback) callback(false);
+        var cbs = dpCallbacks[gameMode] || [];
+        for (var i = 0; i < cbs.length; i++) cbs[i](false);
+        dpCallbacks[gameMode] = [];
       });
   }
 

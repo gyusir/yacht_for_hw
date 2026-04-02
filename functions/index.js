@@ -73,17 +73,19 @@ async function checkRateLimit(uid, action) {
 
   const now = Date.now();
   const rateLimitRef = db.ref("rateLimits/" + uid + "/" + action);
-  const snap = await rateLimitRef.once("value");
-  const data = snap.val();
 
-  if (data && data.count >= limit.maxRequests && (now - data.windowStart) < limit.windowMs) {
+  const result = await rateLimitRef.transaction((current) => {
+    if (!current || (now - current.windowStart) >= limit.windowMs) {
+      return { windowStart: now, count: 1 };
+    }
+    if (current.count >= limit.maxRequests) {
+      return;
+    }
+    return { windowStart: current.windowStart, count: current.count + 1 };
+  });
+
+  if (!result.committed) {
     throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
-  }
-
-  if (!data || (now - data.windowStart) >= limit.windowMs) {
-    await rateLimitRef.set({ windowStart: now, count: 1 });
-  } else {
-    await rateLimitRef.update({ count: data.count + 1 });
   }
 }
 
