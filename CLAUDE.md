@@ -13,7 +13,7 @@
 ### Frontend (`js/`)
 | 파일 | 역할 |
 |---|---|
-| `firebase-config.js` | Firebase 초기화. localhost 시 emulator 자동 연결 |
+| `firebase-config.js` | Firebase 초기화. localhost 시 emulator 자동 연결. sendBeacon URL 설정 |
 | `auth.js` | Google OAuth + Anonymous Auth. `getPlayerName()`은 12자 제한 |
 | `lobby.js` | Cloud Functions 호출로 방 생성/참가/취소. 프레즌스 관리 |
 | `game.js` | 게임 상태 머신, 턴 관리, Firebase 실시간 동기화 |
@@ -21,13 +21,13 @@
 | `dice.js` | 주사위 렌더링, 굴림 애니메이션 |
 | `dice-skins.js` | 스킨 잠금해제/선택/저장. `SKIN_DEFS` 배열로 관리 |
 | `bot-ai.js` | Bot AI 의사결정. DP 룩업 테이블 기반 최적 전략 (Gambler=최적, Basic=±1 노이즈) |
-| `bot-game.js` | Bot 대전 컨트롤러. 로컬 게임 상태, 턴 흐름, 애니메이션, 이모트 |
+| `bot-game.js` | Bot 대전 컨트롤러. 로컬 게임 상태, 턴 흐름, 애니메이션, 이모트, 탭 닫기 시 sendBeacon 패배 저장 |
 | `history.js` | 전적 저장·조회 (로그인 유저 전용) |
 | `i18n.js` | 영어/한국어 이중 언어. `I18n.t(key)` / `I18n.getLang()` |
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
-| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지 |
+| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱 |
 
 ### Bot AI (`data/`, `tools/`)
 | 파일 | 역할 |
@@ -39,7 +39,7 @@
 ### Backend (`functions/`)
 | 파일 | 역할 |
 |---|---|
-| `index.js` | Cloud Functions: createRoom, joinRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, onGameFinished |
+| `index.js` | Cloud Functions: createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
 ### Key Constraints
@@ -47,6 +47,9 @@
 - Database: Firebase Realtime Database (`asia-southeast1`)
 - playerName 최대 12자 (클라이언트 + 서버 양쪽에서 검증/truncate)
 - 게스트는 Anonymous Auth로 uid 발급, classic 스킨만 사용 가능
+- 온라인 매칭: 비공개 방(코드 공유) / 랜덤 매치(Yahtzee·Yacht·상관없음 모드 선택)
+- 봇 게임 탭 닫기 시 `sendBeacon`으로 패배 결과 저장 (`saveBotGameResultBeacon`)
+- 최소 점수 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 시 `"invalid"` (전적 표시되나 승률 미반영)
 
 ## Hosting & Deploy
 
