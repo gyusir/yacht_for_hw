@@ -555,7 +555,6 @@
       // Call Cloud Function for safe forfeit
       leaveGameFn({ roomCode: roomCode }).catch(function (error) {
         console.error('leaveGame error:', error);
-        window.YachtGame.UI.showToast('게임 나가기에 실패했습니다');
       });
     }
     destroy();
