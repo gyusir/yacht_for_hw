@@ -67,7 +67,7 @@
         "emotes": {
           "$playerKey": {
             ".write": "auth != null && root.child('rooms/' + $roomCode + '/players/' + $playerKey + '/uid').val() === auth.uid",
-            ".validate": "newData.hasChildren(['msg', 'name', 'ts']) && newData.child('msg').isString() && newData.child('msg').val().length < 100"
+            ".validate": "newData.hasChildren(['msg', 'name', 'ts']) && newData.child('msg').isString() && newData.child('msg').val().length < 100 && (data.child('ts').val() === null || newData.child('ts').val() >= data.child('ts').val() + 2000)"
           }
         }
       }
