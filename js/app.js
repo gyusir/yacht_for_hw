@@ -167,6 +167,12 @@
     if (isInGame && window.YachtGame.Game && window.YachtGame.Game.refreshUI) {
       window.YachtGame.Game.refreshUI();
     }
+    // Re-render skin selector for new language
+    refreshSkinSelector();
+    // Re-render tutorial tooltip if active
+    if (window.YachtGame.Tutorial && window.YachtGame.Tutorial.isActive() && window.YachtGame.Tutorial.refreshLang) {
+      window.YachtGame.Tutorial.refreshLang();
+    }
     // Re-render history page if stats screen is active
     var statsScreen = document.getElementById('screen-history');
     if (statsScreen && statsScreen.classList.contains('active') && window.YachtGame.UI && window.YachtGame.UI.refreshHistory) {
@@ -179,9 +185,11 @@
     var isGoogle = user && !user.isAnonymous;
     var guestSection = document.querySelector('.guest-section');
     var divider = document.querySelector('#screen-login .divider');
+    var googleDisclaimer = document.getElementById('google-signin-disclaimer');
     if (isGoogle) {
       // Google signed in — show profile, hide guest/google buttons
       btnGoogleSignin.classList.add('hidden-section');
+      if (googleDisclaimer) googleDisclaimer.classList.add('hidden-section');
       guestSection.classList.add('hidden-section');
       divider.classList.add('hidden-section');
       signedInProfile.classList.add('visible');
@@ -204,6 +212,7 @@
     } else {
       // Not signed in or anonymous — show guest + google login
       btnGoogleSignin.classList.remove('hidden-section');
+      if (googleDisclaimer) googleDisclaimer.classList.remove('hidden-section');
       guestSection.classList.remove('hidden-section');
       divider.classList.remove('hidden-section');
       signedInProfile.classList.remove('visible');
