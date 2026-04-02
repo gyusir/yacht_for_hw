@@ -78,6 +78,7 @@
       // Save session info
       sessionStorage.setItem('yacht-room', code);
       sessionStorage.setItem('yacht-player', playerKey);
+      localStorage.setItem('yacht-active-session', code + ':' + Date.now());
 
       callback({ roomCode: code, playerKey: playerKey });
     }).catch(function (error) {
@@ -106,6 +107,7 @@
       setupPresence(code, playerKey, uid);
       sessionStorage.setItem('yacht-room', code);
       sessionStorage.setItem('yacht-player', playerKey);
+      localStorage.setItem('yacht-active-session', code + ':' + Date.now());
 
       callback({ roomCode: code, playerKey: playerKey, gameMode: data.gameMode });
     }).catch(function (error) {
@@ -208,6 +210,7 @@
     cleanupPresence();
     sessionStorage.removeItem('yacht-room');
     sessionStorage.removeItem('yacht-player');
+    localStorage.removeItem('yacht-active-session');
   }
 
   function buildEmptyScores(gameMode) {

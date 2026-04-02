@@ -22,6 +22,18 @@
   // Initialize dice skin from cache
   DiceSkins.loadSkin();
 
+  // --- Detect duplicate tab sessions ---
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'yacht-active-session' && e.newValue && document.body.classList.contains('in-game')) {
+      UI.showToast('다른 탭에서 새 게임이 시작되었습니다');
+      if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
+        window.YachtGame.Game.destroy();
+      }
+      Lobby.clearSession();
+      UI.showScreen('screen-lobby');
+    }
+  });
+
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
