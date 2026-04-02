@@ -137,12 +137,16 @@
     });
   }
 
-  function setGuest(name, callback) {
-    guestName = name;
+  function setGuest(callback) {
     // Use Anonymous Auth so guests get a uid for Security Rules
     window.YachtGame.auth.signInAnonymously().then(function (result) {
       currentUser = result.user;
       isGuest = true;
+      // Generate guest nickname from Anonymous UID
+      var guestNicks = window.YachtGame.Nickname.generateGuest(currentUser.uid);
+      nicknames = guestNicks;
+      var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+      guestName = guestNicks[lang] || guestNicks.ko;
       if (callback) callback(null);
     }).catch(function (error) {
       // Anonymous auth is required — cannot play without a uid
@@ -166,7 +170,12 @@
         });
       } else if (user && user.isAnonymous) {
         isGuest = true;
-        nicknames = null;
+        // Restore guest nicknames if returning from anonymous session
+        if (!nicknames) {
+          nicknames = window.YachtGame.Nickname.generateGuest(user.uid);
+          var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+          guestName = nicknames[lang] || nicknames.ko;
+        }
         callback(user);
       } else {
         isGuest = false;
@@ -178,16 +187,16 @@
   }
 
   function getPlayerName() {
+    if (nicknames) {
+      var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
+      var name = nicknames[lang] || nicknames.ko || nicknames.en;
+      if (name) return name.length > 20 ? name.substring(0, 20) : name;
+    }
     if (isGuest && guestName) return guestName;
     if (currentUser && currentUser.isAnonymous) return guestName || 'Guest';
     if (currentUser) {
-      var name = null;
-      if (nicknames) {
-        var lang = (window.YachtGame.I18n && window.YachtGame.I18n.getLang) ? window.YachtGame.I18n.getLang() : 'en';
-        name = nicknames[lang] || nicknames.ko || nicknames.en;
-      }
-      name = name || currentUser.displayName || 'Player';
-      return name.length > 20 ? name.substring(0, 20) : name;
+      var displayName = currentUser.displayName || 'Player';
+      return displayName.length > 20 ? displayName.substring(0, 20) : displayName;
     }
     return 'Guest';
   }

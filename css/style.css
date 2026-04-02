@@ -198,6 +198,18 @@ body.in-game .header-controls {
   margin-bottom: 0;
 }
 
+.screen-nickname {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+}
+
+.screen-nickname:empty {
+  display: none;
+}
+
 .card-header-actions {
   display: flex;
   gap: 6px;
@@ -329,6 +341,7 @@ input[type="text"]::placeholder {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  margin-top: 8px;
   padding: 12px 24px;
   background: #fff;
   color: #444;
@@ -364,6 +377,7 @@ input[type="text"]::placeholder {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .hidden-section {
@@ -1179,6 +1193,11 @@ input[type="text"]::placeholder {
   margin-top: 20px;
   text-align: center;
   padding: 20px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .skin-selector {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 .skin-section {

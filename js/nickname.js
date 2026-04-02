@@ -124,6 +124,18 @@
     };
   }
 
+  // Generate guest nickname: "adjective + Guest + #number"
+  function generateGuest(uid) {
+    var h1 = djb2(uid + ':adj');
+    var h3 = djb2(uid + ':num');
+    var adjIdx = h1 % ADJECTIVES.ko.length;
+    var num = (h3 % 99) + 1;
+    return {
+      ko: ADJECTIVES.ko[adjIdx] + ' ' + '\uac8c\uc2a4\ud2b8' + '#' + num,
+      en: ADJECTIVES.en[adjIdx] + ' Guest#' + num
+    };
+  }
+
   // Ensure both nickname_ko and nickname_en exist in DB; returns { ko, en }
   function ensureNickname(uid, callback) {
     var db = window.YachtGame.db;
@@ -164,6 +176,7 @@
   window.YachtGame.Nickname = {
     generate: generate,
     generateBoth: generateBoth,
+    generateGuest: generateGuest,
     ensureNickname: ensureNickname
   };
 })();
