@@ -22,6 +22,18 @@
   // Initialize dice skin from cache
   DiceSkins.loadSkin();
 
+  // --- Detect duplicate tab sessions ---
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'yacht-active-session' && e.newValue && document.body.classList.contains('in-game')) {
+      UI.showToast('다른 탭에서 새 게임이 시작되었습니다');
+      if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
+        window.YachtGame.Game.destroy();
+      }
+      Lobby.clearSession();
+      UI.showScreen('screen-lobby');
+    }
+  });
+
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
@@ -265,7 +277,9 @@
   });
 
   btnCreate.addEventListener('click', function () {
+    var originalText = btnCreate.textContent;
     btnCreate.disabled = true;
+    btnCreate.textContent = '...';
     lobbyError.hidden = true;
 
     var gameMode = 'yacht';
@@ -275,6 +289,7 @@
 
     Lobby.createRoom(playerName, gameMode, function (result) {
       btnCreate.disabled = false;
+      btnCreate.textContent = originalText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;
@@ -298,11 +313,14 @@
     var code = roomCodeInput.value.trim();
     if (code.length < 6) return;
 
+    var originalJoinText = btnJoin.textContent;
     btnJoin.disabled = true;
+    btnJoin.textContent = '...';
     lobbyError.hidden = true;
 
     Lobby.joinRoom(playerName, code, function (result) {
       btnJoin.disabled = false;
+      btnJoin.textContent = originalJoinText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;
@@ -325,11 +343,14 @@
       lobbyError.hidden = false;
       return;
     }
+    var originalRandomText = btnRandomJoin.textContent;
     btnRandomJoin.disabled = true;
+    btnRandomJoin.textContent = '...';
     lobbyError.hidden = true;
 
     Lobby.findRandomRoom(playerName, function (result) {
       btnRandomJoin.disabled = false;
+      btnRandomJoin.textContent = originalRandomText;
       if (result.error) {
         lobbyError.textContent = result.error;
         lobbyError.hidden = false;

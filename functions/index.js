@@ -174,7 +174,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   let targetCode = roomCode;
 
   if (random) {
-    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(50).once("value");
+    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(10).once("value");
     if (!snap.exists()) {
       throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
     }
@@ -692,22 +692,17 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const profileSnap = await userRef.child("displayName").once("value");
       if (!profileSnap.exists()) return;
 
-      // Read opponent nicknames (ko/en) and fall back to displayName
+      // Read opponent user data in a single read
       let oppDisplayName = opponent.name;
       let oppNicknameKo = null;
       let oppNicknameEn = null;
       if (opponent.uid) {
-        const oppUserRef = db.ref("users/" + opponent.uid);
-        const [nickKoSnap, nickEnSnap, displayNameSnap] = await Promise.all([
-          oppUserRef.child("nickname_ko").once("value"),
-          oppUserRef.child("nickname_en").once("value"),
-          oppUserRef.child("displayName").once("value")
-        ]);
-        oppNicknameKo = nickKoSnap.exists() ? nickKoSnap.val() : null;
-        oppNicknameEn = nickEnSnap.exists() ? nickEnSnap.val() : null;
-        // Fall back to displayName for opponentName field (backward compat)
-        if (displayNameSnap.exists()) {
-          oppDisplayName = displayNameSnap.val();
+        const oppSnap = await db.ref("users/" + opponent.uid).once("value");
+        if (oppSnap.exists()) {
+          const oppUser = oppSnap.val();
+          oppNicknameKo = oppUser.nickname_ko || null;
+          oppNicknameEn = oppUser.nickname_en || null;
+          if (oppUser.displayName) oppDisplayName = oppUser.displayName;
         }
       }
 
