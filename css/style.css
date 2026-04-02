@@ -774,6 +774,10 @@ input[type="text"]::placeholder {
   font-size: 0.9rem;
 }
 
+/* ===== Waiting Type Visibility ===== */
+[data-wait-type="random"] .wait-private-only { display: none; }
+[data-wait-type="private"] .wait-random-only { display: none; }
+
 /* ===== Spinner ===== */
 .spinner {
   width: 32px;

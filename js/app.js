@@ -307,6 +307,7 @@
 
       displayRoomCode.textContent = result.roomCode;
       currentWaitingRoomCode = result.roomCode;
+      document.getElementById('screen-waiting').setAttribute('data-wait-type', 'private');
       UI.showScreen('screen-waiting');
 
       // Wait for opponent
@@ -357,7 +358,12 @@
     btnRandomJoin.textContent = '...';
     lobbyError.hidden = true;
 
-    Lobby.findRandomRoom(playerName, function (result) {
+    var gameMode = 'yahtzee';
+    for (var i = 0; i < modeRadios.length; i++) {
+      if (modeRadios[i].checked) gameMode = modeRadios[i].value;
+    }
+
+    Lobby.findRandomRoom(playerName, gameMode, function (result) {
       btnRandomJoin.disabled = false;
       btnRandomJoin.textContent = originalRandomText;
       if (result.error) {
@@ -365,8 +371,23 @@
         lobbyError.hidden = false;
         return;
       }
-      UI.showToast('Joined room ' + result.roomCode);
-      Game.init(result.roomCode, result.playerKey);
+
+      if (result.matched) {
+        // Immediately matched with an opponent
+        UI.showToast(I18n.t('random_matched'));
+        Game.init(result.roomCode, result.playerKey);
+      } else {
+        // Created a random room, waiting for another random matcher
+        currentWaitingRoomCode = result.roomCode;
+        document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
+        UI.showScreen('screen-waiting');
+
+        cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
+          cancelOpponentListener = null;
+          UI.showToast(player2.name + ' joined!');
+          Game.init(result.roomCode, result.playerKey);
+        });
+      }
     });
   });
 
@@ -794,7 +815,10 @@
       Game.init(session.roomCode, session.playerKey);
       UI.showToast('Reconnected to game!');
     } else if (session && session.status === 'waiting') {
+      var waitType = session.roomType || 'private';
+      document.getElementById('screen-waiting').setAttribute('data-wait-type', waitType);
       displayRoomCode.textContent = session.roomCode;
+      currentWaitingRoomCode = session.roomCode;
       UI.showScreen('screen-waiting');
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;

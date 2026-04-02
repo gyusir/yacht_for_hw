@@ -12,6 +12,7 @@
   // Cloud Functions references
   var createRoomFn = null;
   var joinRoomFn = null;
+  var findOrCreateRandomRoomFn = null;
   var updateGameModeFn = null;
   var cancelRoomFn = null;
 
@@ -20,6 +21,7 @@
       var fns = window.YachtGame.functions;
       createRoomFn = fns.httpsCallable('createRoom');
       joinRoomFn = fns.httpsCallable('joinRoom');
+      findOrCreateRandomRoomFn = fns.httpsCallable('findOrCreateRandomRoom');
       updateGameModeFn = fns.httpsCallable('updateGameMode');
       cancelRoomFn = fns.httpsCallable('cancelRoom');
     }
@@ -197,7 +199,8 @@
         roomCode: savedRoomCode,
         playerKey: playerKey,
         gameMode: room.gameMode,
-        status: room.status
+        status: room.status,
+        roomType: room.type || 'private'
       });
     }, function (error) {
       console.error('tryReconnect error:', error);
@@ -246,14 +249,14 @@
     clearSession();
   }
 
-  function findRandomRoom(playerName, callback) {
+  function findRandomRoom(playerName, gameMode, callback) {
     getFunctions();
     var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
     var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
-    joinRoomFn({
-      random: true,
+    findOrCreateRandomRoomFn({
       playerName: playerName,
+      gameMode: gameMode || 'yahtzee',
       diceSkin: diceSkin,
       nicknameKo: nicks ? nicks.ko : null,
       nicknameEn: nicks ? nicks.en : null
@@ -266,10 +269,16 @@
       setupPresence(code, playerKey, uid);
       sessionStorage.setItem('yacht-room', code);
       sessionStorage.setItem('yacht-player', playerKey);
+      localStorage.setItem('yacht-active-session', code + ':' + Date.now());
 
-      callback({ roomCode: code, playerKey: playerKey, gameMode: data.gameMode });
+      callback({
+        roomCode: code,
+        playerKey: playerKey,
+        gameMode: data.gameMode,
+        matched: data.matched
+      });
     }).catch(function (error) {
-      callback({ error: error.message || 'No rooms available. Create one!' });
+      callback({ error: error.message || 'Random match failed.' });
     });
   }
 
