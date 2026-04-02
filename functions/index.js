@@ -133,6 +133,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   if (nicknameEn) player1Data.nicknameEn = nicknameEn;
 
   const roomData = {
+    type: "private",
     gameMode: gameMode,
     status: "waiting",
     createdAt: ServerValue.TIMESTAMP,
@@ -161,7 +162,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
 exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
   await checkRateLimit(uid, "joinRoom");
-  const { roomCode, diceSkin, random } = data;
+  const { roomCode, diceSkin } = data;
   let playerName = data.playerName;
   const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
   const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
@@ -171,33 +172,10 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
   }
 
-  let targetCode = roomCode;
-
-  if (random) {
-    const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(10).once("value");
-    if (!snap.exists()) {
-      throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
-    }
-    const now = Date.now();
-    const available = [];
-    snap.forEach((child) => {
-      const room = child.val();
-      if (!room.players || room.players.player2) return;
-      if (room.players.player1 && room.players.player1.uid === uid) return;
-      if (room.players.player1 && room.players.player1.connected === false) return;
-      if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
-      available.push(child.key);
-    });
-    if (available.length === 0) {
-      throw new functions.https.HttpsError("not-found", "No rooms available. Create one!");
-    }
-    targetCode = available[crypto.randomInt(0, available.length)];
-  }
-
-  if (!targetCode || typeof targetCode !== "string") {
+  if (!roomCode || typeof roomCode !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Room code required.");
   }
-  targetCode = targetCode.toUpperCase().trim();
+  const targetCode = roomCode.toUpperCase().trim();
 
   const roomRef = db.ref("rooms/" + targetCode);
   const snap = await roomRef.once("value");
@@ -233,6 +211,122 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   return { roomCode: targetCode, playerKey: "player2", gameMode: room.gameMode };
 });
 
+// ─── findOrCreateRandomRoom ───
+
+exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => {
+  const uid = requireAuth(context);
+  await checkRateLimit(uid, "joinRoom");
+  const { diceSkin } = data;
+  let playerName = data.playerName;
+  let gameMode = data.gameMode;
+  const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+  const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
+
+  if (gameMode !== "yacht" && gameMode !== "yahtzee") {
+    gameMode = "yahtzee";
+  }
+  playerName = sanitizePlayerName(playerName);
+  if (!playerName) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid player name.");
+  }
+
+  // Search for existing random waiting rooms
+  const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(20).once("value");
+  const now = Date.now();
+  const available = [];
+  if (snap.exists()) {
+    snap.forEach((child) => {
+      const room = child.val();
+      if (room.type !== "random") return;
+      if (!room.players || room.players.player2) return;
+      if (room.players.player1 && room.players.player1.uid === uid) return;
+      if (room.players.player1 && room.players.player1.connected === false) return;
+      if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
+      available.push(child.key);
+    });
+  }
+
+  // Try to join an available random room using transaction
+  for (let i = 0; i < available.length; i++) {
+    const targetCode = available[crypto.randomInt(0, available.length)];
+    const roomRef = db.ref("rooms/" + targetCode);
+
+    const result = await roomRef.transaction((room) => {
+      if (!room) return room;
+      if (room.status !== "waiting" || room.type !== "random") return;
+      if (room.players && room.players.player2) return;
+      if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
+
+      const p2 = {
+        name: playerName,
+        uid: uid,
+        connected: true,
+        scores: buildEmptyScores(room.gameMode),
+        diceSkin: diceSkin || "classic"
+      };
+      if (nicknameKo) p2.nicknameKo = nicknameKo;
+      if (nicknameEn) p2.nicknameEn = nicknameEn;
+
+      room.players.player2 = p2;
+      room.status = "playing";
+      room.lastActivityAt = { ".sv": "timestamp" };
+      return room;
+    });
+
+    if (result.committed && result.snapshot.val() && result.snapshot.val().status === "playing") {
+      return { roomCode: targetCode, playerKey: "player2", gameMode: result.snapshot.val().gameMode, matched: true };
+    }
+    // Transaction failed (room was taken), try next
+    available.splice(available.indexOf(targetCode), 1);
+  }
+
+  // No available room found — create a new random room
+  let code, exists;
+  for (let attempt = 0; attempt < ROOM_CODE_MAX_RETRIES; attempt++) {
+    code = generateRoomCode();
+    const codeSnap = await db.ref("rooms/" + code).once("value");
+    if (!codeSnap.exists()) { exists = false; break; }
+    exists = true;
+  }
+  if (exists) {
+    throw new functions.https.HttpsError("unavailable", "Could not generate room code. Try again.");
+  }
+
+  const player1Data = {
+    name: playerName,
+    uid: uid,
+    connected: true,
+    scores: buildEmptyScores(gameMode),
+    diceSkin: diceSkin || "classic"
+  };
+  if (nicknameKo) player1Data.nicknameKo = nicknameKo;
+  if (nicknameEn) player1Data.nicknameEn = nicknameEn;
+
+  const roomData = {
+    type: "random",
+    gameMode: gameMode,
+    status: "waiting",
+    createdAt: ServerValue.TIMESTAMP,
+    lastActivityAt: ServerValue.TIMESTAMP,
+    currentTurn: "player1",
+    rollCount: 0,
+    dice: {
+      0: { value: 0, held: false },
+      1: { value: 0, held: false },
+      2: { value: 0, held: false },
+      3: { value: 0, held: false },
+      4: { value: 0, held: false }
+    },
+    players: {
+      player1: player1Data
+    },
+    winner: ""
+  };
+
+  await db.ref("rooms/" + code).set(roomData);
+  return { roomCode: code, playerKey: "player1", gameMode: gameMode, matched: false };
+});
+
 // ─── updateGameMode ───
 
 exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
@@ -253,6 +347,9 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
   const room = snap.val();
   if (room.status !== "waiting") {
     throw new functions.https.HttpsError("failed-precondition", "Game already started.");
+  }
+  if (room.type === "random") {
+    throw new functions.https.HttpsError("failed-precondition", "Cannot change mode for random match.");
   }
   if (!room.players || !room.players.player1 || room.players.player1.uid !== uid) {
     throw new functions.https.HttpsError("permission-denied", "Only the host can change mode.");

@@ -124,17 +124,18 @@
   </section>
 
   <!-- Screen: Waiting Room -->
-  <section id="screen-waiting" class="screen">
+  <section id="screen-waiting" class="screen" data-wait-type="private">
     <div class="card">
-      <h2 data-i18n="waiting_room">Waiting Room</h2>
-      <div class="room-code-display">
+      <h2 class="wait-private-only" data-i18n="waiting_room">Waiting Room</h2>
+      <h2 class="wait-random-only" data-i18n="random_match">Random Match</h2>
+      <div class="room-code-display wait-private-only">
         <p data-i18n="share_code">Share this code with your friend:</p>
         <div class="code-box">
           <span id="display-room-code"></span>
           <button id="btn-copy-code" class="btn-icon" title="Copy code">&#128203;</button>
         </div>
       </div>
-      <div id="mode-select" class="mode-select">
+      <div id="mode-select" class="mode-select wait-private-only">
         <p data-i18n="select_game_mode">Select game mode:</p>
         <div class="mode-options">
           <label class="mode-option">
@@ -152,7 +153,8 @@
       </div>
       <div class="waiting-spinner">
         <div class="spinner"></div>
-        <p data-i18n="waiting_for_opponent">Waiting for opponent...</p>
+        <p class="wait-private-only" data-i18n="waiting_for_opponent">Waiting for opponent...</p>
+        <p class="wait-random-only" data-i18n="random_searching">Searching for an opponent...</p>
       </div>
       <button id="btn-back-lobby-waiting" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>

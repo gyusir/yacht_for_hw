@@ -61,6 +61,9 @@
       yacht_desc: '12 categories, classic rules',
       waiting_for_opponent: 'Waiting for opponent...',
       back_to_lobby_arrow: '\u2190 Back to Lobby',
+      random_match: 'Random Match',
+      random_searching: 'Searching for an opponent...',
+      random_matched: 'Opponent found!',
 
       // Bot Setup
       bot_game: 'Bot Game',
@@ -253,6 +256,9 @@
       yacht_desc: '12\uac1c \uce74\ud14c\uace0\ub9ac, \ud074\ub798\uc2dd \uaddc\uce59',
       waiting_for_opponent: '\uc0c1\ub300\ub97c \uae30\ub2e4\ub9ac\ub294 \uc911...',
       back_to_lobby_arrow: '\u2190 \ub85c\ube44\ub85c \ub3cc\uc544\uac00\uae30',
+      random_match: '\ub79c\ub364 \ub9e4\uce58',
+      random_searching: '\uc0c1\ub300\ub97c \ucc3e\ub294 \uc911...',
+      random_matched: '\uc0c1\ub300\ub97c \ucc3e\uc558\uc2b5\ub2c8\ub2e4!',
 
       // Bot Setup
       bot_game: '\ubd07 \ub300\uc804',
