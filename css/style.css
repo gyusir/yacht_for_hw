@@ -416,6 +416,38 @@ input[type="text"]::placeholder {
   white-space: pre-line;
 }
 
+.lobby-bottom-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.lobby-bottom-row .btn-secondary {
+  flex: 1;
+}
+
+.btn-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  margin-top: 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-feedback:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .google-icon {
   flex-shrink: 0;
 }
