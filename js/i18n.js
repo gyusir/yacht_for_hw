@@ -62,8 +62,12 @@
       waiting_for_opponent: 'Waiting for opponent...',
       back_to_lobby_arrow: '\u2190 Back to Lobby',
       random_match: 'Random Match',
+      random_match_title: 'Random Match',
       random_searching: 'Searching for an opponent...',
       random_matched: 'Opponent found!',
+      find_opponent: 'Find Opponent',
+      any_mode: 'Any',
+      any_mode_desc: 'Match with any game mode',
 
       // Bot Setup
       bot_game: 'Bot Game',
@@ -257,8 +261,12 @@
       waiting_for_opponent: '\uc0c1\ub300\ub97c \uae30\ub2e4\ub9ac\ub294 \uc911...',
       back_to_lobby_arrow: '\u2190 \ub85c\ube44\ub85c \ub3cc\uc544\uac00\uae30',
       random_match: '\ub79c\ub364 \ub9e4\uce58',
+      random_match_title: '\ub79c\ub364 \ub9e4\uce58',
       random_searching: '\uc0c1\ub300\ub97c \ucc3e\ub294 \uc911...',
       random_matched: '\uc0c1\ub300\ub97c \ucc3e\uc558\uc2b5\ub2c8\ub2e4!',
+      find_opponent: '\uc0c1\ub300 \ucc3e\uae30',
+      any_mode: '\uc0c1\uad00\uc5c6\uc74c',
+      any_mode_desc: '\uc544\ubb34 \uac8c\uc784 \ubaa8\ub4dc\uc640 \ub9e4\uce6d',
 
       // Bot Setup
       bot_game: '\ubd07 \ub300\uc804',

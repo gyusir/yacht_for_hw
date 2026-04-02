@@ -222,7 +222,8 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
   const nicknameKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
   const nicknameEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
 
-  if (gameMode !== "yacht" && gameMode !== "yahtzee") {
+  const isAny = gameMode === "any";
+  if (!isAny && gameMode !== "yacht" && gameMode !== "yahtzee") {
     gameMode = "yahtzee";
   }
   playerName = sanitizePlayerName(playerName);
@@ -242,6 +243,8 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
       if (room.players.player1 && room.players.player1.uid === uid) return;
       if (room.players.player1 && room.players.player1.connected === false) return;
       if (room.createdAt && (now - room.createdAt > 10 * 60 * 1000)) return;
+      // gameMode filtering: "any" matches all, otherwise must match room or room is "any"
+      if (!isAny && room.gameMode !== gameMode && room.requestedMode !== "any") return;
       available.push(child.key);
     });
   }
@@ -256,6 +259,14 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
       if (room.status !== "waiting" || room.type !== "random") return;
       if (room.players && room.players.player2) return;
       if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
+
+      // If room creator chose "any", joiner's specific mode wins (or yahtzee if both "any")
+      if (room.requestedMode === "any" && !isAny) {
+        room.gameMode = gameMode;
+        if (room.players && room.players.player1) {
+          room.players.player1.scores = buildEmptyScores(gameMode);
+        }
+      }
 
       const p2 = {
         name: playerName,
@@ -292,11 +303,14 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("unavailable", "Could not generate room code. Try again.");
   }
 
+  // "any" mode: store as yahtzee by default, but track requestedMode for matching
+  const actualGameMode = isAny ? "yahtzee" : gameMode;
+
   const player1Data = {
     name: playerName,
     uid: uid,
     connected: true,
-    scores: buildEmptyScores(gameMode),
+    scores: buildEmptyScores(actualGameMode),
     diceSkin: diceSkin || "classic"
   };
   if (nicknameKo) player1Data.nicknameKo = nicknameKo;
@@ -304,7 +318,8 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
 
   const roomData = {
     type: "random",
-    gameMode: gameMode,
+    gameMode: actualGameMode,
+    requestedMode: isAny ? "any" : gameMode,
     status: "waiting",
     createdAt: ServerValue.TIMESTAMP,
     lastActivityAt: ServerValue.TIMESTAMP,

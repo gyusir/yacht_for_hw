@@ -553,13 +553,19 @@
   function leaveGame() {
     if (roomRef && lastRoomData && lastRoomData.status === 'playing') {
       // Call Cloud Function for safe forfeit
+      // The Firebase listener will detect status: "finished" and show gameover screen
       leaveGameFn({ roomCode: roomCode }).catch(function (error) {
         console.error('leaveGame error:', error);
+        // On error, fall back to lobby
+        destroy();
+        window.YachtGame.Lobby.clearSession();
+        window.YachtGame.UI.showScreen('screen-lobby');
       });
+    } else {
+      destroy();
+      window.YachtGame.Lobby.clearSession();
+      window.YachtGame.UI.showScreen('screen-lobby');
     }
-    destroy();
-    window.YachtGame.Lobby.clearSession();
-    window.YachtGame.UI.showScreen('screen-lobby');
   }
 
   function getGameMode() {

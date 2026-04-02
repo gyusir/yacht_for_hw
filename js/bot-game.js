@@ -753,6 +753,19 @@
   function leaveGame() {
     if (roomData && roomData.status === 'playing') {
       roomData.status = 'finished';
+      roomData.winner = 'player2';
+      var myData = roomData.players.player1;
+      var oppData = roomData.players.player2;
+      var Auth = window.YachtGame.Auth;
+      var myName = (Auth && Auth.getPlayerName && Auth.getPlayerName()) || myData.name;
+      window.YachtGame.UI.showScreen('screen-gameover');
+      window.YachtGame.UI.renderGameOver(
+        myName, oppData.name,
+        myData.scores || {}, oppData.scores || {},
+        roomData.gameMode, 'player2', 'player1'
+      );
+      saveResult();
+      return;
     }
     destroy();
     window.YachtGame.Lobby.clearSession();

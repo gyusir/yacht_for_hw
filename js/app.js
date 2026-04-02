@@ -343,41 +343,47 @@
   });
 
   // --- Quick Match (Random Join) ---
+  var btnRandomStart = document.getElementById('btn-random-start');
+  var btnBackLobbyRandom = document.getElementById('btn-back-lobby-random');
+
   btnRandomJoin.addEventListener('click', function () {
-    // Ensure playerName is set (may be empty after back-navigation)
-    if (!playerName) {
-      playerName = Auth.getPlayerName();
-    }
+    if (!playerName) playerName = Auth.getPlayerName();
     if (!playerName) {
       lobbyError.textContent = 'Please set a name first.';
       lobbyError.hidden = false;
       return;
     }
-    var originalRandomText = btnRandomJoin.textContent;
-    btnRandomJoin.disabled = true;
-    btnRandomJoin.textContent = '...';
     lobbyError.hidden = true;
+    UI.showScreen('screen-random-setup');
+  });
 
+  btnBackLobbyRandom.addEventListener('click', function () {
+    UI.showScreen('screen-lobby');
+  });
+
+  btnRandomStart.addEventListener('click', function () {
+    var randomModeRadios = document.querySelectorAll('input[name="random-mode"]');
     var gameMode = 'yahtzee';
-    for (var i = 0; i < modeRadios.length; i++) {
-      if (modeRadios[i].checked) gameMode = modeRadios[i].value;
+    for (var i = 0; i < randomModeRadios.length; i++) {
+      if (randomModeRadios[i].checked) gameMode = randomModeRadios[i].value;
     }
 
+    var originalText = btnRandomStart.textContent;
+    btnRandomStart.disabled = true;
+    btnRandomStart.textContent = '...';
+
     Lobby.findRandomRoom(playerName, gameMode, function (result) {
-      btnRandomJoin.disabled = false;
-      btnRandomJoin.textContent = originalRandomText;
+      btnRandomStart.disabled = false;
+      btnRandomStart.textContent = originalText;
       if (result.error) {
-        lobbyError.textContent = result.error;
-        lobbyError.hidden = false;
+        UI.showToast(result.error);
         return;
       }
 
       if (result.matched) {
-        // Immediately matched with an opponent
         UI.showToast(I18n.t('random_matched'));
         Game.init(result.roomCode, result.playerKey);
       } else {
-        // Created a random room, waiting for another random matcher
         currentWaitingRoomCode = result.roomCode;
         document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
         UI.showScreen('screen-waiting');
@@ -545,8 +551,9 @@
       cancelOpponentListener();
       cancelOpponentListener = null;
     }
-    var code = displayRoomCode.textContent;
+    var code = currentWaitingRoomCode || displayRoomCode.textContent;
     Lobby.cancelRoom(code);
+    currentWaitingRoomCode = null;
     UI.showScreen('screen-lobby');
   });
 
