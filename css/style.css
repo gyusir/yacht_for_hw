@@ -30,7 +30,7 @@
   --surface: #1a1a2e;
   --surface-hover: #222240;
   --text: #e8e8f0;
-  --text-muted: #8888a0;
+  --text-muted: #9999b0;
   --accent: #6c8cff;
   --accent-hover: #5a7af0;
   --accent-light: rgba(108, 140, 255, 0.12);
@@ -198,12 +198,11 @@ body.in-game .header-controls {
   margin-bottom: 0;
 }
 
-.screen-nickname {
-  font-style: italic;
+.card > p.screen-nickname {
   font-weight: 400;
   font-size: 0.9rem;
   color: var(--text-muted);
-  margin: 0 0 4px;
+  margin: 0;
 }
 
 .screen-nickname:empty {
@@ -229,6 +228,7 @@ body.in-game .header-controls {
 
 .card > p {
   color: var(--text-muted);
+  margin-top: 0;
   margin-bottom: 20px;
   font-size: 0.95rem;
   white-space: pre-line;
@@ -1956,7 +1956,7 @@ input[type="text"]::placeholder {
 }
 
 /* ===== Session Notice ===== */
-.session-notice {
+.card > p.session-notice {
   margin-top: 16px;
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -2186,3 +2186,15 @@ input[type="text"]::placeholder {
 .header-die-wrap.header-die-spin .cube-inner {
   animation: die-spin 4s linear infinite;
 }
+
+/* ===== Mobile: remove 300ms tap delay ===== */
+button, .die, .score-cell, .skin-option, .emote-btn {
+  touch-action: manipulation;
+}
+
+/* ===== Utility Classes (CSP: no inline styles) ===== */
+#room-code-input { text-transform: uppercase; }
+button.btn-full-width { width: 100%; }
+.btn-mt-16 { margin-top: 16px; }
+.btn-mt-12 { margin-top: 12px; }
+.bot-difficulty-mb { margin-bottom: 16px; }

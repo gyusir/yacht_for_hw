@@ -5,7 +5,7 @@
   <meta id="vp-meta" name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function(){
-      var MIN_W = 520;
+      var MIN_W = 400;
       var meta = document.getElementById('vp-meta');
       var sw = screen.width || MIN_W;
       meta.content = sw < MIN_W
@@ -21,7 +21,7 @@
     <div class="header-top">
       <h1>Yacht Dice</h1>
       <div class="header-top-controls">
-        <button id="lang-toggle" class="btn-icon" title="Language">KO</button>
+        <button id="lang-toggle" class="btn-icon" title="Language" aria-label="Toggle language">KO</button>
         <button id="theme-toggle" aria-label="Toggle theme">
           <span class="icon-sun">&#9728;</span>
           <span class="icon-moon">&#9790;</span>
@@ -29,10 +29,10 @@
       </div>
     </div>
     <div class="header-controls game-only">
-      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts">Shortcut</button>
-      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules">Rule</button>
-      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw">Draw</button>
-      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave">Quit</button>
+      <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts" aria-label="Keyboard shortcuts">Shortcut</button>
+      <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules" aria-label="Game rules">Rule</button>
+      <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw" aria-label="Propose draw">Draw</button>
+      <button id="btn-leave" class="btn-icon btn-leave" data-i18n="btn_quit" data-i18n-title="leave_title" title="Leave" aria-label="Leave game">Quit</button>
     </div>
   </header>
 
@@ -81,7 +81,7 @@
       <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
-          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off">
           <button id="btn-join" class="btn-secondary" disabled data-i18n="join">Join</button>
         </div>
         <p id="lobby-error" class="error-text" hidden></p>
@@ -106,7 +106,7 @@
           <div class="skin-options" id="skin-options-bot"></div>
         </div>
       </div>
-      <button id="btn-back-login" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_login">Back to Login</button>
+      <button id="btn-back-login" class="btn-secondary btn-full-width btn-mt-16" data-i18n="back_to_login">Back to Login</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
@@ -119,7 +119,7 @@
       <div id="stats-summary" class="stats-summary"></div>
       <h3 class="history-title" data-i18n="recent_games">Recent Games</h3>
       <div id="history-list" class="history-list"></div>
-      <button id="btn-back-lobby" class="btn-secondary" style="width:100%;margin-top:16px;" data-i18n="back_to_lobby">Back to Lobby</button>
+      <button id="btn-back-lobby" class="btn-secondary btn-full-width btn-mt-16" data-i18n="back_to_lobby">Back to Lobby</button>
     </div>
   </section>
 
@@ -154,7 +154,7 @@
         <div class="spinner"></div>
         <p data-i18n="waiting_for_opponent">Waiting for opponent...</p>
       </div>
-      <button id="btn-back-lobby-waiting" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
+      <button id="btn-back-lobby-waiting" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
       <p class="session-notice" data-i18n="session_notice">* Closing the tab ends the session. Keep the tab open to stay connected.</p>
     </div>
   </section>
@@ -178,7 +178,7 @@
           </label>
         </div>
       </div>
-      <div class="bot-difficulty" style="margin-bottom:16px;">
+      <div class="bot-difficulty bot-difficulty-mb">
         <label class="bot-option">
           <input type="radio" name="bot-difficulty" value="basic" checked>
           <span class="bot-label" data-i18n="basic">Basic</span>
@@ -190,8 +190,8 @@
           <span class="bot-desc" data-i18n="gambler_desc">\ucd5c\uc801\ud654\ub41c \uc804\ub7b5 AI</span>
         </label>
       </div>
-      <button id="btn-bot-start" class="btn-primary" style="width:100%;" data-i18n="start_game">Start Game</button>
-      <button id="btn-back-lobby-bot" class="btn-secondary" style="width:100%;margin-top:12px;" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
+      <button id="btn-bot-start" class="btn-primary btn-full-width" data-i18n="start_game">Start Game</button>
+      <button id="btn-back-lobby-bot" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
     </div>
   </section>
 
@@ -209,14 +209,14 @@
       <div class="bottom-controls">
         <!-- Dice + Roll Row -->
         <div class="dice-roll-row">
-          <div id="dice-area" class="dice-area">
-            <div class="die" data-index="0"></div>
-            <div class="die" data-index="1"></div>
-            <div class="die" data-index="2"></div>
-            <div class="die" data-index="3"></div>
-            <div class="die" data-index="4"></div>
+          <div id="dice-area" class="dice-area" role="group" aria-label="Dice">
+            <div class="die" data-index="0" role="button" tabindex="0" aria-label="Die 1"></div>
+            <div class="die" data-index="1" role="button" tabindex="0" aria-label="Die 2"></div>
+            <div class="die" data-index="2" role="button" tabindex="0" aria-label="Die 3"></div>
+            <div class="die" data-index="3" role="button" tabindex="0" aria-label="Die 4"></div>
+            <div class="die" data-index="4" role="button" tabindex="0" aria-label="Die 5"></div>
           </div>
-          <button id="btn-roll" class="btn-primary btn-roll" disabled>Roll (0/3)</button>
+          <button id="btn-roll" class="btn-primary btn-roll" disabled aria-label="Roll dice">Roll (0/3)</button>
         </div>
 
         <!-- Emote Bar -->
@@ -339,7 +339,7 @@
   </div>
 
   <!-- Toast Container -->
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" integrity="sha384-ajMUFBUFMCyjh8uxJg6bkGcKe9RTolyjwbxB3yES0QQMenP3Oztj/W9vA2SJPcIh" crossorigin="anonymous"></script>

@@ -752,9 +752,7 @@
 
   function leaveGame() {
     if (roomData && roomData.status === 'playing') {
-      roomData.winner = 'player2';
       roomData.status = 'finished';
-      saveResult();
     }
     destroy();
     window.YachtGame.Lobby.clearSession();
