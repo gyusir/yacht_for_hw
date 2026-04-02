@@ -42,6 +42,12 @@
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=600" }
         ]
+      },
+      {
+        "source": "data/dp_*.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=2592000, immutable" }
+        ]
       }
     ],
     "rewrites": [
