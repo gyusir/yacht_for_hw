@@ -2194,7 +2194,7 @@ button, .die, .score-cell, .skin-option, .emote-btn {
 
 /* ===== Utility Classes (CSP: no inline styles) ===== */
 #room-code-input { text-transform: uppercase; }
-.btn-full-width { width: 100%; }
+button.btn-full-width { width: 100%; }
 .btn-mt-16 { margin-top: 16px; }
 .btn-mt-12 { margin-top: 12px; }
 .bot-difficulty-mb { margin-bottom: 16px; }
