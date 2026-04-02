@@ -139,14 +139,16 @@
     var database = getDb();
     var player2Ref = database.ref('rooms/' + roomCode + '/players/player2');
 
-    player2Ref.on('value', function (snapshot) {
+    function onPlayer2Value(snapshot) {
       if (snapshot.exists()) {
-        player2Ref.off();
+        player2Ref.off('value', onPlayer2Value);
         callback(snapshot.val());
       }
-    });
+    }
 
-    return function cancel() { player2Ref.off(); };
+    player2Ref.on('value', onPlayer2Value);
+
+    return function cancel() { player2Ref.off('value', onPlayer2Value); };
   }
 
   function tryReconnect(callback) {
