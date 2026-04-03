@@ -24,7 +24,7 @@ if (location.hostname === 'localhost') {
 }
 
 firebase.appCheck().activate(
-  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcwIqQsAAAAAIuRTq6Zy8UdNrb9LS-jnWAb6M7M'),
+  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LeJKaQsAAAAAMOTELXn0JR8jWduXEkSJxxYJuVQ'),
   true
 );
 
