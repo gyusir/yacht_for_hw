@@ -104,6 +104,10 @@
 - **사용자 허락 없이 main에 push하지 않는다**
 - **사용자 허락 없이 PR을 merge하지 않는다**
 
+### Version Tagging
+- 버전은 `index.html`의 `<span class="app-version">` 태그에 표기한다
+- 커밋 메시지에 버전을 명시할 때는 반드시 `index.html`의 버전도 함께 업데이트한다
+
 ## Content Security Policy (CSP) 관리
 
 `firebase.json`의 `headers` 섹션에서 CSP를 관리한다. Firebase 앱은 다양한 Google 도메인에 의존하므로 CSP 변경 시 반드시 아래 사항을 준수한다.
