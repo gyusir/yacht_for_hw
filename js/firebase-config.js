@@ -22,7 +22,7 @@ if (location.hostname === 'localhost' && new URLSearchParams(location.search).ha
 }
 
 firebase.appCheck().activate(
-  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcwIqQsAAAAAIuRTq6Zy8UdNrb9LS-jnWAb6M7M'),
+  new firebase.appCheck.ReCaptchaV3Provider('6LeJKaQsAAAAAMOTELXn0JR8jWduXEkSJxxYJuVQ'),
   true
 );
 
