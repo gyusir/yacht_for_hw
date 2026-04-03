@@ -13,7 +13,7 @@
 ### Frontend (`js/`)
 | 파일 | 역할 |
 |---|---|
-| `firebase-config.js` | Firebase 초기화. localhost 시 emulator 자동 연결. sendBeacon URL 설정 |
+| `firebase-config.js` | Firebase 초기화. App Check (reCAPTCHA v3) 활성화. localhost 시 emulator 자동 연결. sendBeacon URL 설정 |
 | `auth.js` | Google OAuth + Anonymous Auth. `getPlayerName()`은 12자 제한 |
 | `lobby.js` | Cloud Functions 호출로 방 생성/참가/취소. 프레즌스 관리 |
 | `game.js` | 게임 상태 머신, 턴 관리, Firebase 실시간 동기화 |
@@ -27,7 +27,7 @@
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
-| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱 |
+| `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱 |
 
 ### Bot AI (`data/`, `tools/`)
 | 파일 | 역할 |
@@ -39,7 +39,7 @@
 ### Backend (`functions/`)
 | 파일 | 역할 |
 |---|---|
-| `index.js` | Cloud Functions: createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished |
+| `index.js` | Cloud Functions: createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함 |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
 ### Key Constraints
@@ -50,6 +50,7 @@
 - 온라인 매칭: 비공개 방(코드 공유) / 랜덤 매치(Yahtzee·Yacht·상관없음 모드 선택)
 - 봇 게임 탭 닫기 시 `sendBeacon`으로 패배 결과 저장 (`saveBotGameResultBeacon`)
 - 최소 점수 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 시 `"invalid"` (전적 표시되나 승률 미반영)
+- Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
 
 ## Hosting & Deploy
 
@@ -116,12 +117,15 @@
 | `script-src` | `https://apis.google.com` | Google Auth |
 | `script-src` | `https://accounts.google.com` | Google Sign-in |
 | `script-src` | `https://*.firebasedatabase.app` | RTDB JSONP long-polling (WebSocket 실패 시 fallback) |
+| `script-src` | `https://www.google.com`, `https://www.recaptcha.net` | reCAPTCHA v3 (App Check) |
 | `connect-src` | `https://*.firebaseio.com`, `wss://*.firebaseio.com` | RTDB 실시간 연결 |
 | `connect-src` | `https://*.firebasedatabase.app`, `wss://*.firebasedatabase.app` | RTDB 연결 |
 | `connect-src` | `https://*.googleapis.com` | Firebase Auth, Cloud Functions |
 | `connect-src` | `https://*.cloudfunctions.net` | Cloud Functions callable 호출 |
 | `connect-src` | `https://*.gstatic.com` | Firebase SDK source maps |
+| `connect-src` | `https://www.recaptcha.net`, `https://recaptcha.google.com` | reCAPTCHA v3 (App Check) |
 | `frame-src` | `https://accounts.google.com`, `https://*.firebaseapp.com` | Google OAuth popup/redirect |
+| `frame-src` | `https://www.recaptcha.net`, `https://recaptcha.google.com` | reCAPTCHA v3 (App Check) |
 
 ### 주의사항
 - **SPA rewrite**: `"source": "**"` rewrite를 사용하므로 `**/*.html` 패턴은 매칭되지 않는다. CSP는 반드시 `"source": "**"` 블록에 배치한다.

@@ -20,6 +20,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 - **Bot Match** — Two difficulties: Basic (occasional mistakes) / Gambler (optimal play), powered by Expectimax DP
 - **Server-side Validation** — Anti-cheat score calculation via Cloud Functions, transaction-based rate limiting
 - **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate)
+- **App Check** — Firebase App Check (reCAPTCHA v3) prevents unauthorized use of backend services from forked apps
 - **Bilingual** — English/Korean dual language support with real-time switching
 - **Tutorial** — Interactive step-by-step game guide
 - **Accessibility** — aria-labels, keyboard navigation, screen reader support
@@ -33,6 +34,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 | Backend | Firebase Realtime Database |
 | Auth | Firebase Auth (Google OAuth + Anonymous) |
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
+| App Check | Firebase App Check (reCAPTCHA v3) |
 | Hosting | Firebase Hosting (Global CDN, Auto SSL) |
 | CI/CD | GitHub Actions (Auto deploy Hosting + Functions, PR Preview) |
 
@@ -44,7 +46,7 @@ yacht_for_hw/
 ├── css/
 │   └── style.css             # All styles (themes, skins, responsive)
 ├── js/
-│   ├── firebase-config.js    # Firebase init + localhost emulator auto-connect + sendBeacon URL
+│   ├── firebase-config.js    # Firebase init + App Check (reCAPTCHA v3) + emulator auto-connect + sendBeacon URL
 │   ├── auth.js               # Google login / guest mode
 │   ├── lobby.js              # Room create/join, presence, reconnection
 │   ├── game.js               # Game state machine, turn management, Firebase sync
@@ -58,7 +60,7 @@ yacht_for_hw/
 │   ├── nickname.js           # Nickname generation/management (per language)
 │   ├── tutorial.js           # Interactive tutorial
 │   ├── ui.js                 # Screen transitions, scorecard (event delegation), toast (dynamic duration)
-│   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching
+│   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching, App Check token caching
 ├── data/
 │   ├── dp_yacht.bin          # Yacht mode DP lookup table (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee mode DP lookup table (Uint16, 2MB)

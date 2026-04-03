@@ -20,6 +20,7 @@
 - **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) 두 난이도, Expectimax DP 기반
 - **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
 - **어뷰징 방지** — 봇 게임 탭 닫기 시 패배 저장(sendBeacon), 최소 점수 미달 게임 무효 처리(승률 미반영)
+- **App Check** — Firebase App Check (reCAPTCHA v3)로 포크 앱의 무단 백엔드 사용 차단
 - **다국어** — 영어/한국어 이중 언어 지원, 실시간 전환
 - **튜토리얼** — 인터랙티브 단계별 게임 안내
 - **접근성** — aria-label, 키보드 내비게이션, 스크린리더 지원
@@ -33,6 +34,7 @@
 | Backend | Firebase Realtime Database |
 | Auth | Firebase Auth (Google OAuth + Anonymous) |
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
+| App Check | Firebase App Check (reCAPTCHA v3) |
 | Hosting | Firebase Hosting (글로벌 CDN, 자동 SSL) |
 | CI/CD | GitHub Actions (Hosting + Functions 자동 배포, PR 프리뷰) |
 
@@ -44,7 +46,7 @@ yacht_for_hw/
 ├── css/
 │   └── style.css             # 전체 스타일 (테마, 스킨, 반응형)
 ├── js/
-│   ├── firebase-config.js    # Firebase 초기화 + localhost emulator 자동 연결 + sendBeacon URL
+│   ├── firebase-config.js    # Firebase 초기화 + App Check (reCAPTCHA v3) + emulator 자동 연결 + sendBeacon URL
 │   ├── auth.js               # Google 로그인 / 게스트 모드
 │   ├── lobby.js              # 방 생성·참가, 프레즌스, 재접속
 │   ├── game.js               # 게임 상태 머신, 턴 관리, Firebase 동기화
@@ -58,7 +60,7 @@ yacht_for_hw/
 │   ├── nickname.js           # 닉네임 생성·관리 (언어별)
 │   ├── tutorial.js           # 인터랙티브 튜토리얼
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
-│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱
+│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱
 ├── data/
 │   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
