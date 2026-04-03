@@ -1,88 +1,90 @@
 # Yacht Dice
 
-1:1 온라인 대전 주사위 게임. **Yacht**(12 카테고리)와 **Yahtzee**(13 카테고리 + 보너스) 두 가지 모드를 지원한다.
+**[한국어](README.ko.md)** | English
+
+A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categories) and **Yahtzee** (13 categories + bonus).
 
 > Live: https://yacht-ff0c8.web.app
 
 ## Features
 
-- **두 가지 게임 모드** — Yacht / Yahtzee 선택
-- **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
-- **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
-- **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
-- **주사위 스킨** — 8종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), 게임 수 / Bot 승리 기반 잠금해제
-- **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환 (WCAG AA 대비 준수)
-- **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원, 서버사이드 레이트 제한
-- **재접속** — 탭 복귀 시 자동 재접속, 동시 탭 충돌 감지
-- **오프라인 감지** — 네트워크 끊김 시 게임 액션 차단 + 토스트 알림
-- **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) 두 난이도, Expectimax DP 기반
-- **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
-- **어뷰징 방지** — 봇 게임 탭 닫기 시 패배 저장(sendBeacon), 최소 점수 미달 게임 무효 처리(승률 미반영)
-- **다국어** — 영어/한국어 이중 언어 지원, 실시간 전환
-- **튜토리얼** — 인터랙티브 단계별 게임 안내
-- **접근성** — aria-label, 키보드 내비게이션, 스크린리더 지원
-- **빌드 없음** — 순수 HTML, CSS, JavaScript (번들러/프레임워크 없음)
+- **Two Game Modes** — Choose between Yacht and Yahtzee
+- **Real-time Multiplayer** — Play with friends via 6-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
+- **Google Login / Guest** — Game history saved with Google OAuth login; guest play also available
+- **History & Stats** — Win rate, recent game records (logged-in users only)
+- **Dice Skins** — 8 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), unlocked by game count / Bot wins
+- **Dark Mode** — Light/dark theme toggle with real-time skin switching (WCAG AA contrast compliant)
+- **Emotes** — 16 emoji chat options, keyboard shortcuts (Q/W/E/R/T/Y), server-side rate limiting
+- **Reconnection** — Auto-reconnect on tab return, concurrent tab conflict detection
+- **Offline Detection** — Blocks game actions on network loss with toast notification
+- **Bot Match** — Two difficulties: Basic (occasional mistakes) / Gambler (optimal play), powered by Expectimax DP
+- **Server-side Validation** — Anti-cheat score calculation via Cloud Functions, transaction-based rate limiting
+- **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate)
+- **Bilingual** — English/Korean dual language support with real-time switching
+- **Tutorial** — Interactive step-by-step game guide
+- **Accessibility** — aria-labels, keyboard navigation, screen reader support
+- **No Build Step** — Pure HTML, CSS, JavaScript (no bundlers or frameworks)
 
 ## Tech Stack
 
-| 영역 | 기술 |
+| Area | Technology |
 |---|---|
 | Frontend | HTML5, CSS3, Vanilla JS (ES5) |
 | Backend | Firebase Realtime Database |
 | Auth | Firebase Auth (Google OAuth + Anonymous) |
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
-| Hosting | Firebase Hosting (글로벌 CDN, 자동 SSL) |
-| CI/CD | GitHub Actions (Hosting + Functions 자동 배포, PR 프리뷰) |
+| Hosting | Firebase Hosting (Global CDN, Auto SSL) |
+| CI/CD | GitHub Actions (Auto deploy Hosting + Functions, PR Preview) |
 
 ## Project Structure
 
 ```
 yacht_for_hw/
-├── index.html                # SPA 엔트리 (모든 화면 포함)
+├── index.html                # SPA entry (all screens included)
 ├── css/
-│   └── style.css             # 전체 스타일 (테마, 스킨, 반응형)
+│   └── style.css             # All styles (themes, skins, responsive)
 ├── js/
-│   ├── firebase-config.js    # Firebase 초기화 + localhost emulator 자동 연결 + sendBeacon URL
-│   ├── auth.js               # Google 로그인 / 게스트 모드
-│   ├── lobby.js              # 방 생성·참가, 프레즌스, 재접속
-│   ├── game.js               # 게임 상태 머신, 턴 관리, Firebase 동기화
-│   ├── scoring.js            # Yacht / Yahtzee 점수 계산 (클라이언트)
-│   ├── dice.js               # 주사위 렌더링, 굴림 애니메이션
-│   ├── dice-skins.js         # 스킨 시스템 (잠금해제, 선택, 저장)
-│   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략)
-│   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트, 탭 닫기 패배 저장)
-│   ├── history.js            # 전적 저장·조회
-│   ├── i18n.js               # 영어/한국어 이중 언어
-│   ├── nickname.js           # 닉네임 생성·관리 (언어별)
-│   ├── tutorial.js           # 인터랙티브 튜토리얼
-│   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
-│   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱
+│   ├── firebase-config.js    # Firebase init + localhost emulator auto-connect + sendBeacon URL
+│   ├── auth.js               # Google login / guest mode
+│   ├── lobby.js              # Room create/join, presence, reconnection
+│   ├── game.js               # Game state machine, turn management, Firebase sync
+│   ├── scoring.js            # Yacht / Yahtzee score calculation (client-side)
+│   ├── dice.js               # Dice rendering, roll animation
+│   ├── dice-skins.js         # Skin system (unlock, select, save)
+│   ├── bot-ai.js             # Bot AI (DP lookup table-based optimal strategy)
+│   ├── bot-game.js           # Bot match controller (local state, turns, emotes, tab close loss save)
+│   ├── history.js            # Game history save/query
+│   ├── i18n.js               # English/Korean bilingual
+│   ├── nickname.js           # Nickname generation/management (per language)
+│   ├── tutorial.js           # Interactive tutorial
+│   ├── ui.js                 # Screen transitions, scorecard (event delegation), toast (dynamic duration)
+│   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching
 ├── data/
-│   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
-│   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
+│   ├── dp_yacht.bin          # Yacht mode DP lookup table (Uint16, 8KB)
+│   └── dp_yahtzee.bin        # Yahtzee mode DP lookup table (Uint16, 2MB)
 ├── tools/
-│   └── generate_dp.py        # Expectimax DP 테이블 생성기 (Python/NumPy/Numba)
+│   └── generate_dp.py        # Expectimax DP table generator (Python/NumPy/Numba)
 ├── functions/
-│   ├── index.js              # Cloud Functions (방 관리, 랜덤 매치, 주사위, 점수 검증, 무승부, Bot 결과, 무효 판정)
-│   ├── scoring.js            # 서버사이드 점수 계산 로직
+│   ├── index.js              # Cloud Functions (rooms, random match, dice, score validation, draw, bot results, invalidation)
+│   ├── scoring.js            # Server-side score calculation logic
 │   └── package.json
 ├── .github/workflows/
-│   ├── firebase-hosting-merge.yml    # main push 시 Hosting + Functions 자동 배포
-│   └── firebase-hosting-preview.yml  # PR 프리뷰 채널 생성
-├── firebase.json             # Hosting, Functions, Database, Emulator 설정
-├── .firebaserc               # Firebase 프로젝트 연결 (yacht-ff0c8)
-├── database.rules.json       # Realtime Database 보안 규칙
-├── CLAUDE.md                 # AI 어시스턴트용 프로젝트 규칙
+│   ├── firebase-hosting-merge.yml    # Auto deploy on main push (Hosting + Functions)
+│   └── firebase-hosting-preview.yml  # PR preview channel
+├── firebase.json             # Hosting, Functions, Database, Emulator config
+├── .firebaserc               # Firebase project link (yacht-ff0c8)
+├── database.rules.json       # Realtime Database security rules
+├── CLAUDE.md                 # Project rules for AI assistant
 └── README.md
 ```
 
 ## How to Play
 
-1. 로그인 화면에서 **Google 로그인** 또는 **게스트 이름 입력**
-2. 로비에서 **Create Room** → 게임 모드 선택 → 6자리 코드를 상대에게 공유
-3. 상대는 **Join** → 코드 입력으로 참가 (또는 **Random Match** → 게임 모드 선택 → 상대 찾기)
-4. 턴마다 주사위를 최대 3회 굴리고, 클릭(또는 1~5키)으로 홀드/해제, 스코어카드에서 카테고리 선택
-5. 모든 카테고리가 채워지면 종료 — 합산 점수가 높은 쪽이 승리
+1. On the login screen, choose **Google Login** or **enter a guest name**
+2. In the lobby, **Create Room** → select game mode → share the 6-digit code with your opponent
+3. Opponent selects **Join** → enters the code (or **Random Match** → select game mode → find opponent)
+4. Each turn, roll dice up to 3 times, click (or press 1-5) to hold/release, then select a category on the scorecard
+5. Game ends when all categories are filled — highest total score wins
 
 ## Game Rules
 
@@ -90,86 +92,84 @@ yacht_for_hw/
 
 | Category | Score |
 |---|---|
-| Ones -- Sixes | 해당 숫자의 합 |
-| Four of a Kind | 같은 숫자 4개의 합 |
-| Full House | 3+2 조합 시 전체 합 |
-| Small Straight (1-2-3-4-5) | 30점 |
-| Large Straight (2-3-4-5-6) | 30점 |
-| Choice | 주사위 전체 합 |
-| Yacht (5개 동일) | 50점 |
+| Ones -- Sixes | Sum of matching dice |
+| Four of a Kind | Sum of four matching dice |
+| Full House | Sum of all dice when 3+2 combination |
+| Small Straight (1-2-3-4-5) | 30 points |
+| Large Straight (2-3-4-5-6) | 30 points |
+| Choice | Sum of all dice |
+| Yacht (all 5 the same) | 50 points |
 
 ### Yahtzee (13 categories)
 
 | Category | Score |
 |---|---|
-| Ones -- Sixes | 해당 숫자의 합 |
-| Three of a Kind | 3개 이상 동일 시 전체 합 |
-| Four of a Kind | 4개 이상 동일 시 전체 합 |
-| Full House | 25점 (고정) |
-| Small Straight (4연속) | 30점 |
-| Large Straight (5연속) | 40점 |
-| Yahtzee (5개 동일) | 50점 |
-| Chance | 주사위 전체 합 |
-| **Upper Bonus** | 상단 합계 >= 63 시 +35점 |
-| **Yahtzee Bonus** | 추가 Yahtzee마다 +100점 |
+| Ones -- Sixes | Sum of matching dice |
+| Three of a Kind | Sum of all dice when 3+ match |
+| Four of a Kind | Sum of all dice when 4+ match |
+| Full House | 25 points (fixed) |
+| Small Straight (4 in sequence) | 30 points |
+| Large Straight (5 in sequence) | 40 points |
+| Yahtzee (all 5 the same) | 50 points |
+| Chance | Sum of all dice |
+| **Upper Bonus** | +35 points when upper total >= 63 |
+| **Yahtzee Bonus** | +100 points per additional Yahtzee |
 
 ## Development
 
 ### Local Test (Emulator)
 
-Firebase Emulator를 사용하면 실제 Firebase를 건드리지 않고 로컬에서 전체 기능을 테스트할 수 있다. `js/firebase-config.js`에서 `localhost` 접속 시 자동으로 emulator로 연결되므로 config 수정이 필요 없다.
+Firebase Emulator lets you test all features locally without touching the production Firebase. `js/firebase-config.js` automatically connects to the emulator on `localhost`, so no config changes are needed.
 
 ```bash
-# functions 의존성 설치 (최초 1회)
+# Install functions dependencies (first time only)
 cd functions && npm install && cd ..
 
-# emulator 실행 (Hosting + Functions + Auth + Database)
+# Start emulator (Hosting + Functions + Auth + Database)
 firebase emulators:start
 ```
 
-- 게임: http://localhost:5002?emulator=true
+- Game: http://localhost:5002?emulator=true
 - Emulator UI: http://localhost:4000
-
-Claude Code 사용 시 `/localtest` 명령어로 emulator를, `/localtest hosting`으로 hosting만 실행할 수 있다.
 
 ### Deploy
 
-`main` 브랜치에 push되면 GitHub Actions가 Hosting과 Functions를 자동 배포한다.
+Pushing to the `main` branch triggers GitHub Actions to auto-deploy both Hosting and Functions.
 
-- **프로덕션 배포**: `dev` → `main` PR merge 시 자동 실행
-- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL이 PR 코멘트에 자동 게시 (7일 후 만료)
-- **수동 배포**: `firebase deploy --only hosting` / `firebase deploy --only functions`
+- **Production deploy**: Runs automatically on `dev` → `main` PR merge
+- **PR preview**: Preview URL is automatically posted as a PR comment on PR creation (expires after 7 days)
+- **Manual deploy**: `firebase deploy --only hosting` / `firebase deploy --only functions`
 
-### Firebase Setup (새 프로젝트로 교체 시)
+### Firebase Setup (when switching to a new project)
 
-1. [Firebase Console](https://console.firebase.google.com/)에서 프로젝트 생성
-2. **Build > Realtime Database** 활성화
-3. **Build > Authentication > Sign-in method**에서 Google 활성화
-4. 프로젝트 설정 > 웹 앱 추가 > config 복사
-5. `js/firebase-config.js`의 `firebaseConfig` 객체 교체
+1. Create a project in [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Build > Realtime Database**
+3. Enable Google in **Build > Authentication > Sign-in method**
+4. Go to Project Settings > Add web app > copy config
+5. Replace the `firebaseConfig` object in `js/firebase-config.js`
 
-### Bot AI (DP 테이블 재생성)
+### Bot AI (DP Table Regeneration)
 
-`tools/generate_dp.py`로 Expectimax DP 룩업 테이블을 생성한다. 점수 규칙이 변경되면 재생성이 필요하다.
+`tools/generate_dp.py` generates Expectimax DP lookup tables. Regeneration is needed when scoring rules change.
 
 ```bash
-# 의존성 설치
+# Install dependencies
 pip install numpy numba
 
-# Yacht 모드 (~2초)
+# Yacht mode (~2 seconds)
 python3 tools/generate_dp.py yacht
 
-# Yahtzee 모드 (~65초, 10코어 병렬)
+# Yahtzee mode (~65 seconds, 10-core parallel)
 python3 tools/generate_dp.py yahtzee
 ```
 
-결과물은 `data/dp_yacht.bin`, `data/dp_yahtzee.bin`에 Uint16 바이너리로 저장된다.
+Results are saved as Uint16 binaries in `data/dp_yacht.bin` and `data/dp_yahtzee.bin`.
 
-| 모드 | 상태 수 | 최적 EV | 파일 크기 |
+| Mode | States | Optimal EV | File Size |
 |---|---|---|---|
 | Yacht | 4,096 | 166.96 | 8KB |
 | Yahtzee | 1,048,576 | 253.97 | 2MB |
 
-### Dice Skin 추가
+### Adding Dice Skins
 
-`CLAUDE.md`의 "Dice Skin Addition Checklist"를 참고한다.
+Refer to the "Dice Skin Addition Checklist" in `CLAUDE.md`.
