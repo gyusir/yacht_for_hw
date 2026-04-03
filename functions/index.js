@@ -13,10 +13,9 @@ const db = admin.database();
 
 function requireAppCheck(context) {
   if (context.app === undefined) {
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      "App Check verification failed."
-    );
+    functions.logger.warn("App Check token missing", {
+      uid: context.auth && context.auth.uid
+    });
   }
 }
 
@@ -827,12 +826,15 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
   const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result } = body;
   if (!idToken) { res.status(401).json({ error: "No token" }); return; }
 
-  // App Check verification
-  if (!appCheckToken) { res.status(401).json({ error: "App Check token required" }); return; }
-  try {
-    await admin.appCheck().verifyToken(appCheckToken);
-  } catch (_) {
-    res.status(401).json({ error: "Invalid App Check token" }); return;
+  // App Check verification (soft check - log only)
+  if (!appCheckToken) {
+    functions.logger.warn("Beacon: App Check token missing");
+  } else {
+    try {
+      await admin.appCheck().verifyToken(appCheckToken);
+    } catch (_) {
+      functions.logger.warn("Beacon: Invalid App Check token");
+    }
   }
 
   try {
