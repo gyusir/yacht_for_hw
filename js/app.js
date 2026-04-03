@@ -69,15 +69,20 @@
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {
-      // Save bot game result as loss via sendBeacon before destroy
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // --- Save bot game result as loss when actually leaving ---
+  window.addEventListener('pagehide', function () {
+    if (document.body.classList.contains('in-game')) {
       if (window.YachtGame._isBotGame && window.YachtGame.BotGame && window.YachtGame.BotGame.saveResultBeacon) {
         window.YachtGame.BotGame.saveResultBeacon();
       }
       if (window.YachtGame.Game && window.YachtGame.Game.destroy) {
         window.YachtGame.Game.destroy();
       }
-      e.preventDefault();
-      e.returnValue = '';
     }
   });
 
