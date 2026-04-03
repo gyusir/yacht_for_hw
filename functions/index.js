@@ -755,12 +755,11 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
   }
   await userRef.child("lastBotGame").set(ServerValue.TIMESTAMP);
 
-  const profileSnap = await userRef.child("displayName").once("value");
-  if (!profileSnap.exists()) return false;
-
-  // Backfill nicknames if missing
   const userSnap = await userRef.once("value");
   const userData = userSnap.val() || {};
+  if (!userData.displayName) return false;
+
+  // Backfill nicknames if missing
   const nickUpdates = {};
   if (!userData.nickname_ko && nicknameKo) nickUpdates.nickname_ko = nicknameKo;
   if (!userData.nickname_en && nicknameEn) nickUpdates.nickname_en = nicknameEn;
