@@ -659,12 +659,15 @@
     if (!fns) return;
 
     var saveFn = fns.httpsCallable('saveBotGameResult');
+    var nicks = Auth.getNicknames ? Auth.getNicknames() : null;
     saveFn({
       gameMode: roomData.gameMode,
       botDifficulty: difficulty,
       myScore: myTotal,
       oppScore: botTotal,
-      result: result
+      result: result,
+      nicknameKo: nicks ? nicks.ko : null,
+      nicknameEn: nicks ? nicks.en : null
     }).catch(function (err) {
       console.error('saveBotGameResult error:', err);
       resultSaved = false;
@@ -692,6 +695,7 @@
     var myTotal = Scoring.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
     var botTotal = Scoring.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
 
+    var nicks = Auth.getNicknames ? Auth.getNicknames() : null;
     var payload = JSON.stringify({
       idToken: cachedToken,
       appCheckToken: window.YachtGame._cachedAppCheckToken || '',
@@ -699,7 +703,9 @@
       botDifficulty: difficulty,
       myScore: myTotal,
       oppScore: botTotal,
-      result: 'loss'
+      result: 'loss',
+      nicknameKo: nicks ? nicks.ko : null,
+      nicknameEn: nicks ? nicks.en : null
     });
 
     var blob = new Blob([payload], { type: 'text/plain' });
