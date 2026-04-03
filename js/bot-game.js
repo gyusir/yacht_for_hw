@@ -694,6 +694,7 @@
 
     var payload = JSON.stringify({
       idToken: cachedToken,
+      appCheckToken: window.YachtGame._cachedAppCheckToken || '',
       gameMode: roomData.gameMode,
       botDifficulty: difficulty,
       myScore: myTotal,
