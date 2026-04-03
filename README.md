@@ -71,8 +71,7 @@ yacht_for_hw/
 │   ├── scoring.js            # Server-side score calculation logic
 │   └── package.json
 ├── .github/workflows/
-│   ├── firebase-hosting-merge.yml    # Auto deploy on main push (Hosting + Functions)
-│   └── firebase-hosting-preview.yml  # PR preview channel
+│   └── firebase-hosting-merge.yml    # Auto deploy on main push (Hosting + Functions + DB Rules)
 ├── firebase.json             # Hosting, Functions, Database, Emulator config
 ├── .firebaserc               # Firebase project link (yacht-ff0c8)
 ├── database.rules.json       # Realtime Database security rules
@@ -139,8 +138,7 @@ firebase emulators:start
 Pushing to the `main` branch triggers GitHub Actions to auto-deploy both Hosting and Functions.
 
 - **Production deploy**: Runs automatically on `dev` → `main` PR merge
-- **PR preview**: Preview URL is automatically posted as a PR comment on PR creation (expires after 7 days)
-- **Manual deploy**: `firebase deploy --only hosting` / `firebase deploy --only functions`
+- **Manual deploy**: `firebase deploy --only hosting` / `firebase deploy --only functions` / `firebase deploy --only database`
 
 ### Firebase Setup (when switching to a new project)
 

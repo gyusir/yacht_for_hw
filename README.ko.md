@@ -71,8 +71,7 @@ yacht_for_hw/
 │   ├── scoring.js            # 서버사이드 점수 계산 로직
 │   └── package.json
 ├── .github/workflows/
-│   ├── firebase-hosting-merge.yml    # main push 시 Hosting + Functions 자동 배포
-│   └── firebase-hosting-preview.yml  # PR 프리뷰 채널 생성
+│   └── firebase-hosting-merge.yml    # main push 시 Hosting + Functions + DB Rules 자동 배포
 ├── firebase.json             # Hosting, Functions, Database, Emulator 설정
 ├── .firebaserc               # Firebase 프로젝트 연결 (yacht-ff0c8)
 ├── database.rules.json       # Realtime Database 보안 규칙
@@ -141,8 +140,7 @@ Claude Code 사용 시 `/localtest` 명령어로 emulator를, `/localtest hostin
 `main` 브랜치에 push되면 GitHub Actions가 Hosting과 Functions를 자동 배포한다.
 
 - **프로덕션 배포**: `dev` → `main` PR merge 시 자동 실행
-- **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL이 PR 코멘트에 자동 게시 (7일 후 만료)
-- **수동 배포**: `firebase deploy --only hosting` / `firebase deploy --only functions`
+- **수동 배포**: `firebase deploy --only hosting` / `firebase deploy --only functions` / `firebase deploy --only database`
 
 ### Firebase Setup (새 프로젝트로 교체 시)
 
