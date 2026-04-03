@@ -16,9 +16,9 @@
 | `firebase-config.js` | Firebase 초기화. App Check (reCAPTCHA v3) 활성화. localhost 시 emulator 자동 연결. sendBeacon URL 설정 |
 | `auth.js` | Google OAuth + Anonymous Auth. `getPlayerName()`은 12자 제한 |
 | `lobby.js` | Cloud Functions 호출로 방 생성/참가/취소. 프레즌스 관리 |
-| `game.js` | 게임 상태 머신, 턴 관리, Firebase 실시간 동기화 |
+| `game.js` | 게임 상태 머신, 턴 관리, Firebase 실시간 동기화. 주사위 stagger 애니메이션 완료 후 스코어카드 프리뷰 반영 |
 | `scoring.js` | 클라이언트 점수 계산 (프리뷰용, 실제 점수는 서버에서 계산) |
-| `dice.js` | 주사위 렌더링, 굴림 애니메이션 |
+| `dice.js` | 주사위 렌더링, 굴림 애니메이션, stagger stop (주사위가 랜덤 순서로 순차 정지) |
 | `dice-skins.js` | 스킨 잠금해제/선택/저장. `SKIN_DEFS` 배열로 관리 |
 | `bot-ai.js` | Bot AI 의사결정. DP 룩업 테이블 기반 최적 전략 (Gambler=최적, Basic=±1 노이즈) |
 | `bot-game.js` | Bot 대전 컨트롤러. 로컬 게임 상태, 턴 흐름, 애니메이션, 이모트, 탭 닫기 시 sendBeacon 패배 저장 |

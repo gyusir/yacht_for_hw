@@ -49,9 +49,9 @@ yacht_for_hw/
 │   ├── firebase-config.js    # Firebase init + App Check (reCAPTCHA v3) + emulator auto-connect + sendBeacon URL
 │   ├── auth.js               # Google login / guest mode
 │   ├── lobby.js              # Room create/join, presence, reconnection
-│   ├── game.js               # Game state machine, turn management, Firebase sync
+│   ├── game.js               # Game state machine, turn management, Firebase sync, deferred score preview
 │   ├── scoring.js            # Yacht / Yahtzee score calculation (client-side)
-│   ├── dice.js               # Dice rendering, roll animation
+│   ├── dice.js               # Dice rendering, roll animation, stagger stop
 │   ├── dice-skins.js         # Skin system (unlock, select, save)
 │   ├── bot-ai.js             # Bot AI (DP lookup table-based optimal strategy)
 │   ├── bot-game.js           # Bot match controller (local state, turns, emotes, tab close loss save)

@@ -251,10 +251,46 @@
       }
       var oppFinalValues = [];
       for (var fi = 0; fi < 5; fi++) oppFinalValues.push(diceState[fi].value);
+      var oppDiceState = diceState;
       setTimeout(function () {
         Dice.staggerStop(oppSpinTimers, dieEls, oppFinalValues, function () {
-          Dice.renderAll(diceState);
+          Dice.renderAll(oppDiceState);
           isRolling = false;
+          // Render scorecard now that all dice have stopped
+          if (lastRoomData) {
+            var r = lastRoomData;
+            var _ds = [];
+            var _hd = r.heldDice || {};
+            for (var k = 0; k < 5; k++) {
+              var _dd = r.dice[k] || { value: 0, held: false };
+              _ds.push({ value: _dd.value, held: _hd[k] === true });
+            }
+            var _currentDice = Dice.getDiceValues(_ds);
+            var _isMyTurn = r.currentTurn === localPlayerKey;
+            var _Auth = window.YachtGame.Auth;
+            var _p1Data = r.players.player1;
+            var _p2Data = r.players.player2;
+            var _p1Name = resolvePlayerName(_p1Data, 'Player 1');
+            var _p2Name = resolvePlayerName(_p2Data, 'Player 2');
+            if (localPlayerKey === 'player1' && _Auth && _Auth.getPlayerName) _p1Name = _Auth.getPlayerName() || _p1Name;
+            if (localPlayerKey === 'player2' && _Auth && _Auth.getPlayerName) _p2Name = _Auth.getPlayerName() || _p2Name;
+            var _myData = r.players[localPlayerKey] || {};
+            var _oppData = r.players[localPlayerKey === 'player1' ? 'player2' : 'player1'] || {};
+            UI.renderScorecard(
+              (_p1Data && _p1Data.scores) || {},
+              (_p2Data && _p2Data.scores) || {},
+              r.gameMode,
+              _currentDice,
+              _isMyTurn,
+              localPlayerKey,
+              _p1Name, _p2Name,
+              _myData.lastCategory || null,
+              _oppData.lastCategory || null,
+              r.rollCount > 0,
+              (_myData.diceSkin) || 'classic',
+              (_oppData.diceSkin) || 'classic'
+            );
+          }
         });
       }, 400);
     } else if (!isRolling) {
@@ -267,30 +303,32 @@
     // Roll button state
     UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling, isMyTurn, room.rollCount || 0);
 
-    // Render scorecard
-    var currentDice = Dice.getDiceValues(diceState);
-    var Auth = window.YachtGame.Auth;
-    var p1Data = room.players.player1;
-    var p2Data = room.players.player2;
-    var p1Name = resolvePlayerName(p1Data, 'Player 1');
-    var p2Name = resolvePlayerName(p2Data, 'Player 2');
-    // Override my own name with Auth (has latest language nickname)
-    if (localPlayerKey === 'player1' && Auth && Auth.getPlayerName) p1Name = Auth.getPlayerName() || p1Name;
-    if (localPlayerKey === 'player2' && Auth && Auth.getPlayerName) p2Name = Auth.getPlayerName() || p2Name;
-    UI.renderScorecard(
-      (p1Data && p1Data.scores) || {},
-      (p2Data && p2Data.scores) || {},
-      gameMode,
-      currentDice,
-      isMyTurn,
-      localPlayerKey,
-      p1Name, p2Name,
-      myData.lastCategory || null,
-      oppData.lastCategory || null,
-      room.rollCount > 0,
-      (myData && myData.diceSkin) || 'classic',
-      (oppData && oppData.diceSkin) || 'classic'
-    );
+    // Render scorecard (skip during rolling animation — staggerStop callback will render)
+    if (!isRolling) {
+      var currentDice = Dice.getDiceValues(diceState);
+      var Auth = window.YachtGame.Auth;
+      var p1Data = room.players.player1;
+      var p2Data = room.players.player2;
+      var p1Name = resolvePlayerName(p1Data, 'Player 1');
+      var p2Name = resolvePlayerName(p2Data, 'Player 2');
+      // Override my own name with Auth (has latest language nickname)
+      if (localPlayerKey === 'player1' && Auth && Auth.getPlayerName) p1Name = Auth.getPlayerName() || p1Name;
+      if (localPlayerKey === 'player2' && Auth && Auth.getPlayerName) p2Name = Auth.getPlayerName() || p2Name;
+      UI.renderScorecard(
+        (p1Data && p1Data.scores) || {},
+        (p2Data && p2Data.scores) || {},
+        gameMode,
+        currentDice,
+        isMyTurn,
+        localPlayerKey,
+        p1Name, p2Name,
+        myData.lastCategory || null,
+        oppData.lastCategory || null,
+        room.rollCount > 0,
+        (myData && myData.diceSkin) || 'classic',
+        (oppData && oppData.diceSkin) || 'classic'
+      );
+    }
 
     // Celebration check: all 5 dice show the same value
     if (!isRolling && (room.rollCount || 0) > 0) {

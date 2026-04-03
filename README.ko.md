@@ -49,9 +49,9 @@ yacht_for_hw/
 │   ├── firebase-config.js    # Firebase 초기화 + App Check (reCAPTCHA v3) + emulator 자동 연결 + sendBeacon URL
 │   ├── auth.js               # Google 로그인 / 게스트 모드
 │   ├── lobby.js              # 방 생성·참가, 프레즌스, 재접속
-│   ├── game.js               # 게임 상태 머신, 턴 관리, Firebase 동기화
+│   ├── game.js               # 게임 상태 머신, 턴 관리, Firebase 동기화, 지연된 점수 프리뷰
 │   ├── scoring.js            # Yacht / Yahtzee 점수 계산 (클라이언트)
-│   ├── dice.js               # 주사위 렌더링, 굴림 애니메이션
+│   ├── dice.js               # 주사위 렌더링, 굴림 애니메이션, stagger stop
 │   ├── dice-skins.js         # 스킨 시스템 (잠금해제, 선택, 저장)
 │   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략)
 │   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트, 탭 닫기 패배 저장)
