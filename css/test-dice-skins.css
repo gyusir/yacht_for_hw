@@ -1,0 +1,67 @@
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 20px;
+  margin: 0;
+}
+.controls {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.controls button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+}
+.controls button:hover { background: var(--surface-hover); }
+.controls-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.skin-section {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.skin-section h2 {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+}
+.dice-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.dice-row .label {
+  width: 80px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.preview-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+.preview-row .label {
+  width: 80px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

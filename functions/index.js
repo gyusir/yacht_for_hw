@@ -890,19 +890,32 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const finalResult = valid ? result : "invalid";
 
       const userRef = db.ref("users/" + player.uid);
-      const profileSnap = await userRef.child("displayName").once("value");
-      if (!profileSnap.exists()) return;
+      const userSnap = await userRef.once("value");
+      const userData = userSnap.val();
+      if (!userData || !userData.displayName) return;
 
-      // Read opponent user data in a single read
+      // Backfill player's own nicknames if missing in users/ table
+      const nickUpdates = {};
+      if (!userData.nickname_ko && player.nicknameKo) {
+        nickUpdates.nickname_ko = player.nicknameKo;
+      }
+      if (!userData.nickname_en && player.nicknameEn) {
+        nickUpdates.nickname_en = player.nicknameEn;
+      }
+      if (Object.keys(nickUpdates).length > 0) {
+        await userRef.update(nickUpdates);
+      }
+
+      // Read opponent user data, falling back to room-level nicknames
       let oppDisplayName = opponent.name;
-      let oppNicknameKo = null;
-      let oppNicknameEn = null;
+      let oppNicknameKo = opponent.nicknameKo || null;
+      let oppNicknameEn = opponent.nicknameEn || null;
       if (opponent.uid) {
         const oppSnap = await db.ref("users/" + opponent.uid).once("value");
         if (oppSnap.exists()) {
           const oppUser = oppSnap.val();
-          oppNicknameKo = oppUser.nickname_ko || null;
-          oppNicknameEn = oppUser.nickname_en || null;
+          if (oppUser.nickname_ko) oppNicknameKo = oppUser.nickname_ko;
+          if (oppUser.nickname_en) oppNicknameEn = oppUser.nickname_en;
           if (oppUser.displayName) oppDisplayName = oppUser.displayName;
         }
       }
