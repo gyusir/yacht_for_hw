@@ -716,7 +716,7 @@ function isValidGame(gameMode, myScore, oppScore) {
 
 // ─── Shared bot result save helper ───
 
-async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, result) {
+async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, result, nicknameKo, nicknameEn) {
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new Error("Invalid game mode.");
   }
@@ -758,6 +758,16 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
   const profileSnap = await userRef.child("displayName").once("value");
   if (!profileSnap.exists()) return false;
 
+  // Backfill nicknames if missing
+  const userSnap = await userRef.once("value");
+  const userData = userSnap.val() || {};
+  const nickUpdates = {};
+  if (!userData.nickname_ko && nicknameKo) nickUpdates.nickname_ko = nicknameKo;
+  if (!userData.nickname_en && nicknameEn) nickUpdates.nickname_en = nicknameEn;
+  if (Object.keys(nickUpdates).length > 0) {
+    await userRef.update(nickUpdates);
+  }
+
   // Override result to "invalid" if scores below threshold
   const valid = isValidGame(gameMode, myScore, oppScore);
   const finalResult = valid ? actualResult : "invalid";
@@ -796,7 +806,9 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
   try {
-    const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result);
+    const nKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
+    const nEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
+    const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result, nKo, nEn);
     return { success: ok };
   } catch (e) {
     throw new functions.https.HttpsError("invalid-argument", e.message);
@@ -823,7 +835,7 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch (_) { res.status(400).json({ error: "Invalid JSON" }); return; }
   }
-  const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result } = body;
+  const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result, nicknameKo, nicknameEn } = body;
   if (!idToken) { res.status(401).json({ error: "No token" }); return; }
 
   // App Check verification (soft check - log only)
@@ -837,9 +849,12 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
     }
   }
 
+  const nKo = (typeof nicknameKo === "string") ? nicknameKo.substring(0, 20) : null;
+  const nEn = (typeof nicknameEn === "string") ? nicknameEn.substring(0, 20) : null;
+
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);
-    await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result);
+    await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result, nKo, nEn);
     res.status(200).json({ success: true });
   } catch (e) {
     res.status(400).json({ error: e.message });
