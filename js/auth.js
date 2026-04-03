@@ -54,15 +54,22 @@
     auth.signInWithPopup(provider).then(function (result) {
       currentUser = result.user;
       isGuest = false;
-      // Save profile to DB
+      // Save profile to DB, then ensure nickname after write completes
       var db = window.YachtGame.db;
       db.ref('users/' + currentUser.uid).update({
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
-      });
-      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
-        nicknames = nicks;
-        if (callback) callback(null, currentUser);
+      }).then(function () {
+        window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+          nicknames = nicks;
+          if (callback) callback(null, currentUser);
+        });
+      }).catch(function () {
+        // Profile save failed — still try nickname
+        window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+          nicknames = nicks;
+          if (callback) callback(null, currentUser);
+        });
       });
     }).catch(function (error) {
       console.error('Google sign-in error:', error.code, error.message);
@@ -118,9 +125,14 @@
       db.ref('users/' + currentUser.uid).update({
         displayName: currentUser.displayName,
         photoURL: currentUser.photoURL || null
-      });
-      window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
-        nicknames = nicks;
+      }).then(function () {
+        window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+          nicknames = nicks;
+        });
+      }).catch(function () {
+        window.YachtGame.Nickname.ensureNickname(currentUser.uid, function (nicks) {
+          nicknames = nicks;
+        });
       });
     }
   }).catch(function (error) {

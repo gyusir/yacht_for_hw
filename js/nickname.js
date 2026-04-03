@@ -162,16 +162,36 @@
 
         userRef.update(updates).then(function () {
           callback({ ko: ko, en: en });
-        }).catch(function () {
-          callback({ ko: ko, en: en });
+        }).catch(function (err) {
+          console.error('ensureNickname write failed:', err);
+          // Retry once after 1s
+          setTimeout(function () {
+            userRef.update(updates).then(function () {
+              callback({ ko: ko, en: en });
+            }).catch(function (err2) {
+              console.error('ensureNickname retry failed:', err2);
+              callback({ ko: ko, en: en });
+            });
+          }, 1000);
         });
       }
-    }).catch(function () {
-      // DB read failed — generate and still try to save
+    }).catch(function (err) {
+      console.error('ensureNickname read failed:', err);
+      // DB read failed — generate and try to save with retry
       var generated = generateBoth(uid);
       userRef.update({ nickname_ko: generated.ko, nickname_en: generated.en })
         .then(function () { callback(generated); })
-        .catch(function () { callback(generated); });
+        .catch(function (err2) {
+          console.error('ensureNickname fallback write failed:', err2);
+          setTimeout(function () {
+            userRef.update({ nickname_ko: generated.ko, nickname_en: generated.en })
+              .then(function () { callback(generated); })
+              .catch(function (err3) {
+                console.error('ensureNickname fallback retry failed:', err3);
+                callback(generated);
+              });
+          }, 1000);
+        });
     });
   }
 
