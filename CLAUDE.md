@@ -54,7 +54,7 @@
 
 ## Hosting & Deploy
 
-- **자동 배포**: `main` 브랜치 push 시 GitHub Actions가 Hosting + Functions 동시 배포
+- **자동 배포**: `main` 브랜치 push 시 GitHub Actions가 Hosting + Functions + Database Rules 동시 배포
 - **PR 프리뷰**: PR 생성 시 임시 프리뷰 URL 자동 게시 (7일 후 만료)
 - **수동 배포**: `firebase deploy --only hosting` / `firebase deploy --only functions`
 - **CI/CD 워크플로우**: `.github/workflows/firebase-hosting-merge.yml`
