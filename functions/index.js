@@ -11,6 +11,15 @@ const db = admin.database();
 
 // ─── Helpers ───
 
+function requireAppCheck(context) {
+  if (context.app === undefined) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "App Check verification failed."
+    );
+  }
+}
+
 function requireAuth(context) {
   if (!context.auth || !context.auth.uid) {
     throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
@@ -96,6 +105,7 @@ const regionFn = functions.region("asia-northeast3");
 // ─── createRoom ───
 
 exports.createRoom = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   await checkRateLimit(uid, "createRoom");
   const { gameMode, diceSkin } = data;
@@ -160,6 +170,7 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
 // ─── joinRoom ───
 
 exports.joinRoom = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   await checkRateLimit(uid, "joinRoom");
   const { roomCode, diceSkin } = data;
@@ -214,6 +225,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
 // ─── findOrCreateRandomRoom ───
 
 exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   await checkRateLimit(uid, "joinRoom");
   const { diceSkin } = data;
@@ -345,6 +357,7 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
 // ─── updateGameMode ───
 
 exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode, gameMode } = data;
 
@@ -381,6 +394,7 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
 // ─── rollDice ───
 
 exports.rollDice = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   await checkRateLimit(uid, "rollDice");
   const { roomCode } = data;
@@ -435,6 +449,7 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
 // ─── selectCategory ───
 
 exports.selectCategory = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   await checkRateLimit(uid, "selectCategory");
   const { roomCode, category } = data;
@@ -551,6 +566,7 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
 // ─── leaveGame ───
 
 exports.leaveGame = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode } = data;
 
@@ -575,6 +591,7 @@ exports.leaveGame = regionFn.https.onCall(async (data, context) => {
 // ─── cancelRoom ───
 
 exports.cancelRoom = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode } = data;
 
@@ -599,6 +616,7 @@ exports.cancelRoom = regionFn.https.onCall(async (data, context) => {
 // ─── proposeDraw ───
 
 exports.proposeDraw = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode } = data;
 
@@ -625,6 +643,7 @@ exports.proposeDraw = regionFn.https.onCall(async (data, context) => {
 // ─── respondToDraw ───
 
 exports.respondToDraw = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode, accept } = data;
 
@@ -653,6 +672,7 @@ exports.respondToDraw = regionFn.https.onCall(async (data, context) => {
 // ─── claimDisconnectWin ───
 
 exports.claimDisconnectWin = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   const { roomCode } = data;
 
@@ -774,6 +794,7 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
 }
 
 exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
   const uid = requireAuth(context);
   try {
     const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result);
@@ -803,8 +824,16 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch (_) { res.status(400).json({ error: "Invalid JSON" }); return; }
   }
-  const { idToken, gameMode, botDifficulty, myScore, oppScore, result } = body;
+  const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result } = body;
   if (!idToken) { res.status(401).json({ error: "No token" }); return; }
+
+  // App Check verification
+  if (!appCheckToken) { res.status(401).json({ error: "App Check token required" }); return; }
+  try {
+    await admin.appCheck().verifyToken(appCheckToken);
+  } catch (_) {
+    res.status(401).json({ error: "Invalid App Check token" }); return;
+  }
 
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);

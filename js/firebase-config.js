@@ -1,12 +1,4 @@
 // Firebase Configuration
-// Replace the placeholder values below with your own Firebase project config.
-// Steps:
-// 1. Go to https://console.firebase.google.com/
-// 2. Create a new project (or use an existing one)
-// 3. Go to Project Settings > General > Your apps > Add web app
-// 4. Copy the config object and paste the values below
-// 5. Enable Realtime Database in the Firebase console
-
 window.YachtGame = window.YachtGame || {};
 
 const firebaseConfig = {
@@ -21,15 +13,26 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+// ─── App Check ───
+window.YachtGame.isEmulator = false;
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emulator')) {
+  window.YachtGame.isEmulator = true;
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+
+firebase.appCheck().activate(
+  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcwIqQsAAAAAIuRTq6Zy8UdNrb9LS-jnWAb6M7M'),
+  true
+);
+
+// ─── Firebase Services ───
 window.YachtGame.db = firebase.database();
 window.YachtGame.auth = firebase.auth();
 window.YachtGame.googleProvider = new firebase.auth.GoogleAuthProvider();
 window.YachtGame.functions = firebase.app().functions('asia-northeast3');
 
-// localhost에서는 emulator 사용
-window.YachtGame.isEmulator = false;
-if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emulator')) {
-  window.YachtGame.isEmulator = true;
+if (window.YachtGame.isEmulator) {
   window.YachtGame.auth.useEmulator('http://localhost:9099');
   window.YachtGame.db.useEmulator('localhost', 9000);
   window.YachtGame.functions.useEmulator('localhost', 5001);
