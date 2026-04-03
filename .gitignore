@@ -79,6 +79,11 @@ __pycache__/
 # macOS
 .DS_Store
 
+# Dice skin test pages
+test-dice-skins.html
+css/test-dice-skins.css
+js/test-dice-skins.js
+
 # Claude Code local settings (commands/ 제외)
 .claude/*
 !.claude/commands/

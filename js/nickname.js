@@ -167,9 +167,11 @@
         });
       }
     }).catch(function () {
-      // DB read failed — generate locally for this session
+      // DB read failed — generate and still try to save
       var generated = generateBoth(uid);
-      callback(generated);
+      userRef.update({ nickname_ko: generated.ko, nickname_en: generated.en })
+        .then(function () { callback(generated); })
+        .catch(function () { callback(generated); });
     });
   }
 
