@@ -708,10 +708,13 @@ exports.claimDisconnectWin = regionFn.https.onCall(async (data, context) => {
 // ─── Minimum score thresholds for valid games ───
 
 const MIN_VALID_SCORE = { yacht: 50, yahtzee: 100 };
+const MIN_GAME_DURATION_MS = 120000; // 2 minutes
 
-function isValidGame(gameMode, myScore, oppScore) {
+function isValidGame(gameMode, myScore, oppScore, durationMs) {
   const threshold = MIN_VALID_SCORE[gameMode] || 0;
-  return myScore >= threshold && oppScore >= threshold;
+  if (myScore < threshold || oppScore < threshold) return false;
+  if (durationMs !== undefined && durationMs < MIN_GAME_DURATION_MS) return false;
+  return true;
 }
 
 // ─── Shared bot result save helper ───
@@ -899,8 +902,9 @@ exports.onGameFinished = functions.region("asia-southeast1")
       else if (winner === "tie") result = "tie";
       else result = "loss";
 
-      // Override to "invalid" if scores below threshold
-      const valid = isValidGame(gameMode, myTotal, oppTotal);
+      // Override to "invalid" if scores below threshold or game too short
+      const durationMs = room.createdAt ? (Date.now() - room.createdAt) : undefined;
+      const valid = isValidGame(gameMode, myTotal, oppTotal, durationMs);
       const finalResult = valid ? result : "invalid";
 
       const userRef = db.ref("users/" + player.uid);

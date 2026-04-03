@@ -858,7 +858,7 @@
   // --- Reconnection on page load ---
   Lobby.tryReconnect(function (session) {
     if (session && session.status === 'playing') {
-      playerName = Auth.isSignedIn() ? Auth.getPlayerName() : 'Reconnected';
+      playerName = Auth.getPlayerName() || 'Player';
       Game.init(session.roomCode, session.playerKey);
       UI.showToast(I18n ? I18n.t('toast_reconnected') : 'Reconnected to game!');
     } else if (session && session.status === 'waiting') {
