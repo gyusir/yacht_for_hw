@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a3a3e"/>
+      <stop offset="100%" stop-color="#28282c"/>
+    </linearGradient>
+    <linearGradient id="pip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffb347"/>
+      <stop offset="100%" stop-color="#e67e22"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="url(#bg)" stroke="#555" stroke-width="1.5"/>
+  <!-- pip 5: four corners + center -->
+  <rect x="13" y="13" width="9" height="9" rx="2" fill="url(#pip)"/>
+  <rect x="42" y="13" width="9" height="9" rx="2" fill="url(#pip)"/>
+  <rect x="27.5" y="27.5" width="9" height="9" rx="2" fill="url(#pip)"/>
+  <rect x="13" y="42" width="9" height="9" rx="2" fill="url(#pip)"/>
+  <rect x="42" y="42" width="9" height="9" rx="2" fill="url(#pip)"/>
+</svg>
