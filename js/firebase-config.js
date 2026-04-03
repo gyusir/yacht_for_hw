@@ -16,13 +16,15 @@ firebase.initializeApp(firebaseConfig);
 
 // ─── App Check ───
 window.YachtGame.isEmulator = false;
-if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emulator')) {
-  window.YachtGame.isEmulator = true;
+if (location.hostname === 'localhost') {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  if (new URLSearchParams(location.search).has('emulator')) {
+    window.YachtGame.isEmulator = true;
+  }
 }
 
 firebase.appCheck().activate(
-  new firebase.appCheck.ReCaptchaV3Provider('6LeJKaQsAAAAAMOTELXn0JR8jWduXEkSJxxYJuVQ'),
+  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcwIqQsAAAAAIuRTq6Zy8UdNrb9LS-jnWAb6M7M'),
   true
 );
 

@@ -141,16 +141,12 @@
     var db = window.YachtGame.db;
     var userRef = db.ref('users/' + uid);
 
-    console.log('[ensureNickname] start for uid:', uid);
-
     userRef.once('value').then(function (snap) {
       var data = snap.val() || {};
       var ko = data.nickname_ko;
       var en = data.nickname_en;
-      console.log('[ensureNickname] read success, ko:', ko, 'en:', en, 'keys:', Object.keys(data));
 
       if (ko && en) {
-        console.log('[ensureNickname] both exist, skip write');
         callback({ ko: ko, en: en });
       } else {
         // Generate missing nicknames
@@ -164,41 +160,33 @@
           updates.nickname = null; // remove legacy field
         }
 
-        console.log('[ensureNickname] writing updates:', JSON.stringify(updates));
         userRef.update(updates).then(function () {
-          console.log('[ensureNickname] write SUCCESS');
           callback({ ko: ko, en: en });
         }).catch(function (err) {
-          console.error('[ensureNickname] write FAILED:', err.code, err.message, err);
+          console.error('ensureNickname write failed:', err);
           // Retry once after 1s
           setTimeout(function () {
-            console.log('[ensureNickname] retrying write...');
             userRef.update(updates).then(function () {
-              console.log('[ensureNickname] retry SUCCESS');
               callback({ ko: ko, en: en });
             }).catch(function (err2) {
-              console.error('[ensureNickname] retry FAILED:', err2.code, err2.message, err2);
+              console.error('ensureNickname retry failed:', err2);
               callback({ ko: ko, en: en });
             });
           }, 1000);
         });
       }
     }).catch(function (err) {
-      console.error('[ensureNickname] read FAILED:', err.code, err.message, err);
+      console.error('ensureNickname read failed:', err);
       // DB read failed — generate and try to save with retry
       var generated = generateBoth(uid);
-      console.log('[ensureNickname] fallback writing:', JSON.stringify(generated));
       userRef.update({ nickname_ko: generated.ko, nickname_en: generated.en })
-        .then(function () {
-          console.log('[ensureNickname] fallback write SUCCESS');
-          callback(generated);
-        })
+        .then(function () { callback(generated); })
         .catch(function (err2) {
-          console.error('[ensureNickname] fallback write FAILED:', err2.code, err2.message, err2);
+          console.error('ensureNickname fallback write failed:', err2);
           setTimeout(function () {
             userRef.update({ nickname_ko: generated.ko, nickname_en: generated.en })
-              .then(function () { console.log('[ensureNickname] fallback retry SUCCESS'); callback(generated); })
-              .catch(function (err3) { console.error('[ensureNickname] fallback retry FAILED:', err3); callback(generated); });
+              .then(function () { callback(generated); })
+              .catch(function (err3) { console.error('ensureNickname fallback retry failed:', err3); callback(generated); });
           }, 1000);
         });
     });
