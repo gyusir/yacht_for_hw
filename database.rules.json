@@ -83,7 +83,8 @@
         ".read": "auth != null && auth.uid === $uid",
 
         "history": {
-          ".write": false
+          ".write": false,
+          ".indexOn": ["date"]
         },
         "stats": {
           ".write": false
