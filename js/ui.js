@@ -45,7 +45,7 @@
     var target = document.getElementById(screenId);
     if (target) target.classList.add('active');
 
-    var titleSpan = document.querySelector('h1 [data-i18n="title_yacht"]');
+    var titleSpan = document.querySelector('h1 [data-i18n="title_yacht"]') || document.querySelector('h1 [data-i18n="title_yahtzee"]');
     var I18n = window.YachtGame.I18n;
     if (screenId === 'screen-game') {
       document.body.classList.add('in-game');
