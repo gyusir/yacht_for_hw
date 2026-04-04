@@ -25,6 +25,7 @@
     { id: 'crimson',   name: 'Crimson',   unlockAt: 12 },
     { id: 'hologram',  name: 'Hologram',  unlockAt: 15 },
     { id: 'circuit',   name: 'Circuit',   unlockAt: -1, unlockBy: 'basic' },
+    { id: 'banana',    name: 'Banana',    unlockAt: 25 },
     { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' }
   ];
 
@@ -130,7 +131,7 @@
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/7 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/8 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
@@ -156,6 +157,12 @@
         charEl.className = 'crimson-char';
         charEl.textContent = CRIMSON_CHARS[5];
         miniDie.appendChild(charEl);
+      } else if (def.id === 'banana') {
+        var img = document.createElement('img');
+        img.src = 'die_image/banana5.png';
+        img.className = 'banana-preview';
+        img.alt = 'Banana 5';
+        miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
         var pipPositions = [1, 3, 5, 7, 9]; // value 5 layout
@@ -224,6 +231,8 @@
     var html = '<div class="cube-face skin-preview-die" data-dice-skin="' + skinId + '" data-value="' + value + '">';
     if (skinId === 'crimson') {
       html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
+    } else if (skinId === 'banana') {
+      html += '<img class="banana-preview" src="die_image/banana' + value + '.png" alt="Banana ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {

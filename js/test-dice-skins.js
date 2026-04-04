@@ -47,7 +47,7 @@ function renderMiniFaceHTML(skinId, value) {
   if (skinId === 'crimson') {
     html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
   } else if (skinId === 'banana') {
-    html += '<img class="banana-preview" src="img/skins/banana/dice-' + value + '.png" alt="Banana ' + value + '">';
+    html += '<img class="banana-preview" src="die_image/banana' + value + '.png" alt="Banana ' + value + '">';
   } else {
     var positions = MINI_PIP_LAYOUTS[value] || [];
     for (var p = 1; p <= 9; p++) {
@@ -87,7 +87,7 @@ function renderDie(skinId, value) {
 
   if (skinId === 'banana') {
     var img = document.createElement('img');
-    img.src = 'img/skins/banana/dice-' + value + '.png';
+    img.src = 'die_image/banana' + value + '.png';
     img.className = 'banana-die-img';
     img.alt = value;
     dieEl.appendChild(img);
@@ -118,7 +118,7 @@ function renderPreview(skinId) {
     miniDie.appendChild(charEl);
   } else if (skinId === 'banana') {
     var img = document.createElement('img');
-    img.src = 'img/skins/banana/dice-5.png';
+    img.src = 'die_image/banana5.png';
     img.className = 'banana-preview';
     img.alt = 'Banana 5';
     miniDie.appendChild(img);

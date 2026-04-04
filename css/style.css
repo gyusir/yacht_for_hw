@@ -1340,13 +1340,14 @@ input[type="text"]::placeholder {
   box-shadow: none;
   padding: 0;
   display: block;
-  overflow: hidden;
+  overflow: visible;
 }
 [data-dice-skin="banana"] .die .banana-die-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
+  border-radius: 12px;
 }
 [data-dice-skin="banana"] .pip { display: none; }
 [data-theme="dark"] [data-dice-skin="banana"] .die {
