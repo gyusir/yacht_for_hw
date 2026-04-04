@@ -25,7 +25,7 @@
     { id: 'crimson',   name: 'Crimson',   unlockAt: 12 },
     { id: 'hologram',  name: 'Hologram',  unlockAt: 15 },
     { id: 'circuit',   name: 'Circuit',   unlockAt: -1, unlockBy: 'basic' },
-    { id: 'banana',    name: 'Banana',    unlockAt: 25 },
+    { id: 'banana',    name: 'Banana',    unlockAt: -1, unlockAtWins: 25 },
     { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' }
   ];
 
@@ -41,25 +41,28 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames, botWins) {
+  function getUnlockedCount(totalGames, botWins, totalWins) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins)) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins)) count++;
     }
     return count;
   }
 
-  function isSkinUnlocked(def, totalGames, botWins) {
+  function isSkinUnlocked(def, totalGames, botWins, totalWins) {
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
       return wins >= BOT_WIN_THRESHOLD;
     }
+    if (def.unlockAtWins) {
+      return (totalWins || 0) >= def.unlockAtWins;
+    }
     return totalGames >= def.unlockAt;
   }
 
-  function isUnlocked(skinId, totalGames, botWins) {
+  function isUnlocked(skinId, totalGames, botWins, totalWins) {
     var def = getSkinDef(skinId);
-    return isSkinUnlocked(def, totalGames, botWins);
+    return isSkinUnlocked(def, totalGames, botWins, totalWins);
   }
 
   function applySkin(skinId) {
@@ -114,9 +117,10 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames, botWins) {
+  function renderSkinSelector(containerEl, totalGames, botWins, totalWins) {
     if (!containerEl) return;
     totalGames = totalGames || 0;
+    totalWins = totalWins || 0;
     botWins = botWins || {};
 
     var playContainer = document.getElementById('skin-options-play');
@@ -127,7 +131,7 @@
     playContainer.innerHTML = '';
     botContainer.innerHTML = '';
 
-    var unlockedCount = getUnlockedCount(totalGames, botWins);
+    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
@@ -136,7 +140,7 @@
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = isSkinUnlocked(def, totalGames, botWins);
+      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins);
       var targetContainer = def.unlockBy ? botContainer : playContainer;
 
       var option = document.createElement('div');
@@ -195,6 +199,8 @@
           var wins = (botWins[def.unlockBy]) || 0;
           var botLabel = def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic');
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
+        } else if (def.unlockAtWins) {
+          progressEl.textContent = totalWins + '/' + def.unlockAtWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
         } else {
           progressEl.textContent = totalGames + '/' + def.unlockAt + ' ' + (I18n ? I18n.t('skin_games_count') : 'games');
         }
