@@ -377,11 +377,6 @@
       }
     }
 
-    // Celebration flag
-    if ((category === 'yacht' || category === 'yahtzee') && score === 50) {
-      window.YachtGame.UI.showConfetti();
-    }
-
     // Check emote triggers for the category just scored
     var HIGH_VALUE_CATS = { yacht: 1, yahtzee: 1, fullHouse: 1, largeStraight: 1 };
     if (playerKey === 'player1') {
@@ -583,6 +578,11 @@
 
             console.log('[Endgame] action=' + result.action + ', winProb=' + (result.winProb * 100).toFixed(1) + '%',
               result.action === 'category' ? ('cat=' + result.category) : ('holds=' + result.holds));
+
+            if (result.action === 'fallback') {
+              normalBotEvaluate(diceValues, botScores, myScores, true);
+              return;
+            }
 
             if (result.action === 'reroll') {
               botApplyHolds(result.holds, function () {
