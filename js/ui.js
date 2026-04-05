@@ -56,6 +56,8 @@
       }
     } else {
       document.body.classList.remove('in-game');
+      document.body.classList.remove('is-bot-game');
+      document.body.classList.remove('fast-mode');
       if (titleSpan) {
         titleSpan.textContent = I18n ? I18n.t('title_yacht') : 'Yacht Dice';
         titleSpan.setAttribute('data-i18n', 'title_yacht');

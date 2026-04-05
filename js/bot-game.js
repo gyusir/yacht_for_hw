@@ -17,6 +17,33 @@
   var lastBotEmoteTime = 0;
   var resultSaved = false;
   var turnCount = 0;
+  var fastMode = false;
+
+  function getSpeedDiv() { return fastMode ? 3 : 1; }
+
+  function initFastMode() {
+    fastMode = localStorage.getItem('yacht-fast-mode') === '1';
+    applyFastModeUI();
+  }
+
+  function applyFastModeUI() {
+    var btn = document.getElementById('btn-fast-mode');
+    if (btn) {
+      if (fastMode) {
+        btn.classList.add('active');
+        document.body.classList.add('fast-mode');
+      } else {
+        btn.classList.remove('active');
+        document.body.classList.remove('fast-mode');
+      }
+    }
+  }
+
+  function toggleFastMode() {
+    fastMode = !fastMode;
+    localStorage.setItem('yacht-fast-mode', fastMode ? '1' : '0');
+    applyFastModeUI();
+  }
 
   var BOT_EMOTE_COOLDOWN = 4000;
   var IDLE_TIMEOUT = 10000;
@@ -284,12 +311,12 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 80);
+        }, Math.round(80 / getSpeedDiv()));
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
-    // Stop after 400ms with stagger and show final values
+    // Stop after delay with stagger and show final values
     addTimer(function () {
       Dice.staggerStop(spinTimers, dieEls, newValues, function () {
         for (var i = 0; i < 5; i++) {
@@ -300,7 +327,7 @@
         isAnimating = false;
         onStateUpdate();
       });
-    }, 400);
+    }, Math.round(400 / getSpeedDiv()));
   }
 
   function toggleHold(index) {
@@ -475,7 +502,8 @@
     // Game start emote on first bot turn
     if (turnCount === 1) tryBotEmote('game_start');
 
-    var thinkDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(1500, 2200) : randRange(1000, 1600);
+    var d = getSpeedDiv();
+    var thinkDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(Math.round(1500 / d), Math.round(2200 / d)) : randRange(Math.round(1000 / d), Math.round(1600 / d));
     addTimer(function () { botRoll(); }, thinkDelay);
   }
 
@@ -516,11 +544,12 @@
         el.classList.add('rolling');
         var timer = setInterval(function () {
           Dice.renderDie(el, Math.ceil(Math.random() * 6));
-        }, 80);
+        }, Math.round(80 / getSpeedDiv()));
         spinTimers.push({ idx: idx, timer: timer });
       })(i);
     }
 
+    var d = getSpeedDiv();
     addTimer(function () {
       Dice.staggerStop(spinTimers, dieEls, newValues, function () {
         for (var i = 0; i < 5; i++) {
@@ -532,10 +561,11 @@
         onStateUpdate();
 
         // Bot evaluates after rolling
-        var evalDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(1000, 1500) : randRange(800, 1200);
+        var dd = getSpeedDiv();
+        var evalDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(Math.round(1000 / dd), Math.round(1500 / dd)) : randRange(Math.round(800 / dd), Math.round(1200 / dd));
         addTimer(function () { botEvaluate(); }, evalDelay);
       });
-    }, 400);
+    }, Math.round(400 / d));
   }
 
   function showBotThinking(show) {
@@ -584,15 +614,16 @@
               return;
             }
 
+            var ed = getSpeedDiv();
             if (result.action === 'reroll') {
               botApplyHolds(result.holds, function () {
-                addTimer(function () { botRoll(); }, randRange(800, 1200));
+                addTimer(function () { botRoll(); }, randRange(Math.round(800 / ed), Math.round(1200 / ed)));
               });
             } else {
               addTimer(function () {
                 if (!roomData || roomData.status === 'finished' || roomData.currentTurn !== 'player2') return;
                 selectCategory('player2', result.category);
-              }, randRange(1200, 1800));
+              }, randRange(Math.round(1200 / ed), Math.round(1800 / ed)));
             }
           });
         return;
@@ -610,14 +641,15 @@
     var BotAI = window.YachtGame.BotAI;
     var effectiveDiff = forceGambler ? 'gambler' : difficulty;
 
+    var d = getSpeedDiv();
     if (roomData.rollCount < 3 && BotAI.shouldReroll(diceValues, botScores, roomData.gameMode, effectiveDiff, roomData.rollCount)) {
       var holds = BotAI.chooseHolds(diceValues, botScores, roomData.gameMode, effectiveDiff, roomData.rollCount);
       botApplyHolds(holds, function () {
-        var rerollDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(800, 1200) : randRange(600, 1000);
+        var rerollDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(Math.round(800 / d), Math.round(1200 / d)) : randRange(Math.round(600 / d), Math.round(1000 / d));
         addTimer(function () { botRoll(); }, rerollDelay);
       });
     } else {
-      var selectDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(1200, 1800) : randRange(900, 1400);
+      var selectDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(Math.round(1200 / d), Math.round(1800 / d)) : randRange(Math.round(900 / d), Math.round(1400 / d));
       addTimer(function () { botSelectCategory(); }, selectDelay);
     }
   }
@@ -673,7 +705,7 @@
             callback();
           }
         }, delay);
-      })(changes[c], (c + 1) * 150);
+      })(changes[c], (c + 1) * Math.round(150 / getSpeedDiv()));
     }
   }
 
@@ -827,6 +859,8 @@
     }
 
     window.YachtGame._isBotGame = true;
+    document.body.classList.add('is-bot-game');
+    initFastMode();
 
     // Load DP table for bot AI (non-blocking — game starts immediately)
     var BotAI = window.YachtGame.BotAI;
@@ -898,6 +932,8 @@
     playerConsecutiveLow = 0;
     prevScoreGap = 0;
     window.YachtGame._isBotGame = false;
+    document.body.classList.remove('is-bot-game');
+    document.body.classList.remove('fast-mode');
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();
   }
@@ -912,6 +948,8 @@
     getGameMode: getGameMode,
     destroy: destroy,
     saveResultBeacon: saveResultBeacon,
+    toggleFastMode: toggleFastMode,
+    getSpeedMultiplier: function () { return getSpeedDiv(); },
     getPendingCategory: function () { return pendingCategory; },
     isRolling: function () { return isAnimating; },
     refreshUI: function () {

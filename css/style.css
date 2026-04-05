@@ -141,6 +141,64 @@ body.in-game .screen {
   color: #fff;
 }
 
+.fast-mode-toggle {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  user-select: none;
+}
+
+body.in-game.is-bot-game .fast-mode-toggle {
+  display: flex;
+}
+
+.fast-mode-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: var(--border);
+  border-radius: 9px;
+  transition: background 0.2s;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.fast-mode-toggle.active .toggle-switch {
+  background: var(--accent);
+}
+
+.fast-mode-toggle.active .toggle-knob {
+  transform: translateX(14px);
+}
+
+.fast-mode-toggle.active .fast-mode-label {
+  color: var(--accent);
+}
+
+body.fast-mode .die.rolling {
+  animation-duration: 0.13s;
+}
+
 .header-controls .btn-leave {
   color: var(--danger) !important;
   border-color: var(--danger);

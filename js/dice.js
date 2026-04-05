@@ -188,6 +188,9 @@
 
   function staggerStop(spinTimers, dieEls, finalValues, callback) {
     if (!spinTimers.length) { if (callback) callback(); return; }
+    var speedDiv = (window.YachtGame.BotGame && window.YachtGame.BotGame.getSpeedMultiplier)
+      ? window.YachtGame.BotGame.getSpeedMultiplier() : 1;
+    var staggerMs = Math.round(STAGGER_DELAY / speedDiv);
     var shuffled = spinTimers.slice().sort(function () { return Math.random() - 0.5; });
     var completed = 0;
     for (var i = 0; i < shuffled.length; i++) {
@@ -200,7 +203,7 @@
           completed++;
           if (completed === shuffled.length && callback) callback();
         }, delay);
-      })(shuffled[i], i * STAGGER_DELAY);
+      })(shuffled[i], i * staggerMs);
     }
   }
 

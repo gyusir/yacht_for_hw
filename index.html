@@ -16,7 +16,7 @@
   <script>
     // Force reload when app version changes (iOS Safari has no hard-refresh)
     (function(){
-      var V='3.1.1';
+      var V='3.1.2';
       var K='yacht-v';
       var prev=localStorage.getItem(K);
       localStorage.setItem(K,V);
@@ -30,12 +30,12 @@
   </script>
   <title>Yacht Dice</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=3.1.1">
+  <link rel="stylesheet" href="css/style.css?v=3.1.2">
 </head>
 <body>
   <header>
     <div class="header-top">
-      <h1><span data-i18n="title_yacht">Yacht Dice</span><span class="app-version">v3.1.1</span></h1>
+      <h1><span data-i18n="title_yacht">Yacht Dice</span><span class="app-version">v3.1.2</span></h1>
       <div class="header-top-controls">
         <button id="lang-toggle" class="btn-icon" title="Language" aria-label="Toggle language">KO</button>
         <button id="theme-toggle" aria-label="Toggle theme">
@@ -45,6 +45,10 @@
       </div>
     </div>
     <div class="header-controls game-only">
+      <label id="btn-fast-mode" class="fast-mode-toggle" aria-label="Toggle fast mode">
+        <span class="fast-mode-label" data-i18n="fast_mode">Fast</span>
+        <span class="toggle-switch"><span class="toggle-knob"></span></span>
+      </label>
       <button id="btn-shortcut" class="btn-icon" data-i18n="btn_shortcut" data-i18n-title="shortcut_title" title="PC Shortcuts" aria-label="Keyboard shortcuts">Shortcut</button>
       <button id="btn-rule" class="btn-icon" data-i18n="btn_rule" data-i18n-title="rule_title" title="Rules" aria-label="Game rules">Rule</button>
       <button id="btn-draw" class="btn-icon" data-i18n="btn_draw" title="Draw" aria-label="Propose draw">Draw</button>
@@ -411,20 +415,20 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 
   <!-- Game Scripts (query string for iOS Safari cache busting) -->
-  <script src="js/firebase-config.js?v=3.1.1"></script>
-  <script src="js/i18n.js?v=3.1.1"></script>
-  <script src="js/nickname.js?v=3.1.1"></script>
-  <script src="js/scoring.js?v=3.1.1"></script>
-  <script src="js/dice.js?v=3.1.1"></script>
-  <script src="js/dice-skins.js?v=3.1.1"></script>
-  <script src="js/auth.js?v=3.1.1"></script>
-  <script src="js/history.js?v=3.1.1"></script>
-  <script src="js/ui.js?v=3.1.1"></script>
-  <script src="js/lobby.js?v=3.1.1"></script>
-  <script src="js/bot-ai.js?v=3.1.1"></script>
-  <script src="js/bot-game.js?v=3.1.1"></script>
-  <script src="js/game.js?v=3.1.1"></script>
-  <script src="js/tutorial.js?v=3.1.1"></script>
-  <script src="js/app.js?v=3.1.1"></script>
+  <script src="js/firebase-config.js?v=3.1.2"></script>
+  <script src="js/i18n.js?v=3.1.2"></script>
+  <script src="js/nickname.js?v=3.1.2"></script>
+  <script src="js/scoring.js?v=3.1.2"></script>
+  <script src="js/dice.js?v=3.1.2"></script>
+  <script src="js/dice-skins.js?v=3.1.2"></script>
+  <script src="js/auth.js?v=3.1.2"></script>
+  <script src="js/history.js?v=3.1.2"></script>
+  <script src="js/ui.js?v=3.1.2"></script>
+  <script src="js/lobby.js?v=3.1.2"></script>
+  <script src="js/bot-ai.js?v=3.1.2"></script>
+  <script src="js/bot-game.js?v=3.1.2"></script>
+  <script src="js/game.js?v=3.1.2"></script>
+  <script src="js/tutorial.js?v=3.1.2"></script>
+  <script src="js/app.js?v=3.1.2"></script>
 </body>
 </html>
