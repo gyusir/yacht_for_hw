@@ -584,6 +584,11 @@
             console.log('[Endgame] action=' + result.action + ', winProb=' + (result.winProb * 100).toFixed(1) + '%',
               result.action === 'category' ? ('cat=' + result.category) : ('holds=' + result.holds));
 
+            if (result.action === 'fallback') {
+              normalBotEvaluate(diceValues, botScores, myScores, true);
+              return;
+            }
+
             if (result.action === 'reroll') {
               botApplyHolds(result.holds, function () {
                 addTimer(function () { botRoll(); }, randRange(800, 1200));

@@ -323,6 +323,12 @@ window.YachtGame = {};
     // Option B: reroll with best hold mask
     var rerollResult = evalHoldsWithBase(dice, botState, botCurrentTotal, oppFinal, remainingTurns, rollsLeft);
 
+    // Win probability saturated — fall back to EV-based play
+    var bestWP = Math.max(stopResult.wp, rerollResult.wp);
+    if (bestWP >= 0.99 || bestWP <= 0.01) {
+      return { action: 'fallback', winProb: bestWP };
+    }
+
     if (rerollResult.wp > stopResult.wp + 0.001) {
       return { action: 'reroll', holds: rerollResult.holds, winProb: rerollResult.wp };
     } else {
