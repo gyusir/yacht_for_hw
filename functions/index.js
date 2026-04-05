@@ -723,7 +723,7 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new Error("Invalid game mode.");
   }
-  if (botDifficulty !== "basic" && botDifficulty !== "gambler") {
+  if (botDifficulty !== "basic" && botDifficulty !== "gambler" && botDifficulty !== "wave") {
     throw new Error("Invalid bot difficulty.");
   }
   if (typeof myScore !== "number" || typeof oppScore !== "number") {
@@ -774,7 +774,7 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
   const valid = isValidGame(gameMode, myScore, oppScore);
   const finalResult = valid ? actualResult : "invalid";
 
-  const botName = botDifficulty === "gambler" ? "Gambler Bot" : "Basic Bot";
+  const botName = botDifficulty === "wave" ? "Wave Bot" : (botDifficulty === "gambler" ? "Gambler Bot" : "Basic Bot");
 
   await userRef.child("history").push({
     date: ServerValue.TIMESTAMP,

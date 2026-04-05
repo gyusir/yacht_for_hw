@@ -94,6 +94,9 @@
       gambler_bot: 'Gambler Bot',
       basic_desc: 'Moderate level AI',
       gambler_desc: 'Optimized strategy AI',
+      wave: 'Wave',
+      wave_bot: 'Wave Bot',
+      wave_desc: 'Win-rate maximizing AI',
       start_game: 'Start Game',
 
       // Game
@@ -329,6 +332,9 @@
       gambler_bot: '\ub3c4\ubc15\uc0ac \ubd07',
       basic_desc: '\uc801\ub2f9\ud55c \uc218\uc900\uc758 AI',
       gambler_desc: '\ucd5c\uc801\ud654\ub41c \uc804\ub7b5 AI',
+      wave: '\ud574\uc77c',
+      wave_bot: '\ud574\uc77c \ubd07',
+      wave_desc: '\uc2b9\ub960 \uadf9\ub300\ud654 \uc804\ub7b5 AI',
       start_game: '\uac8c\uc784 \uc2dc\uc791',
 
       // Game

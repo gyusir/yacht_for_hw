@@ -26,7 +26,8 @@
     { id: 'hologram',  name: 'Hologram',  unlockAt: 15 },
     { id: 'circuit',   name: 'Circuit',   unlockAt: -1, unlockBy: 'basic' },
     { id: 'banana',    name: 'Banana',    unlockAt: -1, unlockAtWins: 25 },
-    { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' }
+    { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' },
+    { id: 'wave',      name: 'Wave',      unlockAt: -1, unlockBy: 'wave' }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -135,7 +136,7 @@
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/8 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/9 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
@@ -167,6 +168,12 @@
         img.className = 'banana-preview';
         img.alt = 'Banana 5';
         miniDie.appendChild(img);
+      } else if (def.id === 'wave') {
+        var img = document.createElement('img');
+        img.src = 'die_image/wave5.png';
+        img.className = 'wave-preview';
+        img.alt = 'Wave 5';
+        miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
         var pipPositions = [1, 3, 5, 7, 9]; // value 5 layout
@@ -197,7 +204,7 @@
         var I18n = window.YachtGame.I18n;
         if (def.unlockBy) {
           var wins = (botWins[def.unlockBy]) || 0;
-          var botLabel = def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic');
+          var botLabel = def.unlockBy === 'wave' ? (I18n ? I18n.t('wave') : 'Wave') : (def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic'));
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
         } else if (def.unlockAtWins) {
           progressEl.textContent = totalWins + '/' + def.unlockAtWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
@@ -239,6 +246,8 @@
       html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
     } else if (skinId === 'banana') {
       html += '<img class="banana-preview" src="die_image/banana' + value + '.png" alt="Banana ' + value + '">';
+    } else if (skinId === 'wave') {
+      html += '<img class="wave-preview" src="die_image/wave' + value + '.png" alt="Wave ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {

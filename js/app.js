@@ -55,16 +55,18 @@
   }, 3000000);
 
   // --- Cache App Check token for sendBeacon usage ---
-  firebase.appCheck().getToken(false).then(function (result) {
-    window.YachtGame._cachedAppCheckToken = result.token;
-  }).catch(function () {
-    window.YachtGame._cachedAppCheckToken = null;
-  });
-  setInterval(function () {
-    firebase.appCheck().getToken(true).then(function (result) {
+  if (!window.YachtGame.isEmulator) {
+    firebase.appCheck().getToken(false).then(function (result) {
       window.YachtGame._cachedAppCheckToken = result.token;
-    }).catch(function () {});
-  }, 3000000);
+    }).catch(function () {
+      window.YachtGame._cachedAppCheckToken = null;
+    });
+    setInterval(function () {
+      firebase.appCheck().getToken(true).then(function (result) {
+        window.YachtGame._cachedAppCheckToken = result.token;
+      }).catch(function () {});
+    }, 3000000);
+  }
 
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
