@@ -100,6 +100,7 @@
       wave_bot: 'Wave Bot',
       wave_desc: 'Win-rate maximizing AI',
       start_game: 'Start Game',
+      fast_mode: 'Fast',
 
       // Game
       btn_shortcut: 'Shortcut',
@@ -340,6 +341,7 @@
       wave_bot: '\ud574\uc77c \ubd07',
       wave_desc: '\uc2b9\ub960 \uadf9\ub300\ud654 \uc804\ub7b5 AI',
       start_game: '\uac8c\uc784 \uc2dc\uc791',
+      fast_mode: '\ube68\ub9ac\uac10\uae30',
 
       // Game
       btn_shortcut: '\ub2e8\ucd95\ud0a4',

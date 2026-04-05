@@ -106,6 +106,7 @@
   var btnRoll = document.getElementById('btn-roll');
   var btnNewGame = document.getElementById('btn-new-game');
   var modeRadios = document.querySelectorAll('input[name="mode"]');
+  var btnFastMode = document.getElementById('btn-fast-mode');
   var btnShortcut = document.getElementById('btn-shortcut');
   var btnRule = document.getElementById('btn-rule');
   var btnLeave = document.getElementById('btn-leave');
@@ -497,6 +498,11 @@
       document.body.removeChild(textArea);
       UI.showToast('Code copied!');
     }
+  });
+
+  // --- Fast Mode Toggle ---
+  btnFastMode.addEventListener('click', function () {
+    if (window.YachtGame.BotGame) window.YachtGame.BotGame.toggleFastMode();
   });
 
   // --- Shortcut Button (hover overlay) ---
