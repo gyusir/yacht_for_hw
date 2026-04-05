@@ -805,8 +805,6 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
       }
       return stats;
     });
-  } else {
-    await userRef.child("stats/currentStreak").set(0);
   }
 
   return true;
@@ -977,8 +975,6 @@ exports.onGameFinished = functions.region("asia-southeast1")
           }
           return stats;
         });
-      } else {
-        await userRef.child("stats/currentStreak").set(0);
       }
     });
 

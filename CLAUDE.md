@@ -53,7 +53,7 @@
 - 게스트는 Anonymous Auth로 uid 발급, classic 스킨만 사용 가능
 - 온라인 매칭: 비공개 방(코드 공유) / 랜덤 매치(Yahtzee·Yacht·상관없음 모드 선택)
 - 봇 게임 탭 닫기 시 `sendBeacon`으로 패배 결과 저장 (`saveBotGameResultBeacon`)
-- 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 또는 게임 시간 2분 미만 시 `"invalid"` (전적 표시되나 승률 미반영, 연승도 끊김)
+- 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 또는 게임 시간 2분 미만 시 `"invalid"` (전적 표시되나 승률·연승에 미반영)
 - Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
 
 ## Hosting & Deploy
