@@ -794,9 +794,15 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
         stats.wins = (stats.wins || 0) + 1;
         if (!stats.botWins) stats.botWins = {};
         stats.botWins[botDifficulty] = (stats.botWins[botDifficulty] || 0) + 1;
+        stats.currentStreak = (stats.currentStreak || 0) + 1;
+        if (stats.currentStreak > (stats.maxStreak || 0)) {
+          stats.maxStreak = stats.currentStreak;
+        }
+      } else {
+        if (actualResult === "loss") stats.losses = (stats.losses || 0) + 1;
+        else stats.ties = (stats.ties || 0) + 1;
+        stats.currentStreak = 0;
       }
-      else if (actualResult === "loss") stats.losses = (stats.losses || 0) + 1;
-      else stats.ties = (stats.ties || 0) + 1;
       return stats;
     });
   }
@@ -956,9 +962,17 @@ exports.onGameFinished = functions.region("asia-southeast1")
         await userRef.child("stats").transaction((stats) => {
           if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
           stats.totalGames = (stats.totalGames || 0) + 1;
-          if (result === "win") stats.wins = (stats.wins || 0) + 1;
-          else if (result === "loss") stats.losses = (stats.losses || 0) + 1;
-          else stats.ties = (stats.ties || 0) + 1;
+          if (result === "win") {
+            stats.wins = (stats.wins || 0) + 1;
+            stats.currentStreak = (stats.currentStreak || 0) + 1;
+            if (stats.currentStreak > (stats.maxStreak || 0)) {
+              stats.maxStreak = stats.currentStreak;
+            }
+          } else {
+            if (result === "loss") stats.losses = (stats.losses || 0) + 1;
+            else stats.ties = (stats.ties || 0) + 1;
+            stats.currentStreak = 0;
+          }
           return stats;
         });
       }

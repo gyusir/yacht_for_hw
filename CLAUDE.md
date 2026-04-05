@@ -36,8 +36,9 @@
 | `data/dp_yacht.bin` | Yacht 모드 DP 룩업 테이블 (4,096 상태, Uint16, 8KB) |
 | `data/dp_yahtzee.bin` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, Uint16, 2MB) |
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
-| `die_image/wave1-6.png` | Wave 주사위 스킨 이미지 |
-| `die_image/banana1-6.png` | Banana 주사위 스킨 이미지 |
+| `die_image/banana/` | Banana 주사위 스킨 이미지 |
+| `die_image/wave/` | Wave 주사위 스킨 이미지 |
+| `die_image/fire/` | Fire 주사위 스킨 이미지 |
 
 ### Backend (`functions/`)
 | 파일 | 역할 |
