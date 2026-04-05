@@ -416,7 +416,11 @@
     html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">' + (I18n ? I18n.t('wins') : 'Wins') + '</div></div>';
     html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">' + (I18n ? I18n.t('losses') : 'Losses') + '</div></div>';
     html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">' + (I18n ? I18n.t('ties') : 'Ties') + '</div></div>';
+    var currentStreak = stats.currentStreak || 0;
+    html += '<div class="stat-winrate-streak-col">';
     html += '<div class="stat-card stat-winrate"><div class="stat-value">' + winRate + '%</div><div class="stat-label">' + (I18n ? I18n.t('win_rate') : 'Win Rate') + '</div></div>';
+    html += '<div class="stat-card stat-streak"><div class="stat-value">' + currentStreak + '</div><div class="stat-label">' + (I18n ? I18n.t('current_streak') : 'Streak') + '</div></div>';
+    html += '</div>';
     html += '<div class="result-criteria-box" style="grid-column: span 3;">';
     html += '<div class="result-criteria-title">' + (I18n ? I18n.t('result_criteria_title') : 'Result Criteria') + '</div>';
     html += '<div class="result-criteria-item"><span class="result-win">' + (I18n ? I18n.t('result_w_label') : 'Win') + '</span>: ' + (I18n ? I18n.t('result_criteria_win') : 'Higher score than opponent') + '</div>';
