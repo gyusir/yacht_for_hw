@@ -1383,26 +1383,30 @@ input[type="text"]::placeholder {
 
 /* --- Fire: image-based dice skin --- */
 [data-dice-skin="fire"] .die {
-  background: #d4852a;
+  background: #b5712a;
   border: none;
   box-shadow: none;
   padding: 0;
   display: block;
   overflow: visible;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 [data-dice-skin="fire"] .die .fire-die-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px #8a5a1e;
 }
 [data-dice-skin="fire"] .pip { display: none; }
 [data-theme="dark"] [data-dice-skin="fire"] .die {
-  background: #d4852a;
+  background: #b5712a;
   border: none;
   box-shadow: none;
+}
+[data-theme="dark"] [data-dice-skin="fire"] .die .fire-die-img {
+  box-shadow: 0 0 0 2px #a06820;
 }
 
 /* ===== Skin Selector (Lobby) ===== */
@@ -1419,6 +1423,12 @@ input[type="text"]::placeholder {
 
 .skin-section {
   margin-top: 14px;
+}
+
+.skin-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0 0;
 }
 
 .skin-section-label {
@@ -1461,10 +1471,9 @@ input[type="text"]::placeholder {
 }
 
 .skin-options {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .skin-divider {
@@ -1678,13 +1687,15 @@ input[type="text"]::placeholder {
   box-shadow: none;
   padding: 0;
   display: block;
-  overflow: hidden;
+  overflow: visible;
 }
 .skin-preview-die[data-dice-skin="fire"] .fire-preview {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
+  box-shadow: 0 0 0 1.5px #8a5a1e;
+  border-radius: 4px;
 }
 .skin-preview-die[data-dice-skin="fire"] .mini-pip { display: none; }
 
@@ -2493,6 +2504,8 @@ p.session-notice {
   height: 100%;
   object-fit: contain;
   display: block;
+  box-shadow: 0 0 0 1.5px #8a5a1e;
+  border-radius: 4px;
 }
 .cube-face.skin-preview-die[data-dice-skin="fire"] {
   background: transparent;

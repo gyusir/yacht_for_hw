@@ -58,7 +58,7 @@
     // Banana skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'banana') {
       var img = document.createElement('img');
-      img.src = 'die_image/banana' + value + '.png';
+      img.src = 'die_image/banana/banana' + value + '.png';
       img.className = 'banana-die-img';
       img.alt = value;
       dieEl.appendChild(img);
@@ -68,7 +68,7 @@
     // Fire skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'fire') {
       var img = document.createElement('img');
-      img.src = 'die_image/fire' + value + '.png';
+      img.src = 'die_image/fire/fire' + value + '.png';
       img.className = 'fire-die-img';
       img.alt = value;
       dieEl.appendChild(img);
@@ -78,7 +78,7 @@
     // Wave skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'wave') {
       var img = document.createElement('img');
-      img.src = 'die_image/wave' + value + '.png';
+      img.src = 'die_image/wave/wave' + value + '.png';
       img.className = 'wave-die-img';
       img.alt = value;
       dieEl.appendChild(img);

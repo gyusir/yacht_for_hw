@@ -147,7 +147,7 @@
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
       var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
-      var targetContainer = (def.unlockBy || def.unlockAtStreak) ? botContainer : playContainer;
+      var targetContainer = def.unlockBy ? botContainer : playContainer;
 
       var option = document.createElement('div');
       option.className = 'skin-option';
@@ -169,19 +169,19 @@
         miniDie.appendChild(charEl);
       } else if (def.id === 'banana') {
         var img = document.createElement('img');
-        img.src = 'die_image/banana5.png';
+        img.src = 'die_image/banana/banana5.png';
         img.className = 'banana-preview';
         img.alt = 'Banana 5';
         miniDie.appendChild(img);
       } else if (def.id === 'wave') {
         var img = document.createElement('img');
-        img.src = 'die_image/wave5.png';
+        img.src = 'die_image/wave/wave5.png';
         img.className = 'wave-preview';
         img.alt = 'Wave 5';
         miniDie.appendChild(img);
       } else if (def.id === 'fire') {
         var img = document.createElement('img');
-        img.src = 'die_image/fire5.png';
+        img.src = 'die_image/fire/fire5.png';
         img.className = 'fire-preview';
         img.alt = 'Fire 5';
         miniDie.appendChild(img);
@@ -218,7 +218,7 @@
           var botLabel = def.unlockBy === 'wave' ? (I18n ? I18n.t('wave') : 'Wave') : (def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic'));
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
         } else if (def.unlockAtStreak) {
-          progressEl.textContent = (I18n ? I18n.t('skin_streak') : 'streak') + ' ' + maxStreak + '/' + def.unlockAtStreak;
+          progressEl.textContent = maxStreak + '/' + def.unlockAtStreak + ' ' + (I18n ? I18n.t('skin_streak') : 'streak');
         } else if (def.unlockAtWins) {
           progressEl.textContent = totalWins + '/' + def.unlockAtWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
         } else {
@@ -258,11 +258,11 @@
     if (skinId === 'crimson') {
       html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
     } else if (skinId === 'banana') {
-      html += '<img class="banana-preview" src="die_image/banana' + value + '.png" alt="Banana ' + value + '">';
+      html += '<img class="banana-preview" src="die_image/banana/banana' + value + '.png" alt="Banana ' + value + '">';
     } else if (skinId === 'wave') {
-      html += '<img class="wave-preview" src="die_image/wave' + value + '.png" alt="Wave ' + value + '">';
+      html += '<img class="wave-preview" src="die_image/wave/wave' + value + '.png" alt="Wave ' + value + '">';
     } else if (skinId === 'fire') {
-      html += '<img class="fire-preview" src="die_image/fire' + value + '.png" alt="Fire ' + value + '">';
+      html += '<img class="fire-preview" src="die_image/fire/fire' + value + '.png" alt="Fire ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {
