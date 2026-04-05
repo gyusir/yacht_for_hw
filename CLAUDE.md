@@ -110,6 +110,10 @@
 ### Version Tagging
 - 버전은 `index.html`의 `<span class="app-version">` 태그에 표기한다
 - 커밋 메시지에 버전을 명시할 때는 반드시 `index.html`의 버전도 함께 업데이트한다
+- 버전 변경 시 반드시 함께 갱신할 것:
+  - `<head>` 인라인 스크립트의 `var V='X.X'` (캐시 버스팅 트리거)
+  - `<link rel="stylesheet" href="css/style.css?v=X.X">`
+  - 모든 `<script src="js/*.js?v=X.X">` 태그의 쿼리 스트링
 
 ## Content Security Policy (CSP) 관리
 

@@ -468,6 +468,7 @@
         var lang = I18n.getLang();
         if (oppName === 'Basic Bot') oppName = I18n.t('basic_bot');
         else if (oppName === 'Gambler Bot') oppName = I18n.t('gambler_bot');
+        else if (oppName === 'Wave Bot') oppName = I18n.t('wave_bot');
         else oppName = (lang === 'ko' ? g.oppNicknameKo : g.oppNicknameEn) || g.oppNicknameKo || g.oppNicknameEn || g.opponentName || '-';
       }
       listHtml += '<td>' + escapeHtml(oppName) + '</td>';
