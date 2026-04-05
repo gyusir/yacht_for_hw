@@ -411,20 +411,24 @@
 
     // Stats summary
     var winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
+    var currentStreak = stats.currentStreak || 0;
     var html = '<div class="stats-grid">';
-    html += '<div class="stat-card"><div class="stat-value">' + stats.totalGames + '</div><div class="stat-label">' + (I18n ? I18n.t('games') : 'Games') + '</div></div>';
-    html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">' + (I18n ? I18n.t('wins') : 'Wins') + '</div></div>';
-    html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">' + (I18n ? I18n.t('losses') : 'Losses') + '</div></div>';
-    html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">' + (I18n ? I18n.t('ties') : 'Ties') + '</div></div>';
+    html += '<div class="stat-winrate-streak-col">';
     html += '<div class="stat-card stat-winrate"><div class="stat-value">' + winRate + '%</div><div class="stat-label">' + (I18n ? I18n.t('win_rate') : 'Win Rate') + '</div></div>';
+    html += '<div class="stat-card stat-streak"><div class="stat-value">' + currentStreak + '</div><div class="stat-label">' + (I18n ? I18n.t('current_streak') : 'Streak') + '</div></div>';
+    html += '</div>';
     html += '<div class="result-criteria-box" style="grid-column: span 3;">';
     html += '<div class="result-criteria-title">' + (I18n ? I18n.t('result_criteria_title') : 'Result Criteria') + '</div>';
     html += '<div class="result-criteria-item"><span class="result-win">' + (I18n ? I18n.t('result_w_label') : 'Win') + '</span>: ' + (I18n ? I18n.t('result_criteria_win') : 'Higher score than opponent') + '</div>';
     html += '<div class="result-criteria-item"><span class="result-loss">' + (I18n ? I18n.t('result_l_label') : 'Loss') + '</span>: ' + (I18n ? I18n.t('result_criteria_loss') : 'Lower score or forfeit') + '</div>';
     html += '<div class="result-criteria-item"><span class="result-tie">' + (I18n ? I18n.t('result_t_label') : 'Tie') + '</span>: ' + (I18n ? I18n.t('result_criteria_tie') : 'Same score as opponent') + '</div>';
-    html += '<div class="result-criteria-item">' + (I18n ? I18n.t('result_inv_label') : 'Invalid') + ': ' + (I18n ? I18n.t('result_criteria_invalid') : 'Below min score (Yacht 50 / Yahtzee 100)') + '</div>';
+    html += '<div class="result-criteria-item"><b>' + (I18n ? I18n.t('result_inv_label') : 'Invalid') + '</b>: ' + (I18n ? I18n.t('result_criteria_invalid') : 'Below min score (Yacht 50 / Yahtzee 100)') + '</div>';
     html += '<div class="result-criteria-note">*' + (I18n ? I18n.t('result_criteria_invalid2') : 'Invalid games not counted in win rate') + '</div>';
     html += '</div>';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.totalGames + '</div><div class="stat-label">' + (I18n ? I18n.t('games') : 'Games') + '</div></div>';
+    html += '<div class="stat-card stat-win"><div class="stat-value">' + stats.wins + '</div><div class="stat-label">' + (I18n ? I18n.t('wins') : 'Wins') + '</div></div>';
+    html += '<div class="stat-card stat-loss"><div class="stat-value">' + stats.losses + '</div><div class="stat-label">' + (I18n ? I18n.t('losses') : 'Losses') + '</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + stats.ties + '</div><div class="stat-label">' + (I18n ? I18n.t('ties') : 'Ties') + '</div></div>';
     html += '</div>';
     summaryEl.innerHTML = html;
 

@@ -543,14 +543,26 @@ input[type="text"]::placeholder {
   margin-bottom: 20px;
 }
 
-.stat-winrate {
+.stat-winrate-streak-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-winrate-streak-col .stat-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .stat-winrate .stat-value {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
+}
+
+.stat-streak .stat-value {
+  font-size: 1.4rem;
+  color: var(--warning, #f0ad4e);
 }
 
 .result-criteria-box {

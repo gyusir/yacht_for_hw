@@ -19,7 +19,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 - **Offline Detection** — Blocks game actions on network loss with toast notification
 - **Bot Match** — Three difficulties: Basic (occasional mistakes) / Gambler (optimal play) / Wave (win-probability maximizing endgame via Web Worker), powered by Expectimax DP
 - **Server-side Validation** — Anti-cheat score calculation via Cloud Functions, transaction-based rate limiting
-- **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate)
+- **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate, breaks win streaks)
 - **App Check** — Firebase App Check (reCAPTCHA v3) prevents unauthorized use of backend services from forked apps
 - **Bilingual** — English/Korean dual language support with real-time switching
 - **Tutorial** — Interactive step-by-step game guide
