@@ -28,12 +28,7 @@
           { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
           { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
           { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' http://localhost:* https://www.gstatic.com https://apis.google.com https://accounts.google.com https://*.firebasedatabase.app https://www.google.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:* https://*.firebaseio.com https://*.googleapis.com https://*.firebasedatabase.app https://*.cloudfunctions.net https://*.gstatic.com https://*.google.com https://www.recaptcha.net https://recaptcha.google.com wss://*.firebaseio.com wss://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com https://www.recaptcha.net https://recaptcha.google.com;" }
-        ]
-      },
-      {
-        "source": "**/*.html",
-        "headers": [
+          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' http://localhost:* https://www.gstatic.com https://apis.google.com https://accounts.google.com https://*.firebasedatabase.app https://www.google.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:* https://*.firebaseio.com https://*.googleapis.com https://*.firebasedatabase.app https://*.cloudfunctions.net https://*.gstatic.com https://*.google.com https://www.recaptcha.net https://recaptcha.google.com wss://*.firebaseio.com wss://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com https://www.recaptcha.net https://recaptcha.google.com;" },
           { "key": "Cache-Control", "value": "no-cache" }
         ]
       },
