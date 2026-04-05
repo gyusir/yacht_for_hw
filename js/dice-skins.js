@@ -43,15 +43,15 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames, botWins, totalWins, currentStreak) {
+  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, currentStreak)) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak)) count++;
     }
     return count;
   }
 
-  function isSkinUnlocked(def, totalGames, botWins, totalWins, currentStreak) {
+  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak) {
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
       return wins >= BOT_WIN_THRESHOLD;
@@ -60,14 +60,14 @@
       return (totalWins || 0) >= def.unlockAtWins;
     }
     if (def.unlockAtStreak) {
-      return (currentStreak || 0) >= def.unlockAtStreak;
+      return (maxStreak || 0) >= def.unlockAtStreak;
     }
     return totalGames >= def.unlockAt;
   }
 
-  function isUnlocked(skinId, totalGames, botWins, totalWins, currentStreak) {
+  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak) {
     var def = getSkinDef(skinId);
-    return isSkinUnlocked(def, totalGames, botWins, totalWins, currentStreak);
+    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
   }
 
   function applySkin(skinId) {
@@ -122,11 +122,12 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, currentStreak) {
+  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak) {
     if (!containerEl) return;
     totalGames = totalGames || 0;
     totalWins = totalWins || 0;
     botWins = botWins || {};
+    maxStreak = maxStreak || 0;
     currentStreak = currentStreak || 0;
 
     var playContainer = document.getElementById('skin-options-play');
@@ -137,7 +138,7 @@
     playContainer.innerHTML = '';
     botContainer.innerHTML = '';
 
-    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, currentStreak);
+    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
@@ -146,7 +147,7 @@
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, currentStreak);
+      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
       var targetContainer = def.unlockBy ? botContainer : playContainer;
 
       var option = document.createElement('div');
