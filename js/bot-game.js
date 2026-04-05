@@ -815,7 +815,7 @@
           uid: 'bot',
           connected: true,
           scores: buildEmptyScores(gameMode),
-          diceSkin: diff === 'wave' ? 'banana' : (diff === 'gambler' ? 'carbon' : 'circuit'),
+          diceSkin: diff === 'wave' ? 'wave' : (diff === 'gambler' ? 'carbon' : 'circuit'),
           lastCategory: null
         }
       },

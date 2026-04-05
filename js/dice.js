@@ -65,6 +65,16 @@
       return;
     }
 
+    // Wave skin: show image instead of pips
+    if (DiceSkins && DiceSkins.getCurrentSkin() === 'wave') {
+      var img = document.createElement('img');
+      img.src = 'die_image/wave' + value + '.png';
+      img.className = 'wave-die-img';
+      img.alt = value;
+      dieEl.appendChild(img);
+      return;
+    }
+
     var layout = PIP_LAYOUTS[value];
     for (var i = 1; i <= 9; i++) {
       var pip = document.createElement('div');
