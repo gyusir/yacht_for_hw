@@ -100,6 +100,8 @@
    - `git fetch` + `git pull`로 원격 `dev` 확인 후 push
 
 4. **PR 생성 & Merge**
+   - **PR 생성 전 반드시 사용자에게 버전을 몇으로 올릴지 물어본다**
+   - 사용자가 지정한 버전으로 `index.html`의 모든 버전 참조를 업데이트하고 커밋한 뒤 push
    - `gh` CLI로 `dev` → `main` PR 생성
    - **merge는 반드시 사용자 허락을 받은 후에만 진행한다**
 
