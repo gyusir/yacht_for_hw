@@ -23,10 +23,12 @@ if (location.hostname === 'localhost') {
   }
 }
 
-firebase.appCheck().activate(
-  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LeJKaQsAAAAAMOTELXn0JR8jWduXEkSJxxYJuVQ'),
-  true
-);
+if (!window.YachtGame.isEmulator) {
+  firebase.appCheck().activate(
+    new firebase.appCheck.ReCaptchaEnterpriseProvider('6LeJKaQsAAAAAMOTELXn0JR8jWduXEkSJxxYJuVQ'),
+    true
+  );
+}
 
 // ─── Firebase Services ───
 window.YachtGame.db = firebase.database();

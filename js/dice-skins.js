@@ -204,7 +204,7 @@
         var I18n = window.YachtGame.I18n;
         if (def.unlockBy) {
           var wins = (botWins[def.unlockBy]) || 0;
-          var botLabel = def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic');
+          var botLabel = def.unlockBy === 'wave' ? (I18n ? I18n.t('wave') : 'Wave') : (def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic'));
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
         } else if (def.unlockAtWins) {
           progressEl.textContent = totalWins + '/' + def.unlockAtWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
