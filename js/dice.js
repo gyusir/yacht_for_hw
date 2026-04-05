@@ -65,6 +65,16 @@
       return;
     }
 
+    // Fire skin: show image instead of pips
+    if (DiceSkins && DiceSkins.getCurrentSkin() === 'fire') {
+      var img = document.createElement('img');
+      img.src = 'die_image/fire' + value + '.png';
+      img.className = 'fire-die-img';
+      img.alt = value;
+      dieEl.appendChild(img);
+      return;
+    }
+
     // Wave skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'wave') {
       var img = document.createElement('img');

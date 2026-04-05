@@ -250,8 +250,9 @@
       var totalGames = (stats && stats.totalGames) || 0;
       var totalWins = (stats && stats.wins) || 0;
       var botWins = (stats && stats.botWins) || {};
+      var maxStreak = (stats && stats.maxStreak) || 0;
       if (skinSelector) skinSelector.hidden = false;
-      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins, totalWins);
+      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins, totalWins, maxStreak);
     });
   }
 
