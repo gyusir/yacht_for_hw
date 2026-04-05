@@ -27,6 +27,14 @@
   // Phase cache (recomputed per turn)
   var phaseCache = { mask: -1, upper: -1, yzFlag: -1, gameMode: '', val0: null, val1: null };
 
+  // ─── Endgame Worker State ───
+  var endgameWorker = null;
+  var endgameReady = false;
+  var endgamePending = {};     // { id: { resolve, timer } }
+  var endgameRequestId = 0;
+  var ENDGAME_THRESHOLD = 5;   // activate when ≤ 5 turns remain
+  var ENDGAME_TIMEOUT = 3000;  // worker response timeout (ms)
+
   // ─── Dice Indexing Infrastructure ───
   // 252 sorted 5-dice multisets from {1..6}, built once at load time
 
@@ -415,7 +423,7 @@
           dpArray[i] = raw[i] * scale;
         }
 
-        dpData[gameMode] = { dp: dpArray, meta: META[gameMode] };
+        dpData[gameMode] = { dp: dpArray, meta: META[gameMode], rawBuf: buf };
         dpLoading[gameMode] = false;
         console.log('[BotAI] DP table loaded:', gameMode,
           '(' + (dpArray.length) + ' entries,',
@@ -455,6 +463,119 @@
     return bestCat;
   }
 
+  // ─── Endgame Worker Management ───
+
+  function initEndgameWorker(gm, appVersion) {
+    if (endgameWorker) {
+      endgameWorker.terminate();
+      endgameWorker = null;
+      endgameReady = false;
+      endgamePending = {};
+    }
+
+    if (!dpData[gm]) {
+      console.warn('[BotAI] Cannot init endgame worker: DP not loaded for', gm);
+      return;
+    }
+
+    try {
+      var workerUrl = 'js/endgame-worker.js' + (appVersion ? '?v=' + appVersion : '');
+      endgameWorker = new Worker(workerUrl);
+    } catch (e) {
+      console.warn('[BotAI] Web Worker not supported:', e);
+      return;
+    }
+
+    endgameWorker.onmessage = function (e) {
+      var msg = e.data;
+      if (msg.type === 'ready') {
+        endgameReady = true;
+        console.log('[BotAI] Endgame worker ready for', gm);
+      } else if (msg.type === 'result' || msg.type === 'error') {
+        var pending = endgamePending[msg.id];
+        if (pending) {
+          clearTimeout(pending.timer);
+          delete endgamePending[msg.id];
+          if (msg.type === 'error') {
+            console.error('[BotAI] Endgame worker error:', msg.message);
+            pending.resolve(null);
+          } else {
+            pending.resolve(msg);
+          }
+        }
+      }
+    };
+
+    endgameWorker.onerror = function (e) {
+      console.error('[BotAI] Endgame worker fatal error:', e.message);
+      endgameReady = false;
+    };
+
+    // Transfer LUT via Transferable (zero-copy ownership transfer)
+    var dpBuf = dpData[gm].dp.buffer;
+    endgameWorker.postMessage(
+      { type: 'init', dpBuffer: dpBuf, meta: dpData[gm].meta, gameMode: gm, version: appVersion || '1' },
+      [dpBuf]
+    );
+
+    // dpData[gm].dp is now neutered — re-decode from saved raw buffer
+    var rawBuf = dpData[gm].rawBuf;
+    var maxValue = new Float32Array(rawBuf, 0, 1)[0];
+    var raw = new Uint16Array(rawBuf, 4);
+    var newDp = new Float64Array(raw.length);
+    var scale = maxValue / 65535;
+    for (var i = 0; i < raw.length; i++) newDp[i] = raw[i] * scale;
+    dpData[gm].dp = newDp;
+
+    console.log('[BotAI] LUT transferred to worker, re-decoded for main thread (' + newDp.length + ' entries)');
+  }
+
+  function endgameDecision(dice, botScores, oppScores, gm, rollCount, remainingTurns) {
+    return new Promise(function (resolve) {
+      if (!endgameReady || !endgameWorker) {
+        resolve(null);
+        return;
+      }
+
+      var id = ++endgameRequestId;
+      var timer = setTimeout(function () {
+        console.warn('[BotAI] Endgame worker timeout (id=' + id + ')');
+        delete endgamePending[id];
+        resolve(null);
+      }, ENDGAME_TIMEOUT);
+
+      endgamePending[id] = { resolve: resolve, timer: timer };
+
+      endgameWorker.postMessage({
+        type: 'decide',
+        id: id,
+        dice: dice,
+        botScores: botScores,
+        oppScores: oppScores,
+        rollCount: rollCount,
+        gameMode: gm,
+        remainingTurns: remainingTurns
+      });
+    });
+  }
+
+  function destroyEndgameWorker() {
+    if (endgameWorker) {
+      endgameWorker.terminate();
+      endgameWorker = null;
+    }
+    endgameReady = false;
+    // Clear all pending promises
+    var ids = Object.keys(endgamePending);
+    for (var i = 0; i < ids.length; i++) {
+      var p = endgamePending[ids[i]];
+      clearTimeout(p.timer);
+      p.resolve(null);
+    }
+    endgamePending = {};
+    endgameRequestId = 0;
+  }
+
   // ─── Public API ───
 
   function chooseHolds(dice, scores, gameMode, difficulty, rollCount) {
@@ -487,6 +608,10 @@
     chooseCategory: chooseCategory,
     shouldReroll: shouldReroll,
     loadDPTable: loadDPTable,
-    isReady: isReady
+    isReady: isReady,
+    initEndgameWorker: initEndgameWorker,
+    endgameDecision: endgameDecision,
+    destroyEndgameWorker: destroyEndgameWorker,
+    ENDGAME_THRESHOLD: ENDGAME_THRESHOLD
   };
 })();

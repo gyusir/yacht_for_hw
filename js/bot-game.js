@@ -27,23 +27,23 @@
   // ─── Emote Trigger Definitions ───
 
   var EMOTE_TRIGGERS = {
-    game_start:       { basic: 0.80, gambler: 0.90, pool: ['\u{1F9CA} 쿨하게~', '\u{1F3AF} 계획대로', '\u{1F44A} 한판 붙자', '\u{1F60F} 봐드림', '\u{1F3B2} 주사위의 신'] },
-    bot_yacht:        { basic: 0.90, gambler: 0.95, pool: ['\u{1F525} 실화냐?', '\u{1F451} 왕 납신다', '\u{1F4A5} 완벽!', '\u{1F3C6} 이게 실력', '\u{1F60E} 너무 쉬움'] },
-    bot_high:         { basic: 0.40, gambler: 0.60, pool: ['\u{1F60E} 쉽네요', '\u{1F3AF} 계획대로', '\u{1F4AA} 기본이지', '\u{1F9E0} 천재?', '\u{1F4C8} 쭉쭉'] },
-    bot_zero:         { basic: 0.30, gambler: 0.50, pool: ['\u{1F926} 말도 안돼', '\u{1F62D} 봐줘요', '\u{1F4A8} 잠깐 실수', '\u{1F612} 다음엔..'] },
-    player_yacht:     { basic: 0.50, gambler: 0.70, pool: ['\u{1F631} 헐 대박', '\u{1F340} 운이지~', '\u{1F644} 치트 아님?', '\u{1F914} 또 나올까', '\u{1F612} 좀 치네'] },
-    player_zero:      { basic: 0.40, gambler: 0.55, pool: ['\u{1F60E} 쉽네요', '\u2753 그게 최선?', '\u{1F923} ㅋㅋㅋㅋ', '\u{1F4A9} 실력?', '\u{1F622} 슬프다'] },
-    player_low:       { basic: 0.25, gambler: 0.40, pool: ['\u2753 그게 최선?', '\u{1F914} Hmm..', '\u{1F9D0} 전략이..?', '\u{1F615} 에이~', '\u{1F971} 하품~'] },
-    bot_leading:      { basic: 0.15, gambler: 0.30, pool: ['\u{1F60E} 쉽네요', '\u{1F451} 왕 납신다', '\u{1F3C3} 따라와~', '\u{1F4AA} 격차 벌림', '\u{1F44B} 항복?'] },
-    bot_losing:       { basic: 0.20, gambler: 0.35, pool: ['\u{1F62D} 봐줘요', '\u{1F9CA} 쿨하게~', '\u{1F612} 아직이야', '\u{1F525} 역전 간다'] },
-    player_slow:      { basic: 0.10, gambler: 0.25, pool: ['\u{1F422} 좀 빨리~', '\u{1F971} 하품~', '\u{23F0} 시간 간다', '\u{1F634} Zzz..', '\u{1F4A4} 자는 거?'] },
-    game_end_win:     { basic: 0.70, gambler: 0.85, pool: ['\u{1F60E} 쉽네요', '\u{1F451} 왕 납신다', '\u{1F44B} GG~', '\u{1F3C6} GG', '\u{1F60F} 배웠지?'] },
-    game_end_lose:    { basic: 0.60, gambler: 0.75, pool: ['\u{1F926} 말도 안돼', '\u{1F340} 운이지~', '\u{1F612} 다음엔..', '\u{1F620} 리매치!'] },
-    bot_comeback:     { basic: 0.50, gambler: 0.70, pool: ['\u{1F525} 역전이다!', '\u{1F60F} 떨리지?', '\u{1F4AA} 다시 간다', '\u{1F3AF} 계획대로', '\u{1F608} 흔들리지?'] },
-    player_wasted:    { basic: 0.50, gambler: 0.70, pool: ['\u{1F62C} 아까워~', '\u{1F923} 0점?!', '\u{1F4A9} 감사~', '\u{1F92D} 아닌데..', '\u{1F622} 울겠다'] },
-    bot_streak:       { basic: 0.40, gambler: 0.60, pool: ['\u{1F525} 불붙었다!', '\u{1F4AA} 연속!', '\u{1F60E} 못 멈춰', '\u{1F680} 폭주 중~'] },
-    player_streak_bad:{ basic: 0.35, gambler: 0.55, pool: ['\u{1F62C} 연속?!', '\u{1F914} 실력? 운?', '\u{1F4C9} 추락 중~', '\u{1F622} 눈물..'] },
-    mid_game_taunt:   { basic: 0.12, gambler: 0.25, pool: ['\u{1F60F} 이 격차?', '\u{1F451} 이미 끝남', '\u{1F44B} 항복?', '\u{1F3AF} 예정된 승리'] }
+    game_start:       { basic: 0.80, gambler: 0.90, wave: 0.95, pool: ['\u{1F9CA} 쿨하게~', '\u{1F3AF} 계획대로', '\u{1F44A} 한판 붙자', '\u{1F60F} 봐드림', '\u{1F3B2} 주사위의 신'] },
+    bot_yacht:        { basic: 0.90, gambler: 0.95, wave: 0.95, pool: ['\u{1F525} 실화냐?', '\u{1F451} 왕 납신다', '\u{1F4A5} 완벽!', '\u{1F3C6} 이게 실력', '\u{1F60E} 너무 쉬움'] },
+    bot_high:         { basic: 0.40, gambler: 0.60, wave: 0.65, pool: ['\u{1F60E} 쉽네요', '\u{1F3AF} 계획대로', '\u{1F4AA} 기본이지', '\u{1F9E0} 천재?', '\u{1F4C8} 쭉쭉'] },
+    bot_zero:         { basic: 0.30, gambler: 0.50, wave: 0.50, pool: ['\u{1F926} 말도 안돼', '\u{1F62D} 봐줘요', '\u{1F4A8} 잠깐 실수', '\u{1F612} 다음엔..'] },
+    player_yacht:     { basic: 0.50, gambler: 0.70, wave: 0.75, pool: ['\u{1F631} 헐 대박', '\u{1F340} 운이지~', '\u{1F644} 치트 아님?', '\u{1F914} 또 나올까', '\u{1F612} 좀 치네'] },
+    player_zero:      { basic: 0.40, gambler: 0.55, wave: 0.60, pool: ['\u{1F60E} 쉽네요', '\u2753 그게 최선?', '\u{1F923} ㅋㅋㅋㅋ', '\u{1F4A9} 실력?', '\u{1F622} 슬프다'] },
+    player_low:       { basic: 0.25, gambler: 0.40, wave: 0.45, pool: ['\u2753 그게 최선?', '\u{1F914} Hmm..', '\u{1F9D0} 전략이..?', '\u{1F615} 에이~', '\u{1F971} 하품~'] },
+    bot_leading:      { basic: 0.15, gambler: 0.30, wave: 0.35, pool: ['\u{1F60E} 쉽네요', '\u{1F451} 왕 납신다', '\u{1F3C3} 따라와~', '\u{1F4AA} 격차 벌림', '\u{1F44B} 항복?'] },
+    bot_losing:       { basic: 0.20, gambler: 0.35, wave: 0.40, pool: ['\u{1F62D} 봐줘요', '\u{1F9CA} 쿨하게~', '\u{1F612} 아직이야', '\u{1F525} 역전 간다'] },
+    player_slow:      { basic: 0.10, gambler: 0.25, wave: 0.25, pool: ['\u{1F422} 좀 빨리~', '\u{1F971} 하품~', '\u{23F0} 시간 간다', '\u{1F634} Zzz..', '\u{1F4A4} 자는 거?'] },
+    game_end_win:     { basic: 0.70, gambler: 0.85, wave: 0.90, pool: ['\u{1F60E} 쉽네요', '\u{1F451} 왕 납신다', '\u{1F44B} GG~', '\u{1F3C6} GG', '\u{1F60F} 배웠지?'] },
+    game_end_lose:    { basic: 0.60, gambler: 0.75, wave: 0.80, pool: ['\u{1F926} 말도 안돼', '\u{1F340} 운이지~', '\u{1F612} 다음엔..', '\u{1F620} 리매치!'] },
+    bot_comeback:     { basic: 0.50, gambler: 0.70, wave: 0.75, pool: ['\u{1F525} 역전이다!', '\u{1F60F} 떨리지?', '\u{1F4AA} 다시 간다', '\u{1F3AF} 계획대로', '\u{1F608} 흔들리지?'] },
+    player_wasted:    { basic: 0.50, gambler: 0.70, wave: 0.75, pool: ['\u{1F62C} 아까워~', '\u{1F923} 0점?!', '\u{1F4A9} 감사~', '\u{1F92D} 아닌데..', '\u{1F622} 울겠다'] },
+    bot_streak:       { basic: 0.40, gambler: 0.60, wave: 0.65, pool: ['\u{1F525} 불붙었다!', '\u{1F4AA} 연속!', '\u{1F60E} 못 멈춰', '\u{1F680} 폭주 중~'] },
+    player_streak_bad:{ basic: 0.35, gambler: 0.55, wave: 0.60, pool: ['\u{1F62C} 연속?!', '\u{1F914} 실력? 운?', '\u{1F4C9} 추락 중~', '\u{1F622} 눈물..'] },
+    mid_game_taunt:   { basic: 0.12, gambler: 0.25, wave: 0.30, pool: ['\u{1F60F} 이 격차?', '\u{1F451} 이미 끝남', '\u{1F44B} 항복?', '\u{1F3AF} 예정된 승리'] }
   };
 
   // ─── Helpers ───
@@ -110,7 +110,7 @@
     var trigger = EMOTE_TRIGGERS[event];
     if (!trigger) return;
 
-    var prob = difficulty === 'gambler' ? trigger.gambler : trigger.basic;
+    var prob = difficulty === 'wave' ? (trigger.wave || trigger.gambler) : (difficulty === 'gambler' ? trigger.gambler : trigger.basic);
     var gap = getScoreGap();
     if (gap > 50) prob = Math.min(prob * 1.3, 1.0);
     if (Math.random() > prob) return;
@@ -480,7 +480,7 @@
     // Game start emote on first bot turn
     if (turnCount === 1) tryBotEmote('game_start');
 
-    var thinkDelay = difficulty === 'gambler' ? randRange(1500, 2200) : randRange(1000, 1600);
+    var thinkDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(1500, 2200) : randRange(1000, 1600);
     addTimer(function () { botRoll(); }, thinkDelay);
   }
 
@@ -537,10 +537,17 @@
         onStateUpdate();
 
         // Bot evaluates after rolling
-        var evalDelay = difficulty === 'gambler' ? randRange(1000, 1500) : randRange(800, 1200);
+        var evalDelay = (difficulty === 'gambler' || difficulty === 'wave') ? randRange(1000, 1500) : randRange(800, 1200);
         addTimer(function () { botEvaluate(); }, evalDelay);
       });
     }, 400);
+  }
+
+  function showBotThinking(show) {
+    var el = document.getElementById('bot-thinking-indicator');
+    if (!el) return;
+    if (show) el.classList.remove('hidden');
+    else el.classList.add('hidden');
   }
 
   function botEvaluate() {
@@ -549,18 +556,68 @@
     var BotAI = window.YachtGame.BotAI;
     var diceValues = getDiceValues();
     var botScores = getBotScores();
+    var myScores = getMyScores();
 
-    // Should we reroll?
-    if (roomData.rollCount < 3 && BotAI.shouldReroll(diceValues, botScores, roomData.gameMode, difficulty, roomData.rollCount)) {
-      // Decide which dice to hold
-      var holds = BotAI.chooseHolds(diceValues, botScores, roomData.gameMode, difficulty, roomData.rollCount);
+    // Wave bot: endgame worker for last N turns
+    if (difficulty === 'wave' && BotAI.endgameDecision) {
+      var Scoring = window.YachtGame.Scoring;
+      var cats = Scoring.getCategories(roomData.gameMode);
+      var filledCount = 0;
+      for (var i = 0; i < cats.length; i++) {
+        if (botScores[cats[i]] !== null && botScores[cats[i]] !== undefined) filledCount++;
+      }
+      var remainingTurns = cats.length - filledCount;
+
+      if (remainingTurns <= BotAI.ENDGAME_THRESHOLD) {
+        showBotThinking(true);
+        BotAI.endgameDecision(diceValues, botScores, myScores, roomData.gameMode, roomData.rollCount, remainingTurns)
+          .then(function (result) {
+            showBotThinking(false);
+            if (!roomData || roomData.status === 'finished' || roomData.currentTurn !== 'player2') return;
+
+            if (!result) {
+              // Fallback to normal EV-based play
+              normalBotEvaluate(diceValues, botScores, myScores, true);
+              return;
+            }
+
+            console.log('[Endgame] action=' + result.action + ', winProb=' + (result.winProb * 100).toFixed(1) + '%',
+              result.action === 'category' ? ('cat=' + result.category) : ('holds=' + result.holds));
+
+            if (result.action === 'reroll') {
+              botApplyHolds(result.holds, function () {
+                addTimer(function () { botRoll(); }, randRange(800, 1200));
+              });
+            } else {
+              addTimer(function () {
+                if (!roomData || roomData.status === 'finished' || roomData.currentTurn !== 'player2') return;
+                selectCategory('player2', result.category);
+              }, randRange(1200, 1800));
+            }
+          });
+        return;
+      }
+
+      // Remaining turns > threshold: play like gambler (EV maximization)
+      normalBotEvaluate(diceValues, botScores, myScores, true);
+      return;
+    }
+
+    normalBotEvaluate(diceValues, botScores, myScores, false);
+  }
+
+  function normalBotEvaluate(diceValues, botScores, myScores, forceGambler) {
+    var BotAI = window.YachtGame.BotAI;
+    var effectiveDiff = forceGambler ? 'gambler' : difficulty;
+
+    if (roomData.rollCount < 3 && BotAI.shouldReroll(diceValues, botScores, roomData.gameMode, effectiveDiff, roomData.rollCount)) {
+      var holds = BotAI.chooseHolds(diceValues, botScores, roomData.gameMode, effectiveDiff, roomData.rollCount);
       botApplyHolds(holds, function () {
-        var rerollDelay = difficulty === 'gambler' ? randRange(800, 1200) : randRange(600, 1000);
+        var rerollDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(800, 1200) : randRange(600, 1000);
         addTimer(function () { botRoll(); }, rerollDelay);
       });
     } else {
-      // Select category
-      var selectDelay = difficulty === 'gambler' ? randRange(1200, 1800) : randRange(900, 1400);
+      var selectDelay = (effectiveDiff === 'gambler' || difficulty === 'wave') ? randRange(1200, 1800) : randRange(900, 1400);
       addTimer(function () { botSelectCategory(); }, selectDelay);
     }
   }
@@ -628,7 +685,8 @@
     var botScores = getBotScores();
     var myScores = getMyScores();
 
-    var category = BotAI.chooseCategory(diceValues, botScores, roomData.gameMode, difficulty, myScores);
+    var effectiveDiff = (difficulty === 'wave') ? 'gambler' : difficulty;
+    var category = BotAI.chooseCategory(diceValues, botScores, roomData.gameMode, effectiveDiff, myScores);
     if (!category) return;
 
     selectCategory('player2', category);
@@ -731,9 +789,10 @@
     var diceSkin = DiceSkins ? DiceSkins.getCurrentSkin() : 'classic';
 
     var I18n = window.YachtGame.I18n;
-    var botName = diff === 'gambler'
-      ? (I18n ? I18n.t('gambler_bot') : 'Gambler Bot')
-      : (I18n ? I18n.t('basic_bot') : 'Basic Bot');
+    var botName;
+    if (diff === 'wave') botName = I18n ? I18n.t('wave_bot') : 'Wave Bot';
+    else if (diff === 'gambler') botName = I18n ? I18n.t('gambler_bot') : 'Gambler Bot';
+    else botName = I18n ? I18n.t('basic_bot') : 'Basic Bot';
 
     roomData = {
       gameMode: gameMode,
@@ -756,7 +815,7 @@
           uid: 'bot',
           connected: true,
           scores: buildEmptyScores(gameMode),
-          diceSkin: diff === 'gambler' ? 'carbon' : 'circuit',
+          diceSkin: diff === 'wave' ? 'banana' : (diff === 'gambler' ? 'carbon' : 'circuit'),
           lastCategory: null
         }
       },
@@ -771,10 +830,20 @@
 
     // Load DP table for bot AI (non-blocking — game starts immediately)
     var BotAI = window.YachtGame.BotAI;
-    if (BotAI && BotAI.loadDPTable && !BotAI.isReady(gameMode)) {
-      BotAI.loadDPTable(gameMode, function (ok) {
-        if (ok) console.log('[BotGame] DP table ready for', gameMode);
-      });
+    var appVersion = (document.querySelector('.app-version') || {}).textContent || '1';
+    if (BotAI && BotAI.loadDPTable) {
+      if (!BotAI.isReady(gameMode)) {
+        BotAI.loadDPTable(gameMode, function (ok) {
+          if (ok) {
+            console.log('[BotGame] DP table ready for', gameMode);
+            if (diff === 'wave' && BotAI.initEndgameWorker) {
+              BotAI.initEndgameWorker(gameMode, appVersion);
+            }
+          }
+        });
+      } else if (diff === 'wave' && BotAI.initEndgameWorker) {
+        BotAI.initEndgameWorker(gameMode, appVersion);
+      }
     }
 
     onStateUpdate();
@@ -814,6 +883,9 @@
 
   function destroy() {
     clearAllTimers();
+    var BotAI = window.YachtGame.BotAI;
+    if (BotAI && BotAI.destroyEndgameWorker) BotAI.destroyEndgameWorker();
+    showBotThinking(false);
     roomData = null;
     difficulty = null;
     isAnimating = false;

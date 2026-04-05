@@ -226,6 +226,11 @@
           <span class="bot-label" data-i18n="gambler">Gambler</span>
           <span class="bot-desc" data-i18n="gambler_desc">\ucd5c\uc801\ud654\ub41c \uc804\ub7b5 AI</span>
         </label>
+        <label class="bot-option">
+          <input type="radio" name="bot-difficulty" value="wave">
+          <span class="bot-label" data-i18n="wave">Wave</span>
+          <span class="bot-desc" data-i18n="wave_desc">\uc2b9\ub960 \uadf9\ub300\ud654 \uc804\ub7b5 AI</span>
+        </label>
       </div>
       <button id="btn-bot-start" class="btn-primary btn-full-width" data-i18n="start_game">Start Game</button>
       <button id="btn-back-lobby-bot" class="btn-secondary btn-full-width btn-mt-12" data-i18n="back_to_lobby_arrow">\u2190 Back to Lobby</button>
@@ -238,6 +243,12 @@
       <!-- Emote Bubbles (mine + opponent) -->
       <div id="emote-bubble-mine" class="emote-bubble hidden"></div>
       <div id="emote-bubble-opp" class="emote-bubble hidden"></div>
+      <!-- Bot thinking indicator (Wave bot endgame) -->
+      <div id="bot-thinking-indicator" class="bot-thinking hidden">
+        <span class="thinking-dot"></span>
+        <span class="thinking-dot"></span>
+        <span class="thinking-dot"></span>
+      </div>
 
       <!-- Scorecard -->
       <div id="scorecard" class="scorecard"></div>
