@@ -12,12 +12,12 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 - **Real-time Multiplayer** — Play with friends via 6-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
 - **Google Login / Guest** — Game history saved with Google OAuth login; guest play also available
 - **History & Stats** — Win rate, recent game records (logged-in users only)
-- **Dice Skins** — 8 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), unlocked by game count / Bot wins
+- **Dice Skins** — 10 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave), unlocked by game count / Bot wins
 - **Dark Mode** — Light/dark theme toggle with real-time skin switching (WCAG AA contrast compliant)
 - **Emotes** — 16 emoji chat options, keyboard shortcuts (Q/W/E/R/T/Y), server-side rate limiting
 - **Reconnection** — Auto-reconnect on tab return, concurrent tab conflict detection
 - **Offline Detection** — Blocks game actions on network loss with toast notification
-- **Bot Match** — Two difficulties: Basic (occasional mistakes) / Gambler (optimal play), powered by Expectimax DP
+- **Bot Match** — Three difficulties: Basic (occasional mistakes) / Gambler (optimal play) / Wave (win-probability maximizing endgame via Web Worker), powered by Expectimax DP
 - **Server-side Validation** — Anti-cheat score calculation via Cloud Functions, transaction-based rate limiting
 - **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate)
 - **App Check** — Firebase App Check (reCAPTCHA v3) prevents unauthorized use of backend services from forked apps
@@ -53,14 +53,16 @@ yacht_for_hw/
 │   ├── scoring.js            # Yacht / Yahtzee score calculation (client-side)
 │   ├── dice.js               # Dice rendering, roll animation, stagger stop
 │   ├── dice-skins.js         # Skin system (unlock, select, save)
-│   ├── bot-ai.js             # Bot AI (DP lookup table-based optimal strategy)
+│   ├── bot-ai.js             # Bot AI (DP lookup table-based optimal strategy, endgame worker management)
 │   ├── bot-game.js           # Bot match controller (local state, turns, emotes, tab close loss save)
+│   ├── endgame-worker.js     # Web Worker for win-probability maximization (Wave bot endgame)
 │   ├── history.js            # Game history save/query
 │   ├── i18n.js               # English/Korean bilingual
 │   ├── nickname.js           # Nickname generation/management (per language)
 │   ├── tutorial.js           # Interactive tutorial
 │   ├── ui.js                 # Screen transitions, scorecard (event delegation), toast (dynamic duration)
 │   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching, App Check token caching
+├── die_image/                # Image-based dice skin assets (Banana, Wave)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht mode DP lookup table (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee mode DP lookup table (Uint16, 2MB)

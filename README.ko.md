@@ -12,12 +12,12 @@
 - **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
-- **주사위 스킨** — 8종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Carbon), 게임 수 / Bot 승리 기반 잠금해제
+- **주사위 스킨** — 10종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave), 게임 수 / Bot 승리 기반 잠금해제
 - **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환 (WCAG AA 대비 준수)
 - **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원, 서버사이드 레이트 제한
 - **재접속** — 탭 복귀 시 자동 재접속, 동시 탭 충돌 감지
 - **오프라인 감지** — 네트워크 끊김 시 게임 액션 차단 + 토스트 알림
-- **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) 두 난이도, Expectimax DP 기반
+- **Bot 대전** — Basic(약간의 실수) / Gambler(최적 플레이) / Wave(승률 극대화 종반전 Web Worker) 세 난이도, Expectimax DP 기반
 - **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
 - **어뷰징 방지** — 봇 게임 탭 닫기 시 패배 저장(sendBeacon), 최소 점수 미달 게임 무효 처리(승률 미반영)
 - **App Check** — Firebase App Check (reCAPTCHA v3)로 포크 앱의 무단 백엔드 사용 차단
@@ -53,14 +53,16 @@ yacht_for_hw/
 │   ├── scoring.js            # Yacht / Yahtzee 점수 계산 (클라이언트)
 │   ├── dice.js               # 주사위 렌더링, 굴림 애니메이션, stagger stop
 │   ├── dice-skins.js         # 스킨 시스템 (잠금해제, 선택, 저장)
-│   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략)
+│   ├── bot-ai.js             # Bot AI (DP 룩업 테이블 기반 최적 전략, endgame worker 관리)
 │   ├── bot-game.js           # Bot 대전 컨트롤러 (로컬 상태, 턴 관리, 이모트, 탭 닫기 패배 저장)
+│   ├── endgame-worker.js     # Web Worker. 승률 근사 모델 (Wave 봇 종반전)
 │   ├── history.js            # 전적 저장·조회
 │   ├── i18n.js               # 영어/한국어 이중 언어
 │   ├── nickname.js           # 닉네임 생성·관리 (언어별)
 │   ├── tutorial.js           # 인터랙티브 튜토리얼
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
 │   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱
+├── die_image/                # 이미지 기반 주사위 스킨 에셋 (Banana, Wave)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
