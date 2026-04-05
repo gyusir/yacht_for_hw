@@ -118,6 +118,19 @@
     });
   }
 
+  function checkCelebration(diceVals) {
+    if (!lastRoomData) return;
+    var room = lastRoomData;
+    if ((room.rollCount || 0) <= 0) return;
+    if (diceVals[0] > 0 && diceVals[0] === diceVals[1] && diceVals[1] === diceVals[2] && diceVals[2] === diceVals[3] && diceVals[3] === diceVals[4]) {
+      var celebKey = room.currentTurn + '_' + room.rollCount;
+      if (celebKey !== lastCelebrationTs) {
+        lastCelebrationTs = celebKey;
+        window.YachtGame.UI.showConfetti();
+      }
+    }
+  }
+
   function onRoomUpdate(snapshot) {
     if (!snapshot.exists()) return;
 
@@ -256,6 +269,7 @@
         Dice.staggerStop(oppSpinTimers, dieEls, oppFinalValues, function () {
           Dice.renderAll(oppDiceState);
           isRolling = false;
+          checkCelebration(oppFinalValues);
           // Render scorecard now that all dice have stopped
           if (lastRoomData) {
             var r = lastRoomData;
@@ -331,15 +345,8 @@
     }
 
     // Celebration check: all 5 dice show the same value
-    if (!isRolling && (room.rollCount || 0) > 0) {
-      var diceVals = currentDice;
-      if (diceVals[0] > 0 && diceVals[0] === diceVals[1] && diceVals[1] === diceVals[2] && diceVals[2] === diceVals[3] && diceVals[3] === diceVals[4]) {
-        var celebKey = room.currentTurn + '_' + room.rollCount;
-        if (celebKey !== lastCelebrationTs) {
-          lastCelebrationTs = celebKey;
-          UI.showConfetti();
-        }
-      }
+    if (!isRolling) {
+      checkCelebration(currentDice);
     }
 
     // Celebration check: Yahtzee upper bonus achieved
@@ -451,6 +458,7 @@
       window.YachtGame.Dice.staggerStop(spinTimers, dieEls, finalValues, function () {
         window.YachtGame.Dice.renderAll(finalState);
         isRolling = false;
+        checkCelebration(finalValues);
       // Re-enable roll button and re-render scorecard so focus logic runs correctly
       if (lastRoomData) {
         var newRollCount = lastRoomData.rollCount || 0;

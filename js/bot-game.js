@@ -377,11 +377,6 @@
       }
     }
 
-    // Celebration flag
-    if ((category === 'yacht' || category === 'yahtzee') && score === 50) {
-      window.YachtGame.UI.showConfetti();
-    }
-
     // Check emote triggers for the category just scored
     var HIGH_VALUE_CATS = { yacht: 1, yahtzee: 1, fullHouse: 1, largeStraight: 1 };
     if (playerKey === 'player1') {
