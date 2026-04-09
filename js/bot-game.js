@@ -957,7 +957,8 @@
       // Update bot name for current language
       var I18n = window.YachtGame.I18n;
       if (I18n && roomData.players && roomData.players.player2) {
-        roomData.players.player2.name = difficulty === 'gambler'
+        roomData.players.player2.name = difficulty === 'wave'
+          ? I18n.t('wave_bot') : difficulty === 'gambler'
           ? I18n.t('gambler_bot') : I18n.t('basic_bot');
       }
       // Game over: only re-render game over screen (avoid re-triggering saveResult)
