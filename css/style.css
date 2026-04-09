@@ -1507,32 +1507,32 @@ input[type="text"]::placeholder {
 }
 [data-dice-skin="star"] .die[data-value="1"] .pip {
   background: linear-gradient(135deg, #ffecd2, #fcb69f, #ee8b60);
-  filter: drop-shadow(0 0 5px rgba(252, 182, 159, 0.8));
+  filter: drop-shadow(0 0 0 #ee8b60) drop-shadow(0 0 0 #ee8b60) drop-shadow(0 0 4px rgba(252, 182, 159, 0.8));
   width: clamp(28px, 7vw, 38px); height: clamp(28px, 7vw, 38px);
 }
 [data-dice-skin="star"] .die[data-value="2"] .pip {
   background: linear-gradient(135deg, #a18cd1, #8360c3, #6335a5);
-  filter: drop-shadow(0 0 3px rgba(131, 96, 195, 0.7));
+  filter: drop-shadow(0 0 0 #6335a5) drop-shadow(0 0 0 #6335a5) drop-shadow(0 0 3px rgba(131, 96, 195, 0.7));
   width: clamp(16px, 4vw, 20px); height: clamp(16px, 4vw, 20px);
 }
 [data-dice-skin="star"] .die[data-value="3"] .pip {
   background: linear-gradient(135deg, #c3f0e8, #a7ffe4, #56ccb2);
-  filter: drop-shadow(0 0 3px rgba(167, 255, 228, 0.6));
+  filter: drop-shadow(0 0 0 #56ccb2) drop-shadow(0 0 0 #56ccb2) drop-shadow(0 0 3px rgba(167, 255, 228, 0.6));
   width: clamp(14px, 3.5vw, 18px); height: clamp(14px, 3.5vw, 18px);
 }
 [data-dice-skin="star"] .die[data-value="4"] .pip {
   background: linear-gradient(135deg, #fbc2eb, #e08abf, #c0609a);
-  filter: drop-shadow(0 0 3px rgba(224, 138, 191, 0.7));
+  filter: drop-shadow(0 0 0 #c0609a) drop-shadow(0 0 0 #c0609a) drop-shadow(0 0 3px rgba(224, 138, 191, 0.7));
   width: clamp(13px, 3.2vw, 16px); height: clamp(13px, 3.2vw, 16px);
 }
 [data-dice-skin="star"] .die[data-value="5"] .pip {
   background: linear-gradient(135deg, #89c4f4, #5b9bd5, #3a76b0);
-  filter: drop-shadow(0 0 3px rgba(91, 155, 213, 0.7));
+  filter: drop-shadow(0 0 0 #3a76b0) drop-shadow(0 0 0 #3a76b0) drop-shadow(0 0 3px rgba(91, 155, 213, 0.7));
   width: clamp(12px, 3vw, 15px); height: clamp(12px, 3vw, 15px);
 }
 [data-dice-skin="star"] .die[data-value="6"] .pip {
   background: linear-gradient(135deg, #fff1c1, #f0d68a, #d4af37);
-  filter: drop-shadow(0 0 3px rgba(240, 214, 138, 0.7));
+  filter: drop-shadow(0 0 0 #d4af37) drop-shadow(0 0 0 #d4af37) drop-shadow(0 0 3px rgba(240, 214, 138, 0.7));
 }
 [data-theme="dark"] [data-dice-skin="star"] .die {
   background: linear-gradient(135deg, #0d0d1a, #111827);
