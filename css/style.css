@@ -1491,6 +1491,51 @@ input[type="text"]::placeholder {
   box-shadow: 0 0 0 2px #a06820;
 }
 
+/* --- Star Skin --- */
+[data-dice-skin="star"] .die {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-color: #e2b04a;
+}
+[data-dice-skin="star"] .pip {
+  background: #f5c542;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  width: clamp(10px, 2.5vw, 14px);
+  height: clamp(10px, 2.5vw, 14px);
+}
+[data-dice-skin="star"] .die[data-value="1"] .pip { background: #f5c542; }
+[data-dice-skin="star"] .die[data-value="2"] .pip { background: #e87461; }
+[data-dice-skin="star"] .die[data-value="3"] .pip { background: #5ec4e8; }
+[data-dice-skin="star"] .die[data-value="4"] .pip { background: #a78bfa; }
+[data-dice-skin="star"] .die[data-value="5"] .pip { background: #4ade80; }
+[data-dice-skin="star"] .die[data-value="6"] .pip { background: #f472b6; }
+[data-theme="dark"] [data-dice-skin="star"] .die {
+  background: linear-gradient(135deg, #0d0d1a, #111827);
+  border-color: #f5c542;
+}
+[data-theme="dark"] [data-dice-skin="star"] .pip {
+  filter: brightness(1.15);
+}
+
+/* Star skin preview */
+.skin-preview-die[data-dice-skin="star"] {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-color: #e2b04a;
+}
+.skin-preview-die[data-dice-skin="star"] .mini-pip {
+  background: #4ade80;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+[data-theme="dark"] .skin-preview-die[data-dice-skin="star"] {
+  background: linear-gradient(135deg, #0d0d1a, #111827);
+  border-color: #f5c542;
+}
+[data-theme="dark"] .skin-preview-die[data-dice-skin="star"] .mini-pip {
+  background: #4ade80;
+  filter: brightness(1.15);
+}
+
 /* ===== Skin Selector (Lobby) ===== */
 .skin-selector {
   margin-top: 20px;
@@ -1609,6 +1654,7 @@ input[type="text"]::placeholder {
 .skin-option.active[data-skin-id="banana"] { border-color: #e0c060; }
 .skin-option.active[data-skin-id="wave"] { border-color: #4a90b8; }
 .skin-option.active[data-skin-id="fire"] { border-color: #e67e22; }
+.skin-option.active[data-skin-id="star"] { border-color: #f5c542; }
 
 /* Skin-specific active selection borders — Dark mode */
 [data-theme="dark"] .skin-option.active[data-skin-id="ornate"] { border-color: #cd8e5a; }
@@ -1621,6 +1667,7 @@ input[type="text"]::placeholder {
 [data-theme="dark"] .skin-option.active[data-skin-id="banana"] { border-color: #f0d870; }
 [data-theme="dark"] .skin-option.active[data-skin-id="wave"] { border-color: #5aa8d0; }
 [data-theme="dark"] .skin-option.active[data-skin-id="fire"] { border-color: #f0932b; }
+[data-theme="dark"] .skin-option.active[data-skin-id="star"] { border-color: #f5c542; }
 
 .skin-option.locked {
   cursor: default;

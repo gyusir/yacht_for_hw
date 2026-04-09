@@ -28,7 +28,8 @@
     { id: 'banana',    name: 'Banana',    unlockAt: -1, unlockAtWins: 25 },
     { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' },
     { id: 'wave',      name: 'Wave',      unlockAt: -1, unlockBy: 'wave' },
-    { id: 'fire',      name: 'Fire',      unlockAt: -1, unlockAtStreak: 5 }
+    { id: 'fire',      name: 'Fire',      unlockAt: -1, unlockAtStreak: 5 },
+    { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -58,6 +59,11 @@
     }
     if (def.unlockAtWins) {
       return (totalWins || 0) >= def.unlockAtWins;
+    }
+    if (def.unlockAtBotWinsTotal) {
+      var total = 0;
+      if (botWins) { for (var k in botWins) { if (botWins.hasOwnProperty(k)) total += botWins[k]; } }
+      return total >= def.unlockAtBotWinsTotal;
     }
     if (def.unlockAtStreak) {
       return (maxStreak || 0) >= def.unlockAtStreak;
@@ -142,13 +148,13 @@
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/10 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/11 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
       var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
-      var targetContainer = def.unlockBy ? botContainer : playContainer;
+      var targetContainer = (def.unlockBy || def.unlockAtBotWinsTotal) ? botContainer : playContainer;
 
       var option = document.createElement('div');
       option.className = 'skin-option';
@@ -218,6 +224,10 @@
           var wins = (botWins[def.unlockBy]) || 0;
           var botLabel = def.unlockBy === 'wave' ? (I18n ? I18n.t('wave') : 'Wave') : (def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic'));
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
+        } else if (def.unlockAtBotWinsTotal) {
+          var botTotal = 0;
+          if (botWins) { for (var bk in botWins) { if (botWins.hasOwnProperty(bk)) botTotal += botWins[bk]; } }
+          progressEl.textContent = (I18n ? I18n.t('skin_bot_total') : 'Bot') + ' ' + botTotal + '/' + def.unlockAtBotWinsTotal + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
         } else if (def.unlockAtStreak) {
           progressEl.textContent = currentStreak + '/' + def.unlockAtStreak + ' ' + (I18n ? I18n.t('skin_streak') : 'streak');
         } else if (def.unlockAtWins) {
