@@ -170,6 +170,14 @@
     } else {
       UI.showDrawProposal(false);
       UI.showDrawPending(false);
+
+      // Detect draw rejection: previously had our proposal, now gone, game still playing
+      if (prevRoom && prevRoom.drawProposal &&
+          prevRoom.drawProposal.proposedBy === localPlayerKey &&
+          room.status === 'playing') {
+        var _I18n = window.YachtGame.I18n;
+        UI.showToast(_I18n ? _I18n.t('draw_declined') : 'Opponent declined the draw.');
+      }
     }
 
     // Skip re-render if only non-game-state fields changed (e.g. emotes)
@@ -597,6 +605,7 @@
     if (myScores[category] !== null && myScores[category] !== undefined) return;
 
     isWriting = true;
+    window.YachtGame.UI.showCellLoading(category);
 
     // Call Cloud Function — server calculates score and updates game state
     selectCategoryFn({ roomCode: roomCode, category: category }).then(function (result) {
@@ -606,6 +615,7 @@
       }
     }).catch(function (error) {
       isWriting = false;
+      window.YachtGame.UI.hideCellLoading();
       console.error('selectCategory error:', error);
       window.YachtGame.UI.showToast('Failed: ' + (error.message || 'Unknown error'));
     });
@@ -685,7 +695,9 @@
     getFunctions();
     proposeDrawFn({ roomCode: roomCode }).catch(function (err) {
       console.error('proposeDraw error:', err);
-      window.YachtGame.UI.showToast('무승부 제안에 실패했습니다');
+      window.YachtGame.UI.showDrawPending(false);
+      var I18n = window.YachtGame.I18n;
+      window.YachtGame.UI.showToast(I18n ? I18n.t('draw_failed') : '무승부 제안에 실패했습니다');
     });
   }
 
@@ -711,6 +723,7 @@
     isRolling: function () { return isRolling; },
     proposeDraw: proposeDraw,
     respondToDraw: respondToDraw,
+    resolvePlayerName: resolvePlayerName,
     refreshUI: function () {
       if (!lastRoomData) return;
       var room = lastRoomData;

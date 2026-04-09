@@ -33,6 +33,7 @@
       skin_unlocked_count: 'unlocked',
       skin_games_count: 'games',
       skin_wins_count: 'wins',
+      skin_bot_total: 'Bot',
       skin_vs_bot: 'vs',
       skin_streak: 'streak',
       my_stats: '\uD83D\uDCCA Stats',
@@ -87,6 +88,24 @@
       find_opponent: 'Find Opponent',
       any_mode: 'Any',
       any_mode_desc: 'Match with any game mode',
+
+      // Tips
+      tip_label: 'Tip:',
+      tip_1: 'Upper total 63+ earns a +35 Bonus! Aim for 3 of each number.',
+      tip_2: 'Rolled a pair? You can aim for both Full House and Four of a Kind at once.',
+      tip_3: 'Got a Sm. Straight? It might be worth pushing for a Lg. Straight too.',
+      tip_4: 'Don\'t give up on Yacht/Yahtzee easily! Three of a kind has ~3% chance to become five.',
+      tip_5: 'Save Choice/Chance for late game — it\'s great insurance when other categories fall through.',
+      tip_6: 'Sixes are the most efficient way to reach the upper Bonus threshold of 63.',
+      tip_7: 'With 2 rolls left, feel free to be bold. With 1 roll left, play it safe!',
+      tip_8: 'Scoring 0 is part of the game. Place it strategically on your lowest-expected category.',
+      tip_9: 'Falling behind? Switch to high-risk plays. Go for Yacht/Yahtzee instead of safe points!',
+      tip_10: 'Full House is easiest to hit from two pair. One pair alone makes it much harder.',
+      tip_11: 'Don\'t dump all your points into one upper category. Spread them out for the Bonus.',
+      tip_12: 'There are 5 dice in total. There is no 6th die. Sorry.',
+      tip_13: 'The player with the higher total score wins. The lower one loses. That\'s how it works.',
+      tip_14: 'Four of a Kind scored low? It might be better placed in an upper category instead.',
+      tip_15: 'To roll the dice, press the Roll button. You\'re welcome.',
 
       // Bot Setup
       bot_game: 'Bot Game',
@@ -160,6 +179,7 @@
       draw_proposed: 'Draw proposed. Waiting for response...',
       bot_no_draw: 'Robots don\'t know what a draw is 🤖',
       draw_declined: 'Opponent declined the draw.',
+      draw_failed: 'Failed to propose draw.',
       accept: 'Accept',
       decline: 'Decline',
 
@@ -274,6 +294,7 @@
       skin_unlocked_count: '\ud574\uc81c',
       skin_games_count: '\ud310',
       skin_wins_count: '\uc2b9',
+      skin_bot_total: '\uBD07',
       skin_vs_bot: 'vs',
       skin_streak: '\uc5f0\uc2b9',
       my_stats: '\uD83D\uDCCA \ub0b4 \uc804\uc801',
@@ -328,6 +349,24 @@
       find_opponent: '\uc0c1\ub300 \ucc3e\uae30',
       any_mode: '\uc0c1\uad00\uc5c6\uc74c',
       any_mode_desc: '\uc544\ubb34 \uac8c\uc784 \ubaa8\ub4dc\uc640 \ub9e4\uce6d',
+
+      // Tips
+      tip_label: '\uAFC0\uD301:',
+      tip_1: '\uc0c1\ub2e8 \ud569\uacc4 63\uc810 \uc774\uc0c1\uc774\uba74 \ubcf4\ub108\uc2a4 +35\uc810! \uac01 \uc22b\uc790\uc5d0\uc11c 3\uac1c\uc529 \ud655\ubcf4\ub97c \ubaa9\ud45c\ub85c \ud558\uc790.',
+      tip_2: '\uc6d0\ud398\uc5b4\uac00 \ub098\uc654\ub2e4\uba74, \ud480\ud558\uc6b0\uc2a4\uc640 \ud3ec \ub2e4\uc774\uc2a4 \ub450 \uac00\uc9c0\ub97c \ub3d9\uc2dc\uc5d0 \ub178\ub9b4 \uc218 \uc788\ub2e4.',
+      tip_3: '\uc2a4\ubab0 \uc2a4\ud2b8\ub808\uc774\ud2b8\uac00 \ub098\uc624\uba74, \ub77c\uc9c0 \uc2a4\ud2b8\ub808\uc774\ud2b8\uae4c\uc9c0 \ub178\ub824\ubcfc \uac00\uce58\uac00 \uc788\ub2e4.',
+      tip_4: '\uc694\ud2b8/\uc57c\ucc0c\ub97c \uc27d\uac8c \ud3ec\uae30\ud558\uc9c0 \ub9c8\ub77c! \uac19\uc740 \ub208 3\uac1c\uc5d0\uc11c \uc694\ud2b8/\uc57c\ucc0c\uac00 \ub420 \ud655\ub960\uc740 \uc57d 3%\ub2e4.',
+      tip_5: '\ucd08\uc774\uc2a4/\ucc2c\uc2a4\ub294 \ud6c4\ubc18\uc5d0 \uc544\uaef4\ub450\uba74 \ub2e4\ub978 \uce74\ud14c\uace0\ub9ac \uc2e4\ud328 \uc2dc \ubcf4\ud5d8\uc774 \ub41c\ub2e4.',
+      tip_6: '\uc0c1\ub2e8 \ubcf4\ub108\uc2a4\ub97c \ub178\ub9b0\ub2e4\uba74 6\uc758 \ud569\uc5d0\uc11c \ub192\uc740 \uc810\uc218\ub97c \ud655\ubcf4\ud558\ub294 \uac83\uc774 \uac00\uc7a5 \ud6a8\uc728\uc801\uc774\ub2e4.',
+      tip_7: '\ub0a8\uc740 \ub864\uc774 2\ud68c\uc77c \ub54c\ub294 \uacfc\uac10\ud558\uac8c \ubc14\uafb8\uc790. 1\ud68c \ub0a8\uc558\uc744 \ub54c\ub294 \uc2e0\uc911\ud558\uac8c!',
+      tip_8: '0\uc810 \uae30\ub85d\uc740 \uc815\uc0c1\uc774\ub2e4. \uae30\ub300\uac12\uc774 \uac00\uc7a5 \ub0ae\uc740 \uce74\ud14c\uace0\ub9ac\uc5d0 \uc804\ub7b5\uc801\uc73c\ub85c 0\uc810\uc744 \ubc30\uce58\ud558\ub77c.',
+      tip_9: '\uc0c1\ub300\uac00 \uc55e\uc11c\uace0 \uc788\ub2e4\uba74 \uace0\uc704\ud5d8\u00b7\uace0\ubcf4\uc0c1 \uc804\ub7b5\uc73c\ub85c! \uc548\uc804\ud55c \uc810\uc218\ubcf4\ub2e4 \uc694\ud2b8/\uc57c\ucc0c\ub97c \ub178\ub824\ub77c.',
+      tip_10: '\ud480\ud558\uc6b0\uc2a4\ub294 \ud22c\ud398\uc5b4\uc5d0\uc11c \ub178\ub9ac\ub294 \uac83\uc774 \uac00\uc7a5 \ud6a8\uc728\uc801\uc774\ub2e4. \uc6d0\ud398\uc5b4\ub9cc\uc73c\ub85c\ub294 \ud655\ub960\uc774 \ud06c\uac8c \ub5a8\uc5b4\uc9c4\ub2e4.',
+      tip_11: '\uc0c1\ub2e8\uc5d0\uc11c \ud2b9\uc815 \uc22b\uc790\ub9cc \ubab0\ube75\ud558\uc9c0 \ub9d0\uace0 \uace8\uace0\ub8e8 \ucc44\uc6cc\uc57c \ubcf4\ub108\uc2a4\uc5d0 \uc720\ub9ac\ud558\ub2e4.',
+      tip_12: '\uc8fc\uc0ac\uc704\ub294 \ucd1d 5\uac1c\ub2e4. 6\ubc88\uc9f8 \uc8fc\uc0ac\uc704\ub294 \uc5c6\ub2e4. \uc720\uac10.',
+      tip_13: '\ucd1d\uc810\uc774 \ub354 \ub192\uc740 \ucabd\uc774 \uc774\uae34\ub2e4. \ub0ae\uc73c\uba74 \uc9c4\ub2e4. \uadf8\ub7f0 \uac70\ub2e4.',
+      tip_14: '\ud3ec \ub2e4\uc774\uc2a4 \uc810\uc218\uac00 \ub0ae\ub2e4\uba74, \uc0c1\ub2e8 \uce74\ud14c\uace0\ub9ac\uc5d0 \ub123\ub294 \uac83\uc774 \ub098\uc744 \uc218 \uc788\ub2e4.',
+      tip_15: '\uc8fc\uc0ac\uc704\ub97c \uad74\ub9ac\ub824\uba74 Roll \ubc84\ud2bc\uc744 \ub204\ub974\uba74 \ub41c\ub2e4. \ubcc4 \uac70 \uc544\ub2c8\ub2e4.',
 
       // Bot Setup
       bot_game: '\ubd07 \ub300\uc804',
@@ -401,6 +440,7 @@
       draw_proposed: '\ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc751\ub2f5 \ub300\uae30 \uc911...',
       bot_no_draw: '로봇은 무승부를 몰라요🤖',
       draw_declined: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uac70\uc808\ud588\uc2b5\ub2c8\ub2e4.',
+      draw_failed: '\ubb34\uc2b9\ubd80 \uc81c\uc548\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
       accept: '\uc218\ub77d',
       decline: '\uac70\uc808',
 

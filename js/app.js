@@ -12,6 +12,25 @@
   var History = window.YachtGame.History;
   var DiceSkins = window.YachtGame.DiceSkins;
 
+  var TIP_COUNT = 15;
+  function showRandomTip() {
+    var tipEl = document.getElementById('waiting-tip');
+    if (!tipEl) return;
+    var I18n = window.YachtGame.I18n;
+    if (!I18n) return;
+    var idx = tipEl.getAttribute('data-tip-idx');
+    if (!idx) {
+      idx = Math.floor(Math.random() * TIP_COUNT) + 1;
+      tipEl.setAttribute('data-tip-idx', idx);
+    }
+    tipEl.textContent = I18n.t('tip_label') + ' ' + I18n.t('tip_' + idx);
+  }
+  function resetRandomTip() {
+    var tipEl = document.getElementById('waiting-tip');
+    if (tipEl) tipEl.removeAttribute('data-tip-idx');
+    showRandomTip();
+  }
+
   // Initialize theme
   UI.initTheme();
 
@@ -198,6 +217,8 @@
     if (statsScreen && statsScreen.classList.contains('active') && window.YachtGame.UI && window.YachtGame.UI.refreshHistory) {
       window.YachtGame.UI.refreshHistory();
     }
+    // Re-render waiting tip for new language
+    showRandomTip();
   });
 
   // --- Auth: show/hide login UI based on auth state ---
@@ -371,7 +392,8 @@
       // Wait for opponent
       cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+        var oppName = Game.resolvePlayerName(player2, player2.name);
+        UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(result.roomCode, result.playerKey);
       });
     });
@@ -441,10 +463,12 @@
         currentWaitingRoomCode = result.roomCode;
         document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
         UI.showScreen('screen-waiting');
+        resetRandomTip();
 
         cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
           cancelOpponentListener = null;
-          UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+          var oppName = Game.resolvePlayerName(player2, player2.name);
+          UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
           Game.init(result.roomCode, result.playerKey);
         });
       }
@@ -554,8 +578,9 @@
       UI.showToast(I18n ? I18n.t('bot_no_draw') : '로봇은 무승부를 모릅니다 🤖');
       return;
     }
+    if (btnDraw.disabled) return;
+    UI.showDrawPending(true);
     window.YachtGame.Game.proposeDraw();
-    UI.showToast(I18n ? I18n.t('draw_proposed') : 'Draw proposed. Waiting for response...');
   });
 
   btnAcceptDraw.addEventListener('click', function () {
@@ -883,9 +908,11 @@
       displayRoomCode.textContent = session.roomCode;
       currentWaitingRoomCode = session.roomCode;
       UI.showScreen('screen-waiting');
+      if (waitType === 'random') showRandomTip();
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+        var oppName = Game.resolvePlayerName(player2, player2.name);
+        UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(session.roomCode, session.playerKey);
       });
     }

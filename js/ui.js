@@ -118,7 +118,20 @@
 
   function showDrawPending(show) {
     var btn = document.getElementById('btn-draw');
-    if (btn) btn.disabled = show;
+    if (!btn) return;
+    btn.disabled = show;
+    if (show) {
+      if (!btn.getAttribute('data-original-text')) {
+        btn.setAttribute('data-original-text', btn.textContent);
+      }
+      btn.innerHTML = '<span class="btn-dice-spinner"></span>';
+    } else {
+      var orig = btn.getAttribute('data-original-text');
+      if (orig) {
+        btn.textContent = orig;
+        btn.removeAttribute('data-original-text');
+      }
+    }
   }
 
   // Turn indicator (no-op, turn is shown via roll button dimming)
@@ -266,6 +279,23 @@
         if (hint.parentNode) hint.remove();
       });
     }, 1500);
+  }
+
+  function showCellLoading(category) {
+    var old = document.querySelector('.score-confirm-hint');
+    if (old) old.remove();
+    var cell = document.querySelector('.score-cell[data-category="' + category + '"]');
+    if (!cell) return;
+    cell.classList.add('loading');
+    cell.classList.remove('pending', 'preview');
+    cell.innerHTML = '<span class="btn-dice-spinner"></span>';
+  }
+
+  function hideCellLoading() {
+    var cells = document.querySelectorAll('.score-cell.loading');
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].classList.remove('loading');
+    }
   }
 
   function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, rowClass) {
@@ -573,6 +603,8 @@
     setRollButtonEnabled: setRollButtonEnabled,
     renderScorecard: renderScorecard,
     showScoreConfirmHint: showScoreConfirmHint,
+    showCellLoading: showCellLoading,
+    hideCellLoading: hideCellLoading,
     renderGameOver: renderGameOver,
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,
