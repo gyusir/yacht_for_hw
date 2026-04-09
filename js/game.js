@@ -695,7 +695,9 @@
     getFunctions();
     proposeDrawFn({ roomCode: roomCode }).catch(function (err) {
       console.error('proposeDraw error:', err);
-      window.YachtGame.UI.showToast('무승부 제안에 실패했습니다');
+      window.YachtGame.UI.showDrawPending(false);
+      var I18n = window.YachtGame.I18n;
+      window.YachtGame.UI.showToast(I18n ? I18n.t('draw_failed') : '무승부 제안에 실패했습니다');
     });
   }
 

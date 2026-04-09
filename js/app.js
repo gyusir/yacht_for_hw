@@ -556,8 +556,9 @@
       UI.showToast(I18n ? I18n.t('bot_no_draw') : '로봇은 무승부를 모릅니다 🤖');
       return;
     }
+    if (btnDraw.disabled) return;
+    UI.showDrawPending(true);
     window.YachtGame.Game.proposeDraw();
-    UI.showToast(I18n ? I18n.t('draw_proposed') : 'Draw proposed. Waiting for response...');
   });
 
   btnAcceptDraw.addEventListener('click', function () {

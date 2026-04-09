@@ -118,7 +118,20 @@
 
   function showDrawPending(show) {
     var btn = document.getElementById('btn-draw');
-    if (btn) btn.disabled = show;
+    if (!btn) return;
+    btn.disabled = show;
+    if (show) {
+      if (!btn.getAttribute('data-original-text')) {
+        btn.setAttribute('data-original-text', btn.textContent);
+      }
+      btn.innerHTML = '<span class="btn-dice-spinner"></span>';
+    } else {
+      var orig = btn.getAttribute('data-original-text');
+      if (orig) {
+        btn.textContent = orig;
+        btn.removeAttribute('data-original-text');
+      }
+    }
   }
 
   // Turn indicator (no-op, turn is shown via roll button dimming)

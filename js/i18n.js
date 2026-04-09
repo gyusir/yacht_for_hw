@@ -160,6 +160,7 @@
       draw_proposed: 'Draw proposed. Waiting for response...',
       bot_no_draw: 'Robots don\'t know what a draw is 🤖',
       draw_declined: 'Opponent declined the draw.',
+      draw_failed: 'Failed to propose draw.',
       accept: 'Accept',
       decline: 'Decline',
 
@@ -401,6 +402,7 @@
       draw_proposed: '\ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc751\ub2f5 \ub300\uae30 \uc911...',
       bot_no_draw: '로봇은 무승부를 몰라요🤖',
       draw_declined: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uac70\uc808\ud588\uc2b5\ub2c8\ub2e4.',
+      draw_failed: '\ubb34\uc2b9\ubd80 \uc81c\uc548\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
       accept: '\uc218\ub77d',
       decline: '\uac70\uc808',
 
