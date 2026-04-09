@@ -18,8 +18,17 @@
     if (!tipEl) return;
     var I18n = window.YachtGame.I18n;
     if (!I18n) return;
-    var idx = Math.floor(Math.random() * TIP_COUNT) + 1;
+    var idx = tipEl.getAttribute('data-tip-idx');
+    if (!idx) {
+      idx = Math.floor(Math.random() * TIP_COUNT) + 1;
+      tipEl.setAttribute('data-tip-idx', idx);
+    }
     tipEl.textContent = I18n.t('tip_label') + ' ' + I18n.t('tip_' + idx);
+  }
+  function resetRandomTip() {
+    var tipEl = document.getElementById('waiting-tip');
+    if (tipEl) tipEl.removeAttribute('data-tip-idx');
+    showRandomTip();
   }
 
   // Initialize theme
@@ -208,6 +217,8 @@
     if (statsScreen && statsScreen.classList.contains('active') && window.YachtGame.UI && window.YachtGame.UI.refreshHistory) {
       window.YachtGame.UI.refreshHistory();
     }
+    // Re-render waiting tip for new language
+    showRandomTip();
   });
 
   // --- Auth: show/hide login UI based on auth state ---
@@ -452,7 +463,7 @@
         currentWaitingRoomCode = result.roomCode;
         document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
         UI.showScreen('screen-waiting');
-        showRandomTip();
+        resetRandomTip();
 
         cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
           cancelOpponentListener = null;
