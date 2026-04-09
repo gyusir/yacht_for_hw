@@ -12,6 +12,16 @@
   var History = window.YachtGame.History;
   var DiceSkins = window.YachtGame.DiceSkins;
 
+  var TIP_COUNT = 15;
+  function showRandomTip() {
+    var tipEl = document.getElementById('waiting-tip');
+    if (!tipEl) return;
+    var I18n = window.YachtGame.I18n;
+    if (!I18n) return;
+    var idx = Math.floor(Math.random() * TIP_COUNT) + 1;
+    tipEl.textContent = I18n.t('tip_label') + ' ' + I18n.t('tip_' + idx);
+  }
+
   // Initialize theme
   UI.initTheme();
 
@@ -442,6 +452,7 @@
         currentWaitingRoomCode = result.roomCode;
         document.getElementById('screen-waiting').setAttribute('data-wait-type', 'random');
         UI.showScreen('screen-waiting');
+        showRandomTip();
 
         cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
           cancelOpponentListener = null;
@@ -886,6 +897,7 @@
       displayRoomCode.textContent = session.roomCode;
       currentWaitingRoomCode = session.roomCode;
       UI.showScreen('screen-waiting');
+      if (waitType === 'random') showRandomTip();
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;
         var oppName = Game.resolvePlayerName(player2, player2.name);
