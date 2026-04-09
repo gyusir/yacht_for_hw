@@ -493,8 +493,8 @@ input[type="text"]::placeholder {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-muted);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
