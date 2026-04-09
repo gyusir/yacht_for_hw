@@ -2097,6 +2097,15 @@ input[type="text"]::placeholder {
   color: var(--accent);
 }
 
+.scorecard .score-cell.loading {
+  background: var(--accent-light);
+  pointer-events: none;
+}
+
+.scorecard .score-cell.loading .btn-dice-spinner {
+  font-size: 0.85rem;
+}
+
 /* Score confirm hint popup */
 .score-confirm-hint {
   position: absolute;

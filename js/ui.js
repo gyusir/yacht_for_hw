@@ -268,6 +268,23 @@
     }, 1500);
   }
 
+  function showCellLoading(category) {
+    var old = document.querySelector('.score-confirm-hint');
+    if (old) old.remove();
+    var cell = document.querySelector('.score-cell[data-category="' + category + '"]');
+    if (!cell) return;
+    cell.classList.add('loading');
+    cell.classList.remove('pending', 'preview');
+    cell.innerHTML = '<span class="btn-dice-spinner"></span>';
+  }
+
+  function hideCellLoading() {
+    var cells = document.querySelectorAll('.score-cell.loading');
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].classList.remove('loading');
+    }
+  }
+
   function renderCategoryRow(category, myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, rowClass) {
     var Scoring = window.YachtGame.Scoring;
     var displayName = Scoring.getDisplayName(category);
@@ -573,6 +590,8 @@
     setRollButtonEnabled: setRollButtonEnabled,
     renderScorecard: renderScorecard,
     showScoreConfirmHint: showScoreConfirmHint,
+    showCellLoading: showCellLoading,
+    hideCellLoading: hideCellLoading,
     renderGameOver: renderGameOver,
     showRulesOverlay: showRulesOverlay,
     hideRulesOverlay: hideRulesOverlay,

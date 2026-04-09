@@ -371,7 +371,8 @@
       // Wait for opponent
       cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+        var oppName = Game.resolvePlayerName(player2, player2.name);
+        UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(result.roomCode, result.playerKey);
       });
     });
@@ -444,7 +445,8 @@
 
         cancelOpponentListener = Lobby.listenForOpponent(result.roomCode, function (player2) {
           cancelOpponentListener = null;
-          UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+          var oppName = Game.resolvePlayerName(player2, player2.name);
+          UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
           Game.init(result.roomCode, result.playerKey);
         });
       }
@@ -885,7 +887,8 @@
       UI.showScreen('screen-waiting');
       cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
         cancelOpponentListener = null;
-        UI.showToast(player2.name + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+        var oppName = Game.resolvePlayerName(player2, player2.name);
+        UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
         Game.init(session.roomCode, session.playerKey);
       });
     }
