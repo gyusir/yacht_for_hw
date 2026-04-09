@@ -965,7 +965,7 @@ input[type="text"]::placeholder {
 [data-wait-type="private"] .wait-random-only { display: none; }
 
 .waiting-tip {
-  margin-top: 16px;
+  margin-top: 28px;
   padding: 10px 14px;
   background: var(--accent-light);
   border-radius: var(--radius-sm);
