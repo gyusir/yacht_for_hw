@@ -1495,6 +1495,9 @@ input[type="text"]::placeholder {
 [data-dice-skin="star"] .die {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   border-color: #e2b04a;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  place-items: center;
 }
 [data-dice-skin="star"] .pip {
   background: #f5c542;
@@ -1503,11 +1506,11 @@ input[type="text"]::placeholder {
   width: clamp(10px, 2.5vw, 14px);
   height: clamp(10px, 2.5vw, 14px);
 }
-[data-dice-skin="star"] .die[data-value="1"] .pip { background: #f5c542; width: clamp(24px, 6vw, 32px); height: clamp(24px, 6vw, 32px); }
-[data-dice-skin="star"] .die[data-value="2"] .pip { background: #e87461; width: clamp(14px, 3.5vw, 18px); height: clamp(14px, 3.5vw, 18px); }
-[data-dice-skin="star"] .die[data-value="3"] .pip { background: #5ec4e8; width: clamp(13px, 3.2vw, 17px); height: clamp(13px, 3.2vw, 17px); }
-[data-dice-skin="star"] .die[data-value="4"] .pip { background: #a78bfa; width: clamp(12px, 3vw, 16px); height: clamp(12px, 3vw, 16px); }
-[data-dice-skin="star"] .die[data-value="5"] .pip { background: #4ade80; width: clamp(11px, 2.8vw, 15px); height: clamp(11px, 2.8vw, 15px); }
+[data-dice-skin="star"] .die[data-value="1"] .pip { background: #f5c542; width: clamp(28px, 7vw, 38px); height: clamp(28px, 7vw, 38px); }
+[data-dice-skin="star"] .die[data-value="2"] .pip { background: #e87461; width: clamp(16px, 4vw, 20px); height: clamp(16px, 4vw, 20px); }
+[data-dice-skin="star"] .die[data-value="3"] .pip { background: #5ec4e8; width: clamp(14px, 3.5vw, 18px); height: clamp(14px, 3.5vw, 18px); }
+[data-dice-skin="star"] .die[data-value="4"] .pip { background: #a78bfa; width: clamp(13px, 3.2vw, 16px); height: clamp(13px, 3.2vw, 16px); }
+[data-dice-skin="star"] .die[data-value="5"] .pip { background: #4ade80; width: clamp(12px, 3vw, 15px); height: clamp(12px, 3vw, 15px); }
 [data-dice-skin="star"] .die[data-value="6"] .pip { background: #f472b6; }
 [data-theme="dark"] [data-dice-skin="star"] .die {
   background: linear-gradient(135deg, #0d0d1a, #111827);
