@@ -90,3 +90,6 @@ js/test-dice-skins.js
 # Claude Code local settings (commands/ 제외)
 .claude/*
 !.claude/commands/
+
+# Playwright MCP screenshots/snapshots
+.playwright-mcp/
