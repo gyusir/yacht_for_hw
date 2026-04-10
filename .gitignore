@@ -76,6 +76,9 @@ skills-lock.json
 __pycache__/
 *.pyc
 
+# MCP config (local dev tools)
+.mcp.json
+
 # macOS
 .DS_Store
 
