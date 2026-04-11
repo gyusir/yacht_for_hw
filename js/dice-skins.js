@@ -29,7 +29,9 @@
     { id: 'carbon',    name: 'Carbon',    unlockAt: -1, unlockBy: 'gambler' },
     { id: 'wave',      name: 'Wave',      unlockAt: -1, unlockBy: 'wave' },
     { id: 'fire',      name: 'Fire',      unlockAt: -1, unlockAtStreak: 5 },
-    { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 }
+    { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 },
+    { id: 'dragon',    name: 'Dragon',    unlockAt: -1, unlockAtExactScore: 256 },
+    { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -44,15 +46,15 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak) {
+  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak)) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak, achievements)) count++;
     }
     return count;
   }
 
-  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak) {
+  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements) {
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
       return wins >= BOT_WIN_THRESHOLD;
@@ -68,12 +70,18 @@
     if (def.unlockAtStreak) {
       return (maxStreak || 0) >= def.unlockAtStreak;
     }
+    if (def.unlockAtExactScore) {
+      return !!(achievements && achievements['score' + def.unlockAtExactScore]);
+    }
+    if (def.unlockAtYachtStreak) {
+      return !!(achievements && achievements.yachtStreak3);
+    }
     return totalGames >= def.unlockAt;
   }
 
-  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak) {
+  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak, achievements) {
     var def = getSkinDef(skinId);
-    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
+    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements);
   }
 
   function applySkin(skinId) {
@@ -128,13 +136,14 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak) {
+  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements) {
     if (!containerEl) return;
     totalGames = totalGames || 0;
     totalWins = totalWins || 0;
     botWins = botWins || {};
     maxStreak = maxStreak || 0;
     currentStreak = currentStreak || 0;
+    achievements = achievements || {};
 
     var playContainer = document.getElementById('skin-options-play');
     var botContainer = document.getElementById('skin-options-bot');
@@ -144,16 +153,16 @@
     playContainer.innerHTML = '';
     botContainer.innerHTML = '';
 
-    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak);
+    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/11 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/13 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak);
+      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements);
       var targetContainer = (def.unlockBy || def.unlockAtBotWinsTotal) ? botContainer : playContainer;
 
       var option = document.createElement('div');
@@ -192,6 +201,18 @@
         img.className = 'fire-preview';
         img.alt = 'Fire 5';
         miniDie.appendChild(img);
+      } else if (def.id === 'dragon') {
+        var img = document.createElement('img');
+        img.src = 'die_image/dragon/Group 13.png';
+        img.className = 'dragon-preview';
+        img.alt = 'Dragon 1';
+        miniDie.appendChild(img);
+      } else if (def.id === 'flower') {
+        var img = document.createElement('img');
+        img.src = 'die_image/flower/Group 26.png';
+        img.className = 'flower-preview';
+        img.alt = 'Flower 5';
+        miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
         var pipPositions = [1, 3, 5, 7, 9]; // value 5 layout
@@ -228,6 +249,10 @@
           var botTotal = 0;
           if (botWins) { for (var bk in botWins) { if (botWins.hasOwnProperty(bk)) botTotal += botWins[bk]; } }
           progressEl.textContent = (I18n ? I18n.t('skin_bot_total') : 'Bot') + ' ' + botTotal + '/' + def.unlockAtBotWinsTotal + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
+        } else if (def.unlockAtExactScore) {
+          progressEl.textContent = (I18n ? I18n.t('skin_exact_score') : 'Score') + ' ' + def.unlockAtExactScore;
+        } else if (def.unlockAtYachtStreak) {
+          progressEl.textContent = 'Yacht ' + def.unlockAtYachtStreak + (I18n ? I18n.t('skin_yacht_streak') : ' in a row');
         } else if (def.unlockAtStreak) {
           progressEl.textContent = currentStreak + '/' + def.unlockAtStreak + ' ' + (I18n ? I18n.t('skin_streak') : 'streak');
         } else if (def.unlockAtWins) {
@@ -274,6 +299,12 @@
       html += '<img class="wave-preview" src="die_image/wave/wave' + value + '.png" alt="Wave ' + value + '">';
     } else if (skinId === 'fire') {
       html += '<img class="fire-preview" src="die_image/fire/fire' + value + '.png" alt="Fire ' + value + '">';
+    } else if (skinId === 'dragon') {
+      var DRAGON_CUBE_FILES = { 1: 'Group 13', 2: 'Group 15', 3: 'Group 16', 4: 'Group 17', 5: 'Group 18', 6: 'Group 19' };
+      html += '<img class="dragon-preview" src="die_image/dragon/' + DRAGON_CUBE_FILES[value] + '.png" alt="Dragon ' + value + '">';
+    } else if (skinId === 'flower') {
+      var FLOWER_CUBE_FILES = { 1: 'Group 20', 2: 'Group 23', 3: 'Group 24', 4: 'Group 25', 5: 'Group 26', 6: 'Group 27' };
+      html += '<img class="flower-preview" src="die_image/flower/' + FLOWER_CUBE_FILES[value] + '.png" alt="Flower ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {

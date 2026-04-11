@@ -1491,6 +1491,52 @@ input[type="text"]::placeholder {
   box-shadow: 0 0 0 2px #a06820;
 }
 
+/* --- Dragon: image-based dice skin --- */
+[data-dice-skin="dragon"] .die {
+  background: #1a1a2e;
+  border-color: #c08430;
+  padding: 0;
+  display: block;
+  overflow: visible;
+  border-radius: 12px;
+}
+[data-dice-skin="dragon"] .die .dragon-die-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+[data-dice-skin="dragon"] .pip { display: none; }
+[data-theme="dark"] [data-dice-skin="dragon"] .die {
+  background: #1a1a2e;
+  border-color: #d4a04a;
+  box-shadow: 0 0 8px rgba(212, 160, 74, 0.4);
+}
+
+/* --- Flower: image-based dice skin --- */
+[data-dice-skin="flower"] .die {
+  background: #c8dce8;
+  border-color: #e08090;
+  padding: 0;
+  display: block;
+  overflow: visible;
+  border-radius: 12px;
+}
+[data-dice-skin="flower"] .die .flower-die-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+[data-dice-skin="flower"] .pip { display: none; }
+[data-theme="dark"] [data-dice-skin="flower"] .die {
+  background: #c8dce8;
+  border-color: #f0a0b0;
+  box-shadow: 0 0 8px rgba(240, 160, 176, 0.4);
+}
+
 /* --- Star Skin --- */
 [data-dice-skin="star"] .die {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -1675,6 +1721,8 @@ input[type="text"]::placeholder {
 .skin-option.active[data-skin-id="banana"] { border-color: #e0c060; }
 .skin-option.active[data-skin-id="wave"] { border-color: #4a90b8; }
 .skin-option.active[data-skin-id="fire"] { border-color: #e67e22; }
+.skin-option.active[data-skin-id="dragon"] { border-color: #c08430; }
+.skin-option.active[data-skin-id="flower"] { border-color: #e08090; }
 .skin-option.active[data-skin-id="star"] { border-color: #fcb69f; }
 
 /* Skin-specific active selection borders — Dark mode */
@@ -1688,6 +1736,8 @@ input[type="text"]::placeholder {
 [data-theme="dark"] .skin-option.active[data-skin-id="banana"] { border-color: #f0d870; }
 [data-theme="dark"] .skin-option.active[data-skin-id="wave"] { border-color: #5aa8d0; }
 [data-theme="dark"] .skin-option.active[data-skin-id="fire"] { border-color: #f0932b; }
+[data-theme="dark"] .skin-option.active[data-skin-id="dragon"] { border-color: #d4a04a; }
+[data-theme="dark"] .skin-option.active[data-skin-id="flower"] { border-color: #f0a0b0; }
 [data-theme="dark"] .skin-option.active[data-skin-id="star"] { border-color: #fcb69f; }
 
 .skin-option.locked {
@@ -1849,6 +1899,40 @@ input[type="text"]::placeholder {
 }
 .skin-preview-die[data-dice-skin="fire"] .mini-pip { display: none; }
 
+.skin-preview-die[data-dice-skin="dragon"] {
+  background: #1a1a2e;
+  border: 2px solid #c08430;
+  box-shadow: none;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+}
+.skin-preview-die[data-dice-skin="dragon"] .dragon-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.skin-preview-die[data-dice-skin="dragon"] .mini-pip { display: none; }
+
+.skin-preview-die[data-dice-skin="flower"] {
+  background: #c8dce8;
+  border: 2px solid #e08090;
+  box-shadow: none;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+}
+.skin-preview-die[data-dice-skin="flower"] .flower-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.skin-preview-die[data-dice-skin="flower"] .mini-pip { display: none; }
+
 /* Preview skin overrides — Dark mode */
 [data-theme="dark"] .skin-preview-die[data-dice-skin="ornate"] {
   background: linear-gradient(145deg, #8a8a96, #929298);
@@ -1920,6 +2004,12 @@ input[type="text"]::placeholder {
   background: transparent;
   border: none;
   box-shadow: none;
+}
+[data-theme="dark"] .skin-preview-die[data-dice-skin="dragon"] {
+  border-color: #d4a04a;
+}
+[data-theme="dark"] .skin-preview-die[data-dice-skin="flower"] {
+  border-color: #f0a0b0;
 }
 
 .mini-pip {
@@ -2658,6 +2748,42 @@ p.session-notice {
 .cube-face.skin-preview-die[data-dice-skin="banana"] .mini-pip { display: none; }
 .cube-face.skin-preview-die[data-dice-skin="wave"] .mini-pip { display: none; }
 .cube-face.skin-preview-die[data-dice-skin="fire"] .mini-pip { display: none; }
+.cube-face.skin-preview-die[data-dice-skin="flower"] .mini-pip { display: none; }
+.cube-face.skin-preview-die[data-dice-skin="flower"] .flower-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 1.5px #e08090;
+}
+.cube-face.skin-preview-die[data-dice-skin="flower"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  display: block;
+}
+[data-theme="dark"] .cube-face.skin-preview-die[data-dice-skin="flower"] .flower-preview {
+  box-shadow: 0 0 0 1.5px #f0a0b0;
+}
+.cube-face.skin-preview-die[data-dice-skin="dragon"] .mini-pip { display: none; }
+.cube-face.skin-preview-die[data-dice-skin="dragon"] .dragon-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 1.5px #c08430;
+}
+.cube-face.skin-preview-die[data-dice-skin="dragon"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  display: block;
+}
+[data-theme="dark"] .cube-face.skin-preview-die[data-dice-skin="dragon"] .dragon-preview {
+  box-shadow: 0 0 0 1.5px #d4a04a;
+}
 .cube-face.skin-preview-die[data-dice-skin="fire"] .fire-preview {
   width: 100%;
   height: 100%;
