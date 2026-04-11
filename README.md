@@ -46,7 +46,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
 | App Check | Firebase App Check (reCAPTCHA v3) |
 | Hosting | Firebase Hosting (Global CDN, Auto SSL) |
-| CI/CD | GitHub Actions (Auto deploy Hosting + Functions, PR Preview) |
+| CI/CD | GitHub Actions (Auto deploy Hosting + Functions + DB Rules on main push) |
 
 ## Project Structure
 

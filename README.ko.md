@@ -46,7 +46,7 @@
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
 | App Check | Firebase App Check (reCAPTCHA v3) |
 | Hosting | Firebase Hosting (글로벌 CDN, 자동 SSL) |
-| CI/CD | GitHub Actions (Hosting + Functions 자동 배포, PR 프리뷰) |
+| CI/CD | GitHub Actions (main push 시 Hosting + Functions + DB Rules 자동 배포) |
 
 ## Project Structure
 
