@@ -96,6 +96,17 @@
       return;
     }
 
+    // Flower skin: show image instead of pips
+    if (DiceSkins && DiceSkins.getCurrentSkin() === 'flower') {
+      var FLOWER_FILES = { 1: 'Group 20', 2: 'Group 23', 3: 'Group 24', 4: 'Group 25', 5: 'Group 26', 6: 'Group 27' };
+      var img = document.createElement('img');
+      img.src = 'die_image/flower/' + FLOWER_FILES[value] + '.png';
+      img.className = 'flower-die-img';
+      img.alt = value;
+      dieEl.appendChild(img);
+      return;
+    }
+
     var layout = PIP_LAYOUTS[value];
     for (var i = 1; i <= 9; i++) {
       var pip = document.createElement('div');

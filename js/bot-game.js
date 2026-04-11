@@ -750,12 +750,14 @@
 
     var saveFn = fns.httpsCallable('saveBotGameResult');
     var nicks = Auth.getNicknames ? Auth.getNicknames() : null;
+    var scoredYacht = (myScores.yacht === 50) || (myScores.yahtzee === 50);
     saveFn({
       gameMode: roomData.gameMode,
       botDifficulty: difficulty,
       myScore: myTotal,
       oppScore: botTotal,
       result: result,
+      scoredYacht: scoredYacht,
       nicknameKo: nicks ? nicks.ko : null,
       nicknameEn: nicks ? nicks.en : null
     }).catch(function (err) {
@@ -785,6 +787,7 @@
     var myTotal = Scoring.totalScore(myScores, roomData.gameMode, myScores.yahtzeeBonus);
     var botTotal = Scoring.totalScore(botScores, roomData.gameMode, botScores.yahtzeeBonus);
 
+    var scoredYacht = (myScores.yacht === 50) || (myScores.yahtzee === 50);
     var nicks = Auth.getNicknames ? Auth.getNicknames() : null;
     var payload = JSON.stringify({
       idToken: cachedToken,
@@ -794,6 +797,7 @@
       myScore: myTotal,
       oppScore: botTotal,
       result: 'loss',
+      scoredYacht: scoredYacht,
       nicknameKo: nicks ? nicks.ko : null,
       nicknameEn: nicks ? nicks.en : null
     });

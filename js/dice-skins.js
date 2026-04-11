@@ -30,7 +30,8 @@
     { id: 'wave',      name: 'Wave',      unlockAt: -1, unlockBy: 'wave' },
     { id: 'fire',      name: 'Fire',      unlockAt: -1, unlockAtStreak: 5 },
     { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 },
-    { id: 'dragon',    name: 'Dragon',    unlockAt: -1, unlockAtExactScore: 256 }
+    { id: 'dragon',    name: 'Dragon',    unlockAt: -1, unlockAtExactScore: 256 },
+    { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -71,6 +72,9 @@
     }
     if (def.unlockAtExactScore) {
       return !!(achievements && achievements['score' + def.unlockAtExactScore]);
+    }
+    if (def.unlockAtYachtStreak) {
+      return !!(achievements && achievements.yachtStreak3);
     }
     return totalGames >= def.unlockAt;
   }
@@ -153,7 +157,7 @@
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/12 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/13 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
@@ -203,6 +207,12 @@
         img.className = 'dragon-preview';
         img.alt = 'Dragon 1';
         miniDie.appendChild(img);
+      } else if (def.id === 'flower') {
+        var img = document.createElement('img');
+        img.src = 'die_image/flower/Group 20.png';
+        img.className = 'flower-preview';
+        img.alt = 'Flower 1';
+        miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
         var pipPositions = [1, 3, 5, 7, 9]; // value 5 layout
@@ -241,6 +251,8 @@
           progressEl.textContent = (I18n ? I18n.t('skin_bot_total') : 'Bot') + ' ' + botTotal + '/' + def.unlockAtBotWinsTotal + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
         } else if (def.unlockAtExactScore) {
           progressEl.textContent = (I18n ? I18n.t('skin_exact_score') : 'Score') + ' ' + def.unlockAtExactScore;
+        } else if (def.unlockAtYachtStreak) {
+          progressEl.textContent = 'Yacht ' + def.unlockAtYachtStreak + (I18n ? I18n.t('skin_yacht_streak') : ' in a row');
         } else if (def.unlockAtStreak) {
           progressEl.textContent = currentStreak + '/' + def.unlockAtStreak + ' ' + (I18n ? I18n.t('skin_streak') : 'streak');
         } else if (def.unlockAtWins) {
@@ -290,6 +302,9 @@
     } else if (skinId === 'dragon') {
       var DRAGON_CUBE_FILES = { 1: 'Group 13', 2: 'Group 15', 3: 'Group 16', 4: 'Group 17', 5: 'Group 18', 6: 'Group 19' };
       html += '<img class="dragon-preview" src="die_image/dragon/' + DRAGON_CUBE_FILES[value] + '.png" alt="Dragon ' + value + '">';
+    } else if (skinId === 'flower') {
+      var FLOWER_CUBE_FILES = { 1: 'Group 20', 2: 'Group 23', 3: 'Group 24', 4: 'Group 25', 5: 'Group 26', 6: 'Group 27' };
+      html += '<img class="flower-preview" src="die_image/flower/' + FLOWER_CUBE_FILES[value] + '.png" alt="Flower ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {

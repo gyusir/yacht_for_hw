@@ -719,7 +719,7 @@ function isValidGame(gameMode, myScore, oppScore, durationMs) {
 
 // ─── Shared bot result save helper ───
 
-async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, result, nicknameKo, nicknameEn) {
+async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, result, nicknameKo, nicknameEn, scoredYacht) {
   if (gameMode !== "yacht" && gameMode !== "yahtzee") {
     throw new Error("Invalid game mode.");
   }
@@ -804,9 +804,18 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
         stats.currentStreak = 0;
       }
       // Score-based achievements
+      if (!stats.achievements) stats.achievements = {};
       if (myScore === 256) {
-        if (!stats.achievements) stats.achievements = {};
         stats.achievements.score256 = true;
+      }
+      // Yacht/Yahtzee streak achievement
+      if (scoredYacht) {
+        stats.consecutiveYachtStreak = (stats.consecutiveYachtStreak || 0) + 1;
+      } else {
+        stats.consecutiveYachtStreak = 0;
+      }
+      if ((stats.consecutiveYachtStreak || 0) >= 3) {
+        stats.achievements.yachtStreak3 = true;
       }
       return stats;
     });
@@ -821,7 +830,8 @@ exports.saveBotGameResult = regionFn.https.onCall(async (data, context) => {
   try {
     const nKo = (typeof data.nicknameKo === "string") ? data.nicknameKo.substring(0, 20) : null;
     const nEn = (typeof data.nicknameEn === "string") ? data.nicknameEn.substring(0, 20) : null;
-    const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result, nKo, nEn);
+    const scoredYacht = data.scoredYacht === true;
+    const ok = await saveBotResult(uid, data.gameMode, data.botDifficulty, data.myScore, data.oppScore, data.result, nKo, nEn, scoredYacht);
     return { success: ok };
   } catch (e) {
     throw new functions.https.HttpsError("invalid-argument", e.message);
@@ -848,7 +858,7 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
   if (typeof body === "string") {
     try { body = JSON.parse(body); } catch (_) { res.status(400).json({ error: "Invalid JSON" }); return; }
   }
-  const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result, nicknameKo, nicknameEn } = body;
+  const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result, scoredYacht, nicknameKo, nicknameEn } = body;
   if (!idToken) { res.status(401).json({ error: "No token" }); return; }
 
   // App Check verification (soft check - log only)
@@ -867,7 +877,7 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
 
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);
-    await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result, nKo, nEn);
+    await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result, nKo, nEn, scoredYacht === true);
     res.status(200).json({ success: true });
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -979,9 +989,19 @@ exports.onGameFinished = functions.region("asia-southeast1")
             stats.currentStreak = 0;
           }
           // Score-based achievements
+          if (!stats.achievements) stats.achievements = {};
           if (myTotal === 256) {
-            if (!stats.achievements) stats.achievements = {};
             stats.achievements.score256 = true;
+          }
+          // Yacht/Yahtzee streak achievement
+          var scoredYacht = (myScores.yacht === 50) || (myScores.yahtzee === 50);
+          if (scoredYacht) {
+            stats.consecutiveYachtStreak = (stats.consecutiveYachtStreak || 0) + 1;
+          } else {
+            stats.consecutiveYachtStreak = 0;
+          }
+          if ((stats.consecutiveYachtStreak || 0) >= 3) {
+            stats.achievements.yachtStreak3 = true;
           }
           return stats;
         });
