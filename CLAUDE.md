@@ -46,6 +46,8 @@
 | `die_image/banana/` | Banana 스킨 이미지 |
 | `die_image/wave/` | Wave 스킨 이미지 |
 | `die_image/fire/` | Fire 스킨 이미지 |
+| `die_image/dragon/` | Dragon 스킨 이미지 |
+| `die_image/flower/` | Flower 스킨 이미지 |
 
 ### Backend (`functions/`)
 

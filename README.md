@@ -22,7 +22,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 - **Real-time Multiplayer** — Play with friends via 6-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
 - **Google Login / Guest** — Game history saved with Google OAuth login; guest play also available
 - **History & Stats** — Win rate, recent game records (logged-in users only)
-- **Dice Skins** — 12 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star), unlocked by game count / Bot wins / win streak
+- **Dice Skins** — 14 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star, Dragon, Flower), unlocked by game count / Bot wins / win streak / special conditions
 - **Dark Mode** — Light/dark theme toggle with real-time skin switching (WCAG AA contrast compliant)
 - **Emotes** — 16 emoji chat options, keyboard shortcuts (Q/W/E/R/T/Y), server-side rate limiting
 - **Reconnection** — Auto-reconnect on tab return, concurrent tab conflict detection
@@ -72,7 +72,7 @@ yacht_for_hw/
 │   ├── tutorial.js           # Interactive tutorial
 │   ├── ui.js                 # Screen transitions, scorecard (event delegation), toast (dynamic duration)
 │   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching, App Check token caching
-├── die_image/                # Image-based dice skin assets (Banana, Wave, Fire)
+├── die_image/                # Image-based dice skin assets (Banana, Wave, Fire, Dragon, Flower)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht mode DP lookup table (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee mode DP lookup table (Uint16, 2MB)
