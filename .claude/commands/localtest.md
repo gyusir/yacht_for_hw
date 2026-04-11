@@ -6,8 +6,9 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 
 ## stop인 경우
 
-1. `lsof -ti:5002,5001,9000,9099,4000 | xargs kill -9 2>/dev/null` 로 emulator 관련 포트를 모두 종료
-2. "로컬 테스트 환경이 종료되었습니다." 메시지 출력
+1. `lsof -ti:5001 | xargs kill -TERM 2>/dev/null` 로 Functions 포트에 SIGTERM 전송 (graceful shutdown → DB/Auth 데이터 자동 export)
+2. 2초 대기 후 나머지 포트가 아직 열려있으면 `lsof -ti:5002,5001,9000,9099,4000 | xargs kill -9 2>/dev/null` 로 강제 종료
+3. "로컬 테스트 환경이 종료되었습니다. (데이터 저장됨)" 메시지 출력
 
 ## 기본 실행 (인자 없음)
 
@@ -18,7 +19,7 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 
 3. Firebase Emulator를 백그라운드로 실행:
    ```
-   firebase emulators:start --import=emulator-data
+   firebase emulators:start --import=emulator-data --export-on-exit=emulator-data
    ```
    - 반드시 프로젝트 루트 디렉토리에서 실행 (cwd가 다르면 절대 경로 사용)
    - 반드시 `run_in_background: true` 옵션으로 실행
@@ -42,6 +43,8 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 ## 주의사항
 - `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결됩니다
 - 쿼리 파라미터 없이 localhost에 접속하면 프로덕션 서버를 사용합니다
-- `emulator-data/`에 사전 설정된 테스트 계정이 자동 로드됩니다:
-  - `testuser@test.com` (displayName: testuser)
-  - `testforlongusername@test.com` (displayName: testforlongusername)
+- `emulator-data/`에 사전 설정된 테스트 계정과 DB 데이터가 자동 로드됩니다
+- 에뮬레이터 로그인 시 사용되는 계정:
+  - `emu-testuser@test.com` (displayName: testuser, UID: UXiRhqXHLsS2qpvWzioUbWO5VQsb)
+  - `emu-longname@test.com` (displayName: testforlongusername, UID: XgSznBM1DwkspDfWB8A8fK2CpWPu)
+- 두 계정 모두 모든 스킨 잠금해제 stats가 사전 세팅되어 있습니다

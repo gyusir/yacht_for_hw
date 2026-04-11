@@ -64,12 +64,12 @@
 
 ## Local Test
 
-두 가지 모드를 지원한다. `js/firebase-config.js`에서 `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결한다.
+`js/firebase-config.js`에서 `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결한다.
 
-| 모드 | 명령어 | 용도 | 서버 연결 |
-|---|---|---|---|
-| Emulator 전체 | `/localtest` | Functions/Auth/DB 변경 테스트 | emulator |
-| Hosting만 | `/localtest hosting` | 프론트엔드만 변경 테스트 | 프로덕션 |
+| 명령어 | 용도 |
+|---|---|
+| `/localtest` | Emulator 전체 실행 (Functions/Auth/DB) |
+| `/localtest stop` | Emulator 종료 (graceful shutdown → 데이터 자동 저장) |
 
 ### Emulator 포트
 
@@ -81,7 +81,40 @@
 | Auth | 9099 |
 | Database | 9000 |
 
-종료: `/localtest stop`
+### 데이터 영속성
+
+에뮬레이터는 `--import=emulator-data --export-on-exit=emulator-data`로 실행되어, 시작 시 데이터를 복원하고 종료 시 자동 저장한다. `/localtest stop`은 SIGTERM으로 graceful shutdown하여 export를 보장한다.
+
+- `emulator-data/auth_export/` — Auth 계정 (고정 UID)
+- `emulator-data/database_export/yacht-ff0c8-default-rtdb.json` — DB 데이터 (stats, 닉네임 등)
+
+### 테스트 계정
+
+에뮬레이터 로그인 시 `auth.js`의 계정 선택 모달에서 아래 계정으로 로그인한다. import된 Auth 계정(`testuser@test.com`)이 아닌, 앱이 실제로 사용하는 `emu-` 이메일 계정이다.
+
+| 이메일 | displayName | UID (고정) | 용도 |
+|---|---|---|---|
+| `emu-testuser@test.com` | testuser | `UXiRhqXHLsS2qpvWzioUbWO5VQsb` | 일반 기능 테스트 |
+| `emu-longname@test.com` | testforlongusername | `XgSznBM1DwkspDfWB8A8fK2CpWPu` | 긴 닉네임 UI 테스트 |
+
+두 계정 모두 모든 스킨 잠금해제 조건을 충족하는 stats가 사전 세팅되어 있다.
+
+### 에뮬레이터 DB namespace 주의
+
+에뮬레이터 RTDB에는 두 개의 namespace가 존재한다:
+- **`yacht-ff0c8-default-rtdb`** — 앱이 실제로 사용하는 namespace (`databaseURL` 기반)
+- **default (namespace 없음)** — curl이 기본으로 접근하는 namespace
+
+curl로 에뮬레이터 DB에 직접 데이터를 쓸 때 반드시 `?ns=yacht-ff0c8-default-rtdb`를 붙여야 한다:
+```bash
+# 올바른 방법
+curl -X PUT "http://localhost:9000/users/{uid}/stats.json?ns=yacht-ff0c8-default-rtdb" \
+  -H "Authorization: Bearer owner" -H "Content-Type: application/json" \
+  -d '{"totalGames":100}'
+
+# 잘못된 방법 (default namespace에 쓰여서 앱에서 안 보임)
+curl -X PUT "http://localhost:9000/users/{uid}/stats.json" -d '{"totalGames":100}'
+```
 
 ## Git Branch Rules
 

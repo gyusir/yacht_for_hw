@@ -6,13 +6,23 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 
 > Live: https://yacht-ff0c8.web.app
 
+## Screenshots
+
+| Lobby & Skins | Gameplay |
+|:---:|:---:|
+| ![Lobby](screenshots/lobby-skins-en.png) | ![Gameplay](screenshots/gameplay-light-en.png) |
+
+| Dark Mode | Mobile |
+|:---:|:---:|
+| ![Dark Mode](screenshots/gameplay-dark-en.png) | ![Mobile](screenshots/gameplay-mobile-en.png) |
+
 ## Features
 
 - **Two Game Modes** — Choose between Yacht and Yahtzee
 - **Real-time Multiplayer** — Play with friends via 6-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
 - **Google Login / Guest** — Game history saved with Google OAuth login; guest play also available
 - **History & Stats** — Win rate, recent game records (logged-in users only)
-- **Dice Skins** — 11 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire), unlocked by game count / Bot wins / win streak
+- **Dice Skins** — 12 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star), unlocked by game count / Bot wins / win streak
 - **Dark Mode** — Light/dark theme toggle with real-time skin switching (WCAG AA contrast compliant)
 - **Emotes** — 16 emoji chat options, keyboard shortcuts (Q/W/E/R/T/Y), server-side rate limiting
 - **Reconnection** — Auto-reconnect on tab return, concurrent tab conflict detection
@@ -36,7 +46,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 | Anti-Cheat | Firebase Cloud Functions (Node 22) |
 | App Check | Firebase App Check (reCAPTCHA v3) |
 | Hosting | Firebase Hosting (Global CDN, Auto SSL) |
-| CI/CD | GitHub Actions (Auto deploy Hosting + Functions, PR Preview) |
+| CI/CD | GitHub Actions (Auto deploy Hosting + Functions + DB Rules on main push) |
 
 ## Project Structure
 
@@ -122,14 +132,14 @@ yacht_for_hw/
 
 ### Local Test (Emulator)
 
-Firebase Emulator lets you test all features locally without touching the production Firebase. `js/firebase-config.js` automatically connects to the emulator on `localhost`, so no config changes are needed.
+Firebase Emulator lets you test all features locally without touching the production Firebase. You must use the `?emulator=true` query parameter to connect to the emulator.
 
 ```bash
 # Install functions dependencies (first time only)
 cd functions && npm install && cd ..
 
 # Start emulator (Hosting + Functions + Auth + Database)
-firebase emulators:start
+firebase emulators:start --import=emulator-data --export-on-exit=emulator-data
 ```
 
 - Game: http://localhost:5002?emulator=true
