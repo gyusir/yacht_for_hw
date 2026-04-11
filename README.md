@@ -14,7 +14,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 
 | Dark Mode | Mobile |
 |:---:|:---:|
-| ![Dark Mode](screenshots/gameplay-dark-en.png) | ![Mobile](screenshots/gameplay-mobile-en.png) |
+| ![Dark Mode](screenshots/gameplay-dark-en.png) | <img src="screenshots/gameplay-mobile-en.png" alt="Mobile" width="280"> |
 
 ## Features
 

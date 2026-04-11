@@ -14,7 +14,7 @@
 
 | 다크 모드 | 모바일 |
 |:---:|:---:|
-| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
+| ![Dark Mode](screenshots/gameplay-dark.png) | <img src="screenshots/gameplay-mobile.png" alt="Mobile" width="280"> |
 
 ## Features
 
