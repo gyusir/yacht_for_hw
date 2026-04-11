@@ -10,11 +10,11 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 
 | Lobby & Skins | Gameplay |
 |:---:|:---:|
-| ![Lobby](screenshots/lobby-skins.png) | ![Gameplay](screenshots/gameplay-light.png) |
+| ![Lobby](screenshots/lobby-skins-en.png) | ![Gameplay](screenshots/gameplay-light-en.png) |
 
 | Dark Mode | Mobile |
 |:---:|:---:|
-| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
+| ![Dark Mode](screenshots/gameplay-dark-en.png) | ![Mobile](screenshots/gameplay-mobile-en.png) |
 
 ## Features
 
