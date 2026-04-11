@@ -12,7 +12,7 @@
 - **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
-- **주사위 스킨** — 11종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire), 게임 수 / Bot 승리 / 연승 기반 잠금해제
+- **주사위 스킨** — 12종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star), 게임 수 / Bot 승리 / 연승 기반 잠금해제
 - **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환 (WCAG AA 대비 준수)
 - **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원, 서버사이드 레이트 제한
 - **재접속** — 탭 복귀 시 자동 재접속, 동시 탭 충돌 감지
@@ -122,20 +122,20 @@ yacht_for_hw/
 
 ### Local Test (Emulator)
 
-Firebase Emulator를 사용하면 실제 Firebase를 건드리지 않고 로컬에서 전체 기능을 테스트할 수 있다. `js/firebase-config.js`에서 `localhost` 접속 시 자동으로 emulator로 연결되므로 config 수정이 필요 없다.
+Firebase Emulator를 사용하면 실제 Firebase를 건드리지 않고 로컬에서 전체 기능을 테스트할 수 있다. `?emulator=true` 쿼리 파라미터로 접속해야 emulator에 연결된다.
 
 ```bash
 # functions 의존성 설치 (최초 1회)
 cd functions && npm install && cd ..
 
 # emulator 실행 (Hosting + Functions + Auth + Database)
-firebase emulators:start
+firebase emulators:start --import=emulator-data --export-on-exit=emulator-data
 ```
 
 - 게임: http://localhost:5002?emulator=true
 - Emulator UI: http://localhost:4000
 
-Claude Code 사용 시 `/localtest` 명령어로 emulator를, `/localtest hosting`으로 hosting만 실행할 수 있다.
+Claude Code 사용 시 `/localtest` 명령어로 emulator를 실행할 수 있다.
 
 ### Deploy
 
