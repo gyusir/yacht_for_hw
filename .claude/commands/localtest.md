@@ -43,6 +43,8 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 ## 주의사항
 - `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결됩니다
 - 쿼리 파라미터 없이 localhost에 접속하면 프로덕션 서버를 사용합니다
-- `emulator-data/`에 사전 설정된 테스트 계정이 자동 로드됩니다:
-  - `testuser@test.com` (displayName: testuser)
-  - `testforlongusername@test.com` (displayName: testforlongusername)
+- `emulator-data/`에 사전 설정된 테스트 계정과 DB 데이터가 자동 로드됩니다
+- 에뮬레이터 로그인 시 사용되는 계정:
+  - `emu-testuser@test.com` (displayName: testuser, UID: UXiRhqXHLsS2qpvWzioUbWO5VQsb)
+  - `emu-longname@test.com` (displayName: testforlongusername, UID: XgSznBM1DwkspDfWB8A8fK2CpWPu)
+- 두 계정 모두 모든 스킨 잠금해제 stats가 사전 세팅되어 있습니다
