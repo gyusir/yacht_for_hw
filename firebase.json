@@ -1,23 +1,9 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "ignore": [
       "firebase.json",
-      ".firebaserc",
-      "database.rules.json",
-      "functions/**",
-      "node_modules/**",
-      ".git/**",
-      ".github/**",
-      ".gitignore",
-      ".claude/**",
-      ".agents/**",
-      "CLAUDE.md",
-      "README.md",
-      "skills-lock.json",
-      "*.log",
-      "tools/**",
-      "__pycache__/**"
+      "**/node_modules/**"
     ],
     "headers": [
       {
