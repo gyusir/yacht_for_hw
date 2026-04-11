@@ -8,13 +8,13 @@
 
 ## Screenshots
 
-| 로비 & 스킨 | 게임 플레이 |
+| 라이트 모드 | 다크 모드 |
 |:---:|:---:|
-| ![Lobby](screenshots/lobby-skins.png) | ![Gameplay](screenshots/gameplay-light.png) |
+| ![라이트 모드](screenshots/gameplay-light.png) | ![다크 모드](screenshots/gameplay-dark.png) |
 
-| 다크 모드 | 모바일 |
+| 로비 & 스킨 | 모바일 |
 |:---:|:---:|
-| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
+| ![로비](screenshots/lobby-skins.png) | ![모바일](screenshots/gameplay-mobile.png) |
 
 ## Features
 
