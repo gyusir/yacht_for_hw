@@ -30,15 +30,19 @@
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
 | `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱 (emulator 모드에서는 App Check 토큰 캐싱 비활성화) |
 
-### Bot AI (`data/`, `tools/`, `die_image/`)
+### Bot AI (`data/`, `tools/`)
 | 파일 | 역할 |
 |---|---|
 | `data/dp_yacht.bin` | Yacht 모드 DP 룩업 테이블 (4,096 상태, Uint16, 8KB) |
 | `data/dp_yahtzee.bin` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, Uint16, 2MB) |
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
-| `die_image/banana/` | Banana 주사위 스킨 이미지 |
-| `die_image/wave/` | Wave 주사위 스킨 이미지 |
-| `die_image/fire/` | Fire 주사위 스킨 이미지 |
+
+### 주사위 스킨 에셋 (`die_image/`)
+| 디렉토리 | 내용 |
+|---|---|
+| `die_image/banana/` | Banana 스킨 이미지 |
+| `die_image/wave/` | Wave 스킨 이미지 |
+| `die_image/fire/` | Fire 스킨 이미지 |
 
 ### Backend (`functions/`)
 | 파일 | 역할 |
@@ -175,7 +179,7 @@ curl -X PUT "http://localhost:9000/users/{uid}/stats.json" -d '{"totalGames":100
 
 ### 주의사항
 - **SPA rewrite**: `"source": "**"` rewrite를 사용하므로 `**/*.html` 패턴은 매칭되지 않는다. CSP는 반드시 `"source": "**"` 블록에 배치한다.
-- **배포 전 테스트**: CSP 변경 시 반드시 `/localtest hosting`으로 로컬에서 먼저 확인한다. 프로덕션 배포 후 CSP 오류가 발생하면 사이트 전체가 작동 불능이 된다.
+- **배포 전 테스트**: CSP 변경 시 반드시 `/localtest`로 로컬에서 먼저 확인한다. 프로덕션 배포 후 CSP 오류가 발생하면 사이트 전체가 작동 불능이 된다.
 - **새 Firebase 서비스 추가 시**: 해당 서비스가 사용하는 도메인을 CSP에 추가해야 한다.
 
 ## Bot AI Architecture
