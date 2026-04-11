@@ -270,6 +270,16 @@ python3 tools/generate_dp.py yahtzee  # ~65초 (10코어)
 - `.skin-option.active[data-skin-id="id"]` — 라이트모드 선택 보더
 - `[data-theme="dark"] .skin-option.active[data-skin-id="id"]` — 다크모드 선택 보더
 
+#### 이미지 스킨 CSS 주의사항
+
+이미지 기반 스킨(Banana, Wave, Fire, Dragon 등)은 기존 이미지 스킨의 CSS 패턴을 반드시 참조하여 작성한다.
+
+- **테두리**: `.die`에 `border-color`를 사용한다 (Star 스킨 패턴). `box-shadow`로 테두리를 주면 `overflow` 설정에 따라 잘릴 수 있다
+- **overflow**: `.die`에 `overflow: visible`을 사용해야 `.held-check` 배지가 잘리지 않는다. `overflow: hidden`은 금지
+- **display**: `.skin-preview-die`와 `.cube-face`에 반드시 `display: block`을 명시한다. 기본값이 `display: grid`(`.skin-preview-die` 상속)이므로 생략하면 이미지가 축소된다
+- **3D Cube 테두리**: `.cube-face.skin-preview-die`의 기본 `border-width`는 `1px`이다. 이미지 스킨은 `border: none`으로 제거하고 이미지에 `box-shadow: 0 0 0 1.5px`로 테두리를 표현한다 (Fire 스킨 패턴 참조). `border: 2px solid`를 사용하면 다른 스킨 대비 테두리가 두꺼워진다
+- **Preview/3D Cube 테두리 누락 방지**: `.die`에 테두리를 적용했으면 `.skin-preview-die`와 `.cube-face`에도 동일한 색상의 테두리를 적용해야 한다
+
 ### 3. Color Design Principles
 
 - 라이트모드 배경(`#f0f2f5`)과 다크모드 배경(`#0f0f1a`) 각각에서 주사위가 뚜렷이 구분되어야 한다
@@ -277,10 +287,18 @@ python3 tools/generate_dp.py yahtzee  # ~65초 (10코어)
 - 다크모드에서는 메탈릭 색상 \~15-20% 밝게, 네온/글로우 계열은 강도 높이기
 - 선택 보더 색상은 스킨의 대표 색상 사용
 
-### 4. Verification
+### 4. 테스트 페이지 등록 (`test-dice-skins.*`)
+
+`test-dice-skins.html`/`js/test-dice-skins.js`/`css/test-dice-skins.css`는 모든 스킨을 한 페이지에서 미리보기하는 독립 테스트 도구이다. 새 스킨 추가 시 반드시 이 파일들에도 등록한다:
+
+- `js/test-dice-skins.js`: `SKIN_DEFS`에 추가, `renderMiniFaceHTML`·`renderDie`·`renderPreview` 함수에 분기 추가
+- `css/test-dice-skins.css`: 이미지 스킨이면 `.die`, `.skin-preview-die`, `.cube-face` CSS 추가
+
+### 5. Verification
 
 - 라이트모드에서 모든 스킨 외관 확인
 - 다크모드에서 모든 스킨 외관 확인
 - 라이트↔다크 실시간 전환 시 즉시 반영되는지 확인
 - 스킨 셀렉터 프리뷰 썸네일이 양쪽 모드에서 정상 표시되는지 확인
+- **3D Cube, Preview에서도 테두리·이미지가 정상 표시되는지 확인**
 - 게스트 모드에서 classic만 적용되는지 확인
