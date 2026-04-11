@@ -22,7 +22,7 @@
 - **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
-- **주사위 스킨** — 12종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star), 게임 수 / Bot 승리 / 연승 기반 잠금해제
+- **주사위 스킨** — 14종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star, Dragon, Flower), 게임 수 / Bot 승리 / 연승 / 특수 조건 기반 잠금해제
 - **다크 모드** — 라이트/다크 테마 토글, 스킨 포함 실시간 전환 (WCAG AA 대비 준수)
 - **이모트** — 16종 이모티콘 채팅, 키보드 단축키(Q/W/E/R/T/Y) 지원, 서버사이드 레이트 제한
 - **재접속** — 탭 복귀 시 자동 재접속, 동시 탭 충돌 감지
@@ -72,7 +72,7 @@ yacht_for_hw/
 │   ├── tutorial.js           # 인터랙티브 튜토리얼
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
 │   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱
-├── die_image/                # 이미지 기반 주사위 스킨 에셋 (Banana, Wave, Fire)
+├── die_image/                # 이미지 기반 주사위 스킨 에셋 (Banana, Wave, Fire, Dragon, Flower)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)
