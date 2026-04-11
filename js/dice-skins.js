@@ -209,9 +209,9 @@
         miniDie.appendChild(img);
       } else if (def.id === 'flower') {
         var img = document.createElement('img');
-        img.src = 'die_image/flower/Group 20.png';
+        img.src = 'die_image/flower/Group 26.png';
         img.className = 'flower-preview';
-        img.alt = 'Flower 1';
+        img.alt = 'Flower 5';
         miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
