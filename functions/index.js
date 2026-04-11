@@ -803,6 +803,11 @@ async function saveBotResult(uid, gameMode, botDifficulty, myScore, oppScore, re
         else stats.ties = (stats.ties || 0) + 1;
         stats.currentStreak = 0;
       }
+      // Score-based achievements
+      if (myScore === 256) {
+        if (!stats.achievements) stats.achievements = {};
+        stats.achievements.score256 = true;
+      }
       return stats;
     });
   }
@@ -972,6 +977,11 @@ exports.onGameFinished = functions.region("asia-southeast1")
             if (result === "loss") stats.losses = (stats.losses || 0) + 1;
             else stats.ties = (stats.ties || 0) + 1;
             stats.currentStreak = 0;
+          }
+          // Score-based achievements
+          if (myTotal === 256) {
+            if (!stats.achievements) stats.achievements = {};
+            stats.achievements.score256 = true;
           }
           return stats;
         });
