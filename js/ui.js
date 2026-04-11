@@ -536,7 +536,438 @@
     });
   }
 
-  function showConfetti() {
+  // --- Default confetti helpers ---
+  var DEFAULT_COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6bcb', '#a66cff'];
+  function defaultCreateParticles(canvas) {
+    var particles = [];
+    for (var i = 0; i < 120; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -10 - Math.random() * canvas.height * 0.5,
+        w: 4 + Math.random() * 6,
+        h: 6 + Math.random() * 10,
+        color: DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 4,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 10
+      });
+    }
+    return particles;
+  }
+  function defaultUpdateParticle(p) {
+    p.x += p.vx;
+    p.vy += 0.08;
+    p.y += p.vy;
+    p.rotation += p.rotSpeed;
+  }
+  function defaultRenderParticle(ctx, p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation * Math.PI / 180);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    ctx.restore();
+  }
+
+  // --- Skin-specific celebration effects ---
+  var CELEBRATION_EFFECTS = {
+    // Banana: bouncing monkey & banana emoji
+    banana: {
+      createParticles: function(canvas) {
+        var emojis = ['\uD83D\uDC12', '\uD83C\uDF4C'];
+        var particles = [];
+        for (var i = 0; i < 80; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: -30 - Math.random() * canvas.height * 0.5,
+            size: 30 + Math.random() * 18,
+            emoji: emojis[Math.floor(Math.random() * emojis.length)],
+            vx: (Math.random() - 0.5) * 4,
+            vy: 2 + Math.random() * 3,
+            rotation: Math.random() * 360,
+            rotSpeed: (Math.random() - 0.5) * 8,
+            canvasH: canvas.height,
+            bounces: 0
+          });
+        }
+        return particles;
+      },
+      updateParticle: function(p) {
+        p.x += p.vx;
+        p.vy += 0.12;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        // Bounce off bottom
+        if (p.y > p.canvasH - 20 && p.bounces < 3) {
+          p.y = p.canvasH - 20;
+          p.vy = -p.vy * 0.55;
+          p.bounces++;
+        }
+      },
+      renderParticle: function(ctx, p) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.font = p.size + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.emoji, 0, 0);
+        ctx.restore();
+      }
+    },
+
+    // Fire: flames rising from bottom + sparks (bigger, brighter, faster)
+    fire: {
+      createParticles: function(canvas) {
+        var colors = ['#ff4500', '#ff5500', '#ff6600', '#ff8c00', '#ffd700', '#ffff00'];
+        var particles = [];
+        for (var i = 0; i < 120; i++) {
+          var isSpark = Math.random() < 0.3;
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: canvas.height + 10 + Math.random() * canvas.height * 0.3,
+            size: isSpark ? 3 + Math.random() * 4 : 14 + Math.random() * 18,
+            originalSize: 0,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: (Math.random() - 0.5) * 4,
+            vy: -(5 + Math.random() * 7),
+            isSpark: isSpark,
+            alpha: 1
+          });
+          particles[particles.length - 1].originalSize = particles[particles.length - 1].size;
+        }
+        return particles;
+      },
+      updateParticle: function(p) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx += (Math.random() - 0.5) * 0.5;
+        if (!p.isSpark) {
+          p.size *= 0.988;
+          p.vy *= 0.997;
+        } else {
+          p.vy += 0.04;
+        }
+      },
+      renderParticle: function(ctx, p) {
+        if (p.size < 0.5) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        if (!p.isSpark && p.size > 3) {
+          var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.2, p.color);
+          grad.addColorStop(1, 'rgba(255,69,0,0)');
+          ctx.fillStyle = grad;
+        } else {
+          ctx.fillStyle = p.color;
+        }
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+
+    // Dragon: dramatic center appearance with fire burst
+    dragon: {
+      animate: function(canvas, ctx) {
+        var cx = canvas.width / 2;
+        var cy = canvas.height / 2;
+        var maxSize = Math.min(canvas.width, canvas.height) * 0.35;
+        var frame = 0;
+        var totalFrames = 130;
+        var burstParticles = [];
+
+        // Create burst particles at frame 50
+        function createBurst() {
+          var colors = ['#ff4500', '#ff6600', '#ffd700', '#ff8c00'];
+          for (var i = 0; i < 60; i++) {
+            var angle = Math.random() * Math.PI * 2;
+            var speed = 3 + Math.random() * 6;
+            burstParticles.push({
+              x: cx, y: cy,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              size: 3 + Math.random() * 5,
+              color: colors[Math.floor(Math.random() * colors.length)],
+              alpha: 1
+            });
+          }
+        }
+
+        function animate() {
+          frame++;
+          if (frame > totalFrames) {
+            if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+            return;
+          }
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          var globalAlpha = frame > totalFrames - 25 ? (totalFrames - frame) / 25 : 1;
+          ctx.globalAlpha = globalAlpha;
+
+          // Phase 1 (1-40): Scale up with ease-out
+          // Phase 2 (40-60): Pulse glow + shake
+          // Phase 3 (50+): Fire burst
+          var t, scale, fontSize, offsetX, offsetY;
+
+          if (frame <= 40) {
+            t = frame / 40;
+            scale = 1 - Math.pow(1 - t, 3); // ease-out cubic
+          } else {
+            scale = 1;
+          }
+
+          fontSize = maxSize * scale;
+          offsetX = 0;
+          offsetY = 0;
+
+          // Shake effect (frame 40-65)
+          if (frame > 40 && frame <= 65) {
+            var shakeIntensity = 4 * (1 - (frame - 40) / 25);
+            offsetX = (Math.random() - 0.5) * shakeIntensity * 2;
+            offsetY = (Math.random() - 0.5) * shakeIntensity * 2;
+          }
+
+          // Glow effect
+          if (frame > 30 && frame <= 80) {
+            var glowT = (frame - 30) / 50;
+            var glowSize = 20 + Math.sin(glowT * Math.PI * 3) * 10;
+            ctx.shadowColor = '#ff4500';
+            ctx.shadowBlur = glowSize;
+          } else {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+
+          // Draw dragon emoji
+          if (fontSize > 1) {
+            ctx.save();
+            ctx.font = Math.round(fontSize) + 'px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('\uD83D\uDC09', cx + offsetX, cy + offsetY);
+            ctx.restore();
+          }
+
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+
+          // Create burst at frame 50
+          if (frame === 50) createBurst();
+
+          // Update & render burst particles
+          for (var i = 0; i < burstParticles.length; i++) {
+            var bp = burstParticles[i];
+            bp.x += bp.vx;
+            bp.y += bp.vy;
+            bp.vy += 0.08;
+            bp.size *= 0.97;
+            if (bp.size < 0.3) continue;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(bp.x, bp.y, bp.size, 0, Math.PI * 2);
+            ctx.fillStyle = bp.color;
+            ctx.fill();
+            ctx.restore();
+          }
+
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+    },
+
+    // Flower: drifting petals (faster fall)
+    flower: {
+      createParticles: function(canvas) {
+        var colors = ['#ffb7c5', '#ff69b4', '#ff1493', '#fff0f5', '#dda0dd', '#f8c8dc'];
+        var particles = [];
+        for (var i = 0; i < 80; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: -15 - Math.random() * canvas.height * 0.4,
+            size: 6 + Math.random() * 8,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: 2 + Math.random() * 2.5,
+            rotation: Math.random() * 360,
+            rotSpeed: (Math.random() - 0.5) * 3,
+            phase: Math.random() * Math.PI * 2,
+            age: 0
+          });
+        }
+        return particles;
+      },
+      updateParticle: function(p, frame) {
+        p.age++;
+        p.x += p.vx + Math.sin(p.age * 0.04 + p.phase) * 1.2;
+        p.vy += 0.03;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+      },
+      renderParticle: function(ctx, p) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        // Draw petal shape using bezier curves
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.bezierCurveTo(p.size * 0.8, -p.size * 0.6, p.size * 0.8, p.size * 0.6, 0, p.size);
+        ctx.bezierCurveTo(-p.size * 0.8, p.size * 0.6, -p.size * 0.8, -p.size * 0.6, 0, -p.size);
+        ctx.fill();
+        ctx.restore();
+      },
+      maxFrames: 180
+    },
+
+    // Wave: rain + lightning (bigger, more visible)
+    wave: {
+      createParticles: function(canvas) {
+        var colors = ['#4a90d9', '#5ba3e6', '#87ceeb', '#6db3f2', '#a0d2ff'];
+        var particles = [];
+        for (var i = 0; i < 120; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: -10 - Math.random() * canvas.height,
+            len: 18 + Math.random() * 22,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: -2 + Math.random() * 0.5,
+            vy: 10 + Math.random() * 8,
+            canvasH: canvas.height,
+            canvasW: canvas.width
+          });
+        }
+        particles._lightning = null;
+        particles._lightningFrame = 0;
+        return particles;
+      },
+      updateParticle: function(p, frame) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y > p.canvasH + 20) {
+          p.y = -20;
+          p.x = Math.random() * p.canvasW;
+        }
+      },
+      renderParticle: function(ctx, p, frame, particles) {
+        ctx.save();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2.5;
+        ctx.globalAlpha = ctx.globalAlpha * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.vx * 2, p.y + p.len);
+        ctx.stroke();
+        ctx.restore();
+      },
+      maxFrames: 180,
+      afterRender: function(ctx, particles, frame, canvas) {
+        // Lightning every ~30 frames, lasts 5 frames
+        if (frame % 30 === 0 && frame > 0 && frame < 160) {
+          var points = [];
+          var lx = canvas.width * 0.15 + Math.random() * canvas.width * 0.7;
+          var ly = 0;
+          points.push({ x: lx, y: ly });
+          while (ly < canvas.height) {
+            lx += (Math.random() - 0.5) * 80;
+            ly += 15 + Math.random() * 35;
+            points.push({ x: lx, y: ly });
+          }
+          particles._lightning = points;
+          particles._lightningFrame = frame;
+        }
+        if (particles._lightning && frame - particles._lightningFrame < 5) {
+          var pts = particles._lightning;
+          var lAlpha = 1 - (frame - particles._lightningFrame) * 0.2;
+          ctx.save();
+          // Outer glow
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 5;
+          ctx.shadowColor = '#87ceeb';
+          ctx.shadowBlur = 30;
+          ctx.globalAlpha = lAlpha;
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (var j = 1; j < pts.length; j++) {
+            ctx.lineTo(pts[j].x, pts[j].y);
+          }
+          ctx.stroke();
+          // Bright core
+          ctx.strokeStyle = '#e0f0ff';
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (var k = 1; k < pts.length; k++) {
+            ctx.lineTo(pts[k].x, pts[k].y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    },
+
+    // Star: shooting stars with thick trails
+    star: {
+      createParticles: function(canvas) {
+        var colors = ['#ffd700', '#fff8dc', '#fffacd', '#f0e68c', '#ffffff'];
+        var particles = [];
+        for (var i = 0; i < 40; i++) {
+          var fromLeft = Math.random() < 0.5;
+          var dirX = fromLeft ? (4 + Math.random() * 6) : -(4 + Math.random() * 6);
+          particles.push({
+            x: fromLeft ? -20 : canvas.width + 20,
+            y: Math.random() * canvas.height * 0.6,
+            size: 4.5 + Math.random() * 3.5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            vx: dirX,
+            vy: 2 + Math.random() * 3,
+            spawnFrame: Math.floor(Math.random() * 80),
+            trail: [],
+            active: false
+          });
+        }
+        return particles;
+      },
+      updateParticle: function(p, frame) {
+        if (frame < p.spawnFrame) return;
+        p.active = true;
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 12) p.trail.shift();
+        p.x += p.vx;
+        p.y += p.vy;
+      },
+      renderParticle: function(ctx, p) {
+        if (!p.active) return;
+        ctx.save();
+        // Draw trail
+        for (var t = 0; t < p.trail.length; t++) {
+          var tAlpha = (t + 1) / p.trail.length * 0.6;
+          var tSize = p.size * (t + 1) / p.trail.length * 0.7;
+          ctx.beginPath();
+          ctx.arc(p.trail[t].x, p.trail[t].y, tSize, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = ctx.globalAlpha * tAlpha;
+          ctx.fill();
+          ctx.globalAlpha = ctx.globalAlpha / tAlpha;
+        }
+        // Draw star head
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.restore();
+      },
+      maxFrames: 130
+    }
+  };
+
+  function showConfetti(overrideSkinId) {
     var existing = document.getElementById('confetti-canvas');
     if (existing) existing.remove();
     var canvas = document.createElement('canvas');
@@ -547,46 +978,38 @@
     canvas.height = window.innerHeight;
     var ctx = canvas.getContext('2d');
 
-    var colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6bcb', '#a66cff'];
-    var particles = [];
-    for (var i = 0; i < 120; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: -10 - Math.random() * canvas.height * 0.5,
-        w: 4 + Math.random() * 6,
-        h: 6 + Math.random() * 10,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        vx: (Math.random() - 0.5) * 4,
-        vy: 2 + Math.random() * 4,
-        rotation: Math.random() * 360,
-        rotSpeed: (Math.random() - 0.5) * 10
-      });
+    var skinId = overrideSkinId || (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
+    var effect = CELEBRATION_EFFECTS[skinId];
+
+    // Dragon: fully custom animation
+    if (effect && effect.animate) {
+      effect.animate(canvas, ctx);
+      return;
     }
 
+    var createFn = (effect && effect.createParticles) || defaultCreateParticles;
+    var updateFn = (effect && effect.updateParticle) || defaultUpdateParticle;
+    var renderFn = (effect && effect.renderParticle) || defaultRenderParticle;
+    var afterFn = effect && effect.afterRender;
+    var maxFrames = (effect && effect.maxFrames) || 150;
+
+    var particles = createFn(canvas);
     var frame = 0;
-    var maxFrames = 150;
+
     function animate() {
       frame++;
       if (frame > maxFrames) {
-        document.body.removeChild(canvas);
+        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
         return;
       }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       var alpha = frame > maxFrames - 30 ? (maxFrames - frame) / 30 : 1;
       ctx.globalAlpha = alpha;
       for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        p.x += p.vx;
-        p.vy += 0.08;
-        p.y += p.vy;
-        p.rotation += p.rotSpeed;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation * Math.PI / 180);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
+        updateFn(particles[i], frame);
+        renderFn(ctx, particles[i], frame, particles);
       }
+      if (afterFn) afterFn(ctx, particles, frame, canvas);
       requestAnimationFrame(animate);
     }
     animate();

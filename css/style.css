@@ -1750,6 +1750,26 @@ input[type="text"]::placeholder {
   color: var(--text-muted);
 }
 
+/* Shimmer effect for skins with special celebration effects */
+.skin-option:not(.locked)[data-skin-id="banana"] .skin-name,
+.skin-option:not(.locked)[data-skin-id="fire"] .skin-name,
+.skin-option:not(.locked)[data-skin-id="dragon"] .skin-name,
+.skin-option:not(.locked)[data-skin-id="flower"] .skin-name,
+.skin-option:not(.locked)[data-skin-id="wave"] .skin-name,
+.skin-option:not(.locked)[data-skin-id="star"] .skin-name {
+  background: linear-gradient(90deg, var(--text-muted) 0%, var(--text-muted) 35%, #ffd700 50%, var(--text-muted) 65%, var(--text-muted) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: skin-name-shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes skin-name-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 .lock-overlay {
   position: absolute;
   top: 0;

@@ -258,7 +258,8 @@
         var pScores = (roomData.players[pk] && roomData.players[pk].scores) || {};
         if (!celebratedBonuses[pk] && Scoring.upperBonus(pScores) > 0) {
           celebratedBonuses[pk] = true;
-          UI.showConfetti();
+          var bonusSkin = (roomData.players[pk] && roomData.players[pk].diceSkin) || 'classic';
+          UI.showConfetti(bonusSkin);
         }
       }
     }

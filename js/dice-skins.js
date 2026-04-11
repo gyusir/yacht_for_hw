@@ -264,6 +264,7 @@
       }
 
       // Click handler
+      var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1 };
       (function (skinDef, skinUnlocked, optionEl) {
         optionEl.addEventListener('click', function () {
           if (!skinUnlocked) return;
@@ -272,6 +273,10 @@
           optionEl.classList.add('active');
           applySkin(skinDef.id);
           saveSkin(skinDef.id);
+          // Play celebration effect preview for special skins
+          if (SPECIAL_EFFECT_SKINS[skinDef.id] && window.YachtGame.UI && window.YachtGame.UI.showConfetti) {
+            window.YachtGame.UI.showConfetti();
+          }
         });
       })(def, unlocked, option);
 
