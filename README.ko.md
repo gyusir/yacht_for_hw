@@ -6,6 +6,16 @@
 
 > Live: https://yacht-ff0c8.web.app
 
+## Screenshots
+
+| 로비 & 스킨 | 게임 플레이 |
+|:---:|:---:|
+| ![Lobby](screenshots/lobby-skins.png) | ![Gameplay](screenshots/gameplay-light.png) |
+
+| 다크 모드 | 모바일 |
+|:---:|:---:|
+| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
+
 ## Features
 
 - **두 가지 게임 모드** — Yacht / Yahtzee 선택

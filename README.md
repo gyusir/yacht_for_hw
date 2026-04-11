@@ -6,6 +6,16 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 
 > Live: https://yacht-ff0c8.web.app
 
+## Screenshots
+
+| Lobby & Skins | Gameplay |
+|:---:|:---:|
+| ![Lobby](screenshots/lobby-skins.png) | ![Gameplay](screenshots/gameplay-light.png) |
+
+| Dark Mode | Mobile |
+|:---:|:---:|
+| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
+
 ## Features
 
 - **Two Game Modes** — Choose between Yacht and Yahtzee
