@@ -125,3 +125,31 @@
 - 콘솔 에러는 Phase 1과 Phase 5 이후 최소 2회 확인합니다
 - 다크모드 테스트는 반드시 라이트모드로 복원 후 다음 단계로 진행합니다
 - 모바일 테스트 후 반드시 데스크톱 뷰포트로 복원합니다
+
+## 브라우저 세션 관리
+- 이전 세션의 브라우저가 남아 "Browser is already in use" 에러가 발생하면:
+  1. `browser_close` 시도
+  2. 그래도 안 되면 `pkill -f "mcp-chrome"` 실행 후 재접속
+
+## 스코어카드 카테고리 선택 패턴
+게임 화면에서 카테고리를 선택할 때 **2단계 확정 방식**을 사용한다:
+1. 첫 번째 클릭: 해당 카테고리가 `pending` 상태로 선택됨 (파란 테두리)
+2. 두 번째 클릭: 확정됨
+
+**주의**: 첫 번째 클릭 후 DOM이 재렌더링되어 기존 ref가 무효화될 수 있다.
+이 경우 `browser_evaluate`로 직접 클릭한다:
+```js
+() => {
+  const tds = document.querySelectorAll('td');
+  for (const td of tds) {
+    if (td.classList.contains('pending')) { td.click(); return 'confirmed'; }
+  }
+  return 'not found';
+}
+```
+
+## 봇 턴 대기 시간
+- 봇은 최대 3회 굴림 + stagger 애니메이션 + 카테고리 선택까지 수행한다
+- 일반/도박사 봇: `wait_for` 5~6초
+- 해일(Wave) 봇: `wait_for` 6~8초 (Endgame Worker 계산 포함 시 더 길어질 수 있음)
+- 봇 턴 완료 확인: "굴리기! (0/3)" 텍스트가 나타나면 내 턴이 돌아온 것
