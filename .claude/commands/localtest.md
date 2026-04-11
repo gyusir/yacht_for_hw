@@ -6,8 +6,9 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 
 ## stop인 경우
 
-1. `lsof -ti:5002,5001,9000,9099,4000 | xargs kill -9 2>/dev/null` 로 emulator 관련 포트를 모두 종료
-2. "로컬 테스트 환경이 종료되었습니다." 메시지 출력
+1. `lsof -ti:5001 | xargs kill -TERM 2>/dev/null` 로 Functions 포트에 SIGTERM 전송 (graceful shutdown → DB/Auth 데이터 자동 export)
+2. 2초 대기 후 나머지 포트가 아직 열려있으면 `lsof -ti:5002,5001,9000,9099,4000 | xargs kill -9 2>/dev/null` 로 강제 종료
+3. "로컬 테스트 환경이 종료되었습니다. (데이터 저장됨)" 메시지 출력
 
 ## 기본 실행 (인자 없음)
 
@@ -18,7 +19,7 @@ Firebase Emulator를 실행하여 로컬 테스트 환경을 구성합니다.
 
 3. Firebase Emulator를 백그라운드로 실행:
    ```
-   firebase emulators:start --import=emulator-data
+   firebase emulators:start --import=emulator-data --export-on-exit=emulator-data
    ```
    - 반드시 프로젝트 루트 디렉토리에서 실행 (cwd가 다르면 절대 경로 사용)
    - 반드시 `run_in_background: true` 옵션으로 실행
