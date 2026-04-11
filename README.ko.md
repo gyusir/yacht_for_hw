@@ -8,24 +8,13 @@
 
 ## Screenshots
 
-<table>
-<tr>
-<td align="center" width="50%"><b>로비 & 스킨</b></td>
-<td align="center" width="50%"><b>게임 플레이</b></td>
-</tr>
-<tr>
-<td><img src="screenshots/lobby-skins.png" alt="로비" width="100%"></td>
-<td><img src="screenshots/gameplay-light.png" alt="게임 플레이" width="100%"></td>
-</tr>
-<tr>
-<td align="center"><b>다크 모드</b></td>
-<td align="center"><b>모바일</b></td>
-</tr>
-<tr>
-<td><img src="screenshots/gameplay-dark.png" alt="다크 모드" width="100%"></td>
-<td><img src="screenshots/gameplay-mobile.png" alt="모바일" width="100%"></td>
-</tr>
-</table>
+| 로비 & 스킨 | 게임 플레이 |
+|:---:|:---:|
+| ![Lobby](screenshots/lobby-skins.png) | ![Gameplay](screenshots/gameplay-light.png) |
+
+| 다크 모드 | 모바일 |
+|:---:|:---:|
+| ![Dark Mode](screenshots/gameplay-dark.png) | ![Mobile](screenshots/gameplay-mobile.png) |
 
 ## Features
 
