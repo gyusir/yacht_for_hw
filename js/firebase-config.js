@@ -15,12 +15,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 // ─── App Check ───
-window.YachtGame.isEmulator = false;
-if (location.hostname === 'localhost') {
+window.YachtGame.isEmulator = (location.hostname === 'localhost');
+if (window.YachtGame.isEmulator) {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  if (new URLSearchParams(location.search).has('emulator')) {
-    window.YachtGame.isEmulator = true;
-  }
 }
 
 if (!window.YachtGame.isEmulator) {

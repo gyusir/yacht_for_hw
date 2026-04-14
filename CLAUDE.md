@@ -75,7 +75,7 @@
 
 ## Local Test
 
-`js/firebase-config.js`에서 `?emulator=true` 쿼리 파라미터가 있을 때만 emulator로 연결한다.
+`js/firebase-config.js`에서 `localhost`이면 자동으로 emulator에 연결한다.
 
 | 명령어 | 용도 |
 | --- | --- |
