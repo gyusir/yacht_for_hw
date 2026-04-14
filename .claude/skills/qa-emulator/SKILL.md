@@ -1,4 +1,4 @@
-로컬 에뮬레이터 환경(http://localhost:5002?emulator=true)의 UI/UX QA 테스트를 수행합니다.
+로컬 에뮬레이터 환경(http://localhost:5002)의 UI/UX QA 테스트를 수행합니다.
 
 ## 실행 방법
 
@@ -34,7 +34,7 @@
 3. 실행 중이 아니면 `/localtest` 스킬을 호출하여 에뮬레이터를 시작한 뒤 Phase 1로 진행
 
 ### Phase 1: 초기 접속 및 콘솔 체크
-1. `browser_navigate`로 http://localhost:5002?emulator=true 접속
+1. `browser_navigate`로 http://localhost:5002 접속
 2. `browser_console_messages` (level: error)로 에러 확인
 3. `browser_take_screenshot`으로 초기 화면 캡처
 4. 에뮬레이터 연결 확인 — 콘솔에 에뮬레이터 관련 로그가 있는지, 프로덕션 서버로 연결되지 않았는지 확인
@@ -144,7 +144,7 @@
 ```
 
 ## 주의사항
-- 반드시 `?emulator=true` 쿼리 파라미터를 포함하여 접속한다. 없으면 프로덕션 서버로 연결된다.
+- localhost이면 자동으로 emulator에 연결된다.
 - 각 화면 전환 후 반드시 스크린샷을 남긴다
 - 콘솔 에러는 Phase 1과 Phase 5 이후 최소 2회 확인한다
 - 다크모드 테스트는 반드시 라이트모드로 복원 후 다음 단계로 진행한다
