@@ -2,7 +2,7 @@
   "rules": {
     "rooms": {
       "$roomCode": {
-        ".read": true,
+        ".read": "auth != null",
 
         "dice": {
           ".write": false

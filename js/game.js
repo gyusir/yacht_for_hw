@@ -82,7 +82,8 @@
       getFunctions();
       claimDisconnectWinFn({ roomCode: roomCode }).catch(function (err) {
         console.error('claimDisconnectWin error:', err);
-        window.YachtGame.UI.showToast('승리 처리에 실패했습니다');
+        var _I18n = window.YachtGame.I18n;
+        window.YachtGame.UI.showToast(_I18n ? _I18n.t('claim_win_failed') : 'Failed to claim win.');
       });
     }, DISCONNECT_TIMEOUT * 1000);
   }
@@ -374,7 +375,7 @@
 
   function rollDice() {
     if (!lastRoomData || isRolling) return;
-    if (!isOnline) { window.YachtGame.UI.showToast('오프라인 상태입니다'); return; }
+    if (!isOnline) { var _I18n = window.YachtGame.I18n; window.YachtGame.UI.showToast(_I18n ? _I18n.t('offline_status') : 'You are offline.'); return; }
 
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
@@ -575,7 +576,7 @@
 
   function confirmCategory(category) {
     if (!lastRoomData) return;
-    if (!isOnline) { window.YachtGame.UI.showToast('오프라인 상태입니다'); return; }
+    if (!isOnline) { var _I18n = window.YachtGame.I18n; window.YachtGame.UI.showToast(_I18n ? _I18n.t('offline_status') : 'You are offline.'); return; }
     var myScores = lastRoomData.players[localPlayerKey].scores || {};
     if (myScores[category] !== null && myScores[category] !== undefined) return;
 
@@ -681,6 +682,7 @@
     pendingCategory = null;
     lastTurn = null;
     lastRollCount = null;
+    roomListener = null;
     emoteListener = null;
     lastSeenEmoteTs = 0;
     lastCelebrationTs = 0;
@@ -707,7 +709,8 @@
     getFunctions();
     respondToDrawFn({ roomCode: roomCode, accept: accept }).catch(function (err) {
       console.error('respondToDraw error:', err);
-      window.YachtGame.UI.showToast('무승부 응답에 실패했습니다');
+      var I18n = window.YachtGame.I18n;
+      window.YachtGame.UI.showToast(I18n ? I18n.t('draw_response_failed') : 'Failed to respond to draw.');
     });
   }
 
