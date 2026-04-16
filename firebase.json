@@ -17,7 +17,8 @@
       "skills-lock.json",
       "*.log",
       "tools/**",
-      "__pycache__/**"
+      "__pycache__/**",
+      "dist/**"
     ],
     "headers": [
       {
