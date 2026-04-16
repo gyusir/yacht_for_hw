@@ -87,9 +87,8 @@
 
     // Dragon skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'dragon') {
-      var DRAGON_FILES = { 1: 'Group 13', 2: 'Group 15', 3: 'Group 16', 4: 'Group 17', 5: 'Group 18', 6: 'Group 19' };
       var img = document.createElement('img');
-      img.src = 'die_image/dragon/' + DRAGON_FILES[value] + '.png';
+      img.src = 'die_image/dragon/dragon' + value + '.png';
       img.className = 'dragon-die-img';
       img.alt = value;
       dieEl.appendChild(img);
@@ -98,9 +97,8 @@
 
     // Flower skin: show image instead of pips
     if (DiceSkins && DiceSkins.getCurrentSkin() === 'flower') {
-      var FLOWER_FILES = { 1: 'Group 20', 2: 'Group 23', 3: 'Group 24', 4: 'Group 25', 5: 'Group 26', 6: 'Group 27' };
       var img = document.createElement('img');
-      img.src = 'die_image/flower/' + FLOWER_FILES[value] + '.png';
+      img.src = 'die_image/flower/flower' + value + '.png';
       img.className = 'flower-die-img';
       img.alt = value;
       dieEl.appendChild(img);

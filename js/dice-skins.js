@@ -203,13 +203,13 @@
         miniDie.appendChild(img);
       } else if (def.id === 'dragon') {
         var img = document.createElement('img');
-        img.src = 'die_image/dragon/Group 13.png';
+        img.src = 'die_image/dragon/dragon1.png';
         img.className = 'dragon-preview';
         img.alt = 'Dragon 1';
         miniDie.appendChild(img);
       } else if (def.id === 'flower') {
         var img = document.createElement('img');
-        img.src = 'die_image/flower/Group 26.png';
+        img.src = 'die_image/flower/flower5.png';
         img.className = 'flower-preview';
         img.alt = 'Flower 5';
         miniDie.appendChild(img);
@@ -305,11 +305,9 @@
     } else if (skinId === 'fire') {
       html += '<img class="fire-preview" src="die_image/fire/fire' + value + '.png" alt="Fire ' + value + '">';
     } else if (skinId === 'dragon') {
-      var DRAGON_CUBE_FILES = { 1: 'Group 13', 2: 'Group 15', 3: 'Group 16', 4: 'Group 17', 5: 'Group 18', 6: 'Group 19' };
-      html += '<img class="dragon-preview" src="die_image/dragon/' + DRAGON_CUBE_FILES[value] + '.png" alt="Dragon ' + value + '">';
+      html += '<img class="dragon-preview" src="die_image/dragon/dragon' + value + '.png" alt="Dragon ' + value + '">';
     } else if (skinId === 'flower') {
-      var FLOWER_CUBE_FILES = { 1: 'Group 20', 2: 'Group 23', 3: 'Group 24', 4: 'Group 25', 5: 'Group 26', 6: 'Group 27' };
-      html += '<img class="flower-preview" src="die_image/flower/' + FLOWER_CUBE_FILES[value] + '.png" alt="Flower ' + value + '">';
+      html += '<img class="flower-preview" src="die_image/flower/flower' + value + '.png" alt="Flower ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {
