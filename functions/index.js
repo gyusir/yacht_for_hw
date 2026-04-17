@@ -13,9 +13,7 @@ const db = admin.database();
 
 function requireAppCheck(context) {
   if (context.app === undefined) {
-    functions.logger.warn("App Check token missing", {
-      uid: context.auth && context.auth.uid
-    });
+    throw new functions.https.HttpsError("failed-precondition", "App Check verification failed.");
   }
 }
 
@@ -188,37 +186,40 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   const targetCode = roomCode.toUpperCase().trim();
 
   const roomRef = db.ref("rooms/" + targetCode);
-  const snap = await roomRef.once("value");
 
-  if (!snap.exists()) {
-    throw new functions.https.HttpsError("not-found", "Room not found.");
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    if (room.status !== "waiting") return;
+    if (room.players && room.players.player2) return;
+
+    const p2 = {
+      name: playerName,
+      uid: uid,
+      connected: true,
+      scores: buildEmptyScores(room.gameMode),
+      diceSkin: diceSkin || "classic"
+    };
+    if (nicknameKo) p2.nicknameKo = nicknameKo;
+    if (nicknameEn) p2.nicknameEn = nicknameEn;
+
+    room.players.player2 = p2;
+    room.status = "playing";
+    room.lastActivityAt = { ".sv": "timestamp" };
+    return room;
+  });
+
+  if (!result.committed || !result.snapshot.exists()) {
+    // Determine specific error reason
+    const snap = await roomRef.once("value");
+    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+    const room = snap.val();
+    if (room.status !== "waiting") throw new functions.https.HttpsError("failed-precondition", "Room is already in a game.");
+    if (room.players && room.players.player2) throw new functions.https.HttpsError("failed-precondition", "Room is full.");
+    throw new functions.https.HttpsError("aborted", "Could not join room. Try again.");
   }
 
-  const room = snap.val();
-  if (room.status !== "waiting") {
-    throw new functions.https.HttpsError("failed-precondition", "Room is already in a game.");
-  }
-  if (room.players && room.players.player2) {
-    throw new functions.https.HttpsError("failed-precondition", "Room is full.");
-  }
-
-  const player2Data = {
-    name: playerName,
-    uid: uid,
-    connected: true,
-    scores: buildEmptyScores(room.gameMode),
-    diceSkin: diceSkin || "classic"
-  };
-  if (nicknameKo) player2Data.nicknameKo = nicknameKo;
-  if (nicknameEn) player2Data.nicknameEn = nicknameEn;
-
-  const updates = {};
-  updates["players/player2"] = player2Data;
-  updates["status"] = "playing";
-  updates["lastActivityAt"] = ServerValue.TIMESTAMP;
-
-  await roomRef.update(updates);
-  return { roomCode: targetCode, playerKey: "player2", gameMode: room.gameMode };
+  const finalRoom = result.snapshot.val();
+  return { roomCode: targetCode, playerKey: "player2", gameMode: finalRoom.gameMode };
 });
 
 // ─── findOrCreateRandomRoom ───
@@ -401,48 +402,56 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
-  const snap = await roomRef.once("value");
-  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
 
-  const room = snap.val();
-  if (room.status !== "playing") {
-    throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
-  }
+  // Pre-generate dice values (transaction callback must be pure/deterministic)
+  const randomValues = [];
+  for (let i = 0; i < 5; i++) randomValues.push(randomDie());
 
-  const playerKey = findPlayerKey(room.players, uid);
-  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
-  if (room.currentTurn !== playerKey) {
-    throw new functions.https.HttpsError("failed-precondition", "Not your turn.");
-  }
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    if (room.status !== "playing") return;
 
-  const rollCount = room.rollCount || 0;
-  if (rollCount >= 3) {
-    throw new functions.https.HttpsError("failed-precondition", "No rolls remaining.");
-  }
+    const playerKey = findPlayerKey(room.players || {}, uid);
+    if (!playerKey) return;
+    if (room.currentTurn !== playerKey) return;
 
-  const heldSnap = await db.ref("rooms/" + roomCode + "/heldDice").once("value");
-  const heldData = heldSnap.val() || {};
+    const rollCount = room.rollCount || 0;
+    if (rollCount >= 3) return;
 
-  const newDice = {};
-  for (let i = 0; i < 5; i++) {
-    const currentDie = room.dice && room.dice[i];
-    const isHeld = rollCount > 0 && heldData[i] === true && currentDie && currentDie.value >= 1;
+    const heldData = room.heldDice || {};
+    const newDice = {};
+    for (let i = 0; i < 5; i++) {
+      const currentDie = room.dice && room.dice[i];
+      const isHeld = rollCount > 0 && heldData[i] === true && currentDie && currentDie.value >= 1;
 
-    if (isHeld) {
-      newDice[i] = { value: currentDie.value, held: true };
-    } else {
-      newDice[i] = { value: randomDie(), held: false };
+      if (isHeld) {
+        newDice[i] = { value: currentDie.value, held: true };
+      } else {
+        newDice[i] = { value: randomValues[i], held: false };
+      }
     }
+
+    room.dice = newDice;
+    room.rollCount = rollCount + 1;
+    room.lastActivityAt = { ".sv": "timestamp" };
+    return room;
+  });
+
+  if (!result.committed) {
+    // Determine specific error reason
+    const snap = await roomRef.once("value");
+    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+    const room = snap.val();
+    if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
+    const pk = findPlayerKey(room.players || {}, uid);
+    if (!pk) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+    if (room.currentTurn !== pk) throw new functions.https.HttpsError("failed-precondition", "Not your turn.");
+    if ((room.rollCount || 0) >= 3) throw new functions.https.HttpsError("failed-precondition", "No rolls remaining.");
+    throw new functions.https.HttpsError("aborted", "Could not roll dice. Try again.");
   }
 
-  const updates = {
-    dice: newDice,
-    rollCount: rollCount + 1,
-    lastActivityAt: ServerValue.TIMESTAMP
-  };
-
-  await roomRef.update(updates);
-  return { dice: newDice, rollCount: rollCount + 1 };
+  const finalRoom = result.snapshot.val();
+  return { dice: finalRoom.dice, rollCount: finalRoom.rollCount };
 });
 
 // ─── selectCategory ───
@@ -572,16 +581,25 @@ exports.leaveGame = regionFn.https.onCall(async (data, context) => {
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
-  const snap = await roomRef.once("value");
-  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
 
-  const room = snap.val();
-  const playerKey = findPlayerKey(room.players, uid);
-  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    const playerKey = findPlayerKey(room.players || {}, uid);
+    if (!playerKey) return;
 
-  if (room.status === "playing") {
-    const oppKey = opponentOf(playerKey);
-    await roomRef.update({ status: "finished", winner: oppKey });
+    if (room.status === "playing") {
+      room.status = "finished";
+      room.winner = opponentOf(playerKey);
+    }
+    return room;
+  });
+
+  if (!result.committed) {
+    const snap = await roomRef.once("value");
+    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+    const room = snap.val();
+    if (!findPlayerKey(room.players || {}, uid)) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+    throw new functions.https.HttpsError("aborted", "Could not leave game. Try again.");
   }
 
   return { success: true };
@@ -622,19 +640,30 @@ exports.proposeDraw = regionFn.https.onCall(async (data, context) => {
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
-  const snap = await roomRef.once("value");
-  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
 
-  const room = snap.val();
-  const playerKey = findPlayerKey(room.players, uid);
-  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
-  if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
-  if (room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "A draw proposal is already pending.");
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    const playerKey = findPlayerKey(room.players || {}, uid);
+    if (!playerKey) return;
+    if (room.status !== "playing") return;
+    if (room.drawProposal) return;
 
-  await roomRef.child("drawProposal").set({
-    proposedBy: playerKey,
-    timestamp: ServerValue.TIMESTAMP
+    room.drawProposal = {
+      proposedBy: playerKey,
+      timestamp: { ".sv": "timestamp" }
+    };
+    return room;
   });
+
+  if (!result.committed) {
+    const snap = await roomRef.once("value");
+    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+    const room = snap.val();
+    if (!findPlayerKey(room.players || {}, uid)) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+    if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
+    if (room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "A draw proposal is already pending.");
+    throw new functions.https.HttpsError("aborted", "Could not propose draw. Try again.");
+  }
 
   return { success: true };
 });
@@ -649,20 +678,34 @@ exports.respondToDraw = regionFn.https.onCall(async (data, context) => {
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
-  const snap = await roomRef.once("value");
-  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
 
-  const room = snap.val();
-  const playerKey = findPlayerKey(room.players, uid);
-  if (!playerKey) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
-  if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
-  if (!room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "No draw proposal pending.");
-  if (room.drawProposal.proposedBy === playerKey) throw new functions.https.HttpsError("failed-precondition", "Cannot respond to own proposal.");
+  const result = await roomRef.transaction((room) => {
+    if (!room) return room;
+    const playerKey = findPlayerKey(room.players || {}, uid);
+    if (!playerKey) return;
+    if (room.status !== "playing") return;
+    if (!room.drawProposal) return;
+    if (room.drawProposal.proposedBy === playerKey) return;
 
-  if (accept) {
-    await roomRef.update({ status: "finished", winner: "tie", drawProposal: null });
-  } else {
-    await roomRef.child("drawProposal").remove();
+    if (accept) {
+      room.status = "finished";
+      room.winner = "tie";
+      room.drawProposal = null;
+    } else {
+      room.drawProposal = null;
+    }
+    return room;
+  });
+
+  if (!result.committed) {
+    const snap = await roomRef.once("value");
+    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+    const room = snap.val();
+    if (!findPlayerKey(room.players || {}, uid)) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
+    if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
+    if (!room.drawProposal) throw new functions.https.HttpsError("failed-precondition", "No draw proposal pending.");
+    if (room.drawProposal.proposedBy === findPlayerKey(room.players || {}, uid)) throw new functions.https.HttpsError("failed-precondition", "Cannot respond to own proposal.");
+    throw new functions.https.HttpsError("aborted", "Could not respond to draw. Try again.");
   }
 
   return { success: true };
@@ -861,15 +904,14 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
   const { idToken, appCheckToken, gameMode, botDifficulty, myScore, oppScore, result, scoredYacht, nicknameKo, nicknameEn } = body;
   if (!idToken) { res.status(401).json({ error: "No token" }); return; }
 
-  // App Check verification (soft check - log only)
+  // App Check verification
   if (!appCheckToken) {
-    functions.logger.warn("Beacon: App Check token missing");
-  } else {
-    try {
-      await admin.appCheck().verifyToken(appCheckToken);
-    } catch (_) {
-      functions.logger.warn("Beacon: Invalid App Check token");
-    }
+    res.status(403).json({ error: "App Check token required" }); return;
+  }
+  try {
+    await admin.appCheck().verifyToken(appCheckToken);
+  } catch (_) {
+    res.status(403).json({ error: "Invalid App Check token" }); return;
   }
 
   const nKo = (typeof nicknameKo === "string") ? nicknameKo.substring(0, 20) : null;

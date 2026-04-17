@@ -110,9 +110,7 @@
   }
 
   function buildEmptyScores(gameMode) {
-    var scores = { _init: true };
-    if (gameMode === 'yahtzee') scores.yahtzeeBonus = 0;
-    return scores;
+    return window.YachtGame.Lobby.buildEmptyScores(gameMode);
   }
 
   function getMyScores() { return roomData.players.player1.scores || {}; }
@@ -764,7 +762,8 @@
     }).catch(function (err) {
       console.error('saveBotGameResult error:', err);
       resultSaved = false;
-      window.YachtGame.UI.showToast('결과 저장에 실패했습니다');
+      var I18n = window.YachtGame.I18n;
+      window.YachtGame.UI.showToast(I18n ? I18n.t('save_result_failed') : 'Failed to save result.');
     });
   }
 
@@ -931,6 +930,7 @@
     pendingCategory = null;
     lastCelebrationKey = null;
     celebratedBonuses = {};
+    resultSaved = false;
     turnCount = 0;
     lastBotEmoteTime = 0;
     botConsecutiveHigh = 0;
