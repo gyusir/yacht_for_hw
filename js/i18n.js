@@ -122,6 +122,8 @@
       wave_desc: 'Win-rate maximizing AI',
       start_game: 'Start Game',
       fast_mode: 'Fast',
+      bgm_on: 'Music on',
+      bgm_off: 'Music off',
 
       // Game
       btn_shortcut: 'Shortcut',
@@ -391,6 +393,8 @@
       wave_desc: '\uc2b9\ub960 \uadf9\ub300\ud654 \uc804\ub7b5 AI',
       start_game: '\uac8c\uc784 \uc2dc\uc791',
       fast_mode: '\ube68\ub9ac\uac10\uae30',
+      bgm_on: '\uc74c\uc545 \ucf1c\uae30',
+      bgm_off: '\uc74c\uc545 \ub044\uae30',
 
       // Game
       btn_shortcut: '\ub2e8\ucd95\ud0a4',
