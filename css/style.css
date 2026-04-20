@@ -209,7 +209,9 @@ body.fast-mode .die.rolling {
   color: #fff !important;
 }
 
-#theme-toggle {
+.header-top-controls #lang-toggle,
+#theme-toggle,
+#bgm-toggle {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -220,12 +222,21 @@ body.fast-mode .die.rolling {
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  transition: background var(--transition), border-color var(--transition);
+  padding: 0;
+  transition: background var(--transition), border-color var(--transition), opacity var(--transition);
   color: var(--text);
 }
 
-#theme-toggle:hover {
+.header-top-controls #lang-toggle {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.header-top-controls #lang-toggle:hover,
+#theme-toggle:hover,
+#bgm-toggle:hover {
   background: var(--surface-hover);
+  color: var(--text);
 }
 
 .icon-moon { display: none; }
@@ -429,6 +440,23 @@ input[type="text"]::placeholder {
 
 .btn-icon:hover {
   color: var(--accent);
+}
+
+#bgm-toggle {
+  position: relative;
+}
+
+#bgm-toggle.bgm-off::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  pointer-events: none;
 }
 
 /* ===== Google Sign-In ===== */

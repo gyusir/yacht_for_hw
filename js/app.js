@@ -177,6 +177,25 @@
     UI.toggleTheme();
   });
 
+  // --- BGM Toggle ---
+  var bgmToggle = document.getElementById('bgm-toggle');
+  var syncBgmButton = function () {};
+  if (bgmToggle && window.YachtGame.Audio) {
+    var BGMAudio = window.YachtGame.Audio;
+    syncBgmButton = function () {
+      var muted = BGMAudio.isMuted();
+      bgmToggle.setAttribute('aria-pressed', muted ? 'false' : 'true');
+      bgmToggle.classList.toggle('bgm-off', muted);
+      var label = I18n ? I18n.t(muted ? 'bgm_on' : 'bgm_off') : (muted ? 'Music on' : 'Music off');
+      bgmToggle.setAttribute('aria-label', label);
+      bgmToggle.setAttribute('title', label);
+    };
+    syncBgmButton();
+    BGMAudio.onChange(syncBgmButton);
+    BGMAudio.init();
+    bgmToggle.addEventListener('click', function () { BGMAudio.toggleMuted(); });
+  }
+
   // --- Language Toggle ---
   var langToggle = document.getElementById('lang-toggle');
   function updateLangButton() {
@@ -189,6 +208,7 @@
     I18n.setLang(newLang);
     I18n.refreshStaticText();
     updateLangButton();
+    syncBgmButton();
     // Update nickname display for new language
     if (Auth.getNickname()) {
       playerName = Auth.getPlayerName();

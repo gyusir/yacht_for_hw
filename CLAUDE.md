@@ -26,6 +26,7 @@
 | `endgame-worker.js` | Web Worker. 남은 5턴 이하에서 승률 근사(Win Probability) 모델로 상대 점수 대비 최적 전략 계산. Wave 봇 전용 |
 | `history.js` | 전적 저장·조회 (로그인 유저 전용) |
 | `i18n.js` | 영어/한국어 이중 언어. `I18n.t(key)` / `I18n.getLang()` |
+| `audio.js` | BGM 매니저. `<audio loop>` 기반, 첫 사용자 인터랙션에 lazy 시작, `localStorage`('yacht-bgm-muted')로 음소거 상태 영구 저장 |
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
@@ -48,6 +49,12 @@
 | `die_image/fire/` | Fire 스킨 이미지 |
 | `die_image/dragon/` | Dragon 스킨 이미지 |
 | `die_image/flower/` | Flower 스킨 이미지 |
+
+### 오디오 에셋 (`assets/audio/`)
+
+| 파일 | 출처 | 라이선스 |
+| --- | --- | --- |
+| `assets/audio/bgm-bossa.mp3` | Joth - "8bit Bossa" (OpenGameArt) | CC0 (표기 의무 없음) |
 
 ### Backend (`functions/`)
 
