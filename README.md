@@ -31,6 +31,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 - **Server-side Validation** — Anti-cheat score calculation via Cloud Functions, transaction-based rate limiting
 - **Abuse Prevention** — Bot game tab close saves as loss (sendBeacon), minimum score threshold invalidation (excluded from win rate and streaks)
 - **App Check** — Firebase App Check (reCAPTCHA v3) prevents unauthorized use of backend services from forked apps
+- **Audio** — Looping BGM + low-latency polyphonic SFX (dice roll/hold/confirm), single ♪ toggle, default muted, persisted via localStorage
 - **Bilingual** — English/Korean dual language support with real-time switching
 - **Tutorial** — Interactive step-by-step game guide
 - **Accessibility** — aria-labels, keyboard navigation, screen reader support
@@ -68,11 +69,14 @@ yacht_for_hw/
 │   ├── endgame-worker.js     # Web Worker for win-probability maximization (Wave bot endgame)
 │   ├── history.js            # Game history save/query
 │   ├── i18n.js               # English/Korean bilingual
+│   ├── audio.js              # BGM manager (HTMLAudioElement, lazy start on first gesture, localStorage mute)
+│   ├── sfx.js                # SFX manager (Web Audio API, polyphonic dice/hold/confirm sounds, shares mute with audio.js)
 │   ├── nickname.js           # Nickname generation/management (per language)
 │   ├── tutorial.js           # Interactive tutorial
 │   ├── ui.js                 # Screen transitions, scorecard (event delegation), toast (dynamic duration)
 │   └── app.js                # Entry point, module wiring, emotes, offline detection, tab conflict, ID token caching, App Check token caching
 ├── die_image/                # Image-based dice skin assets (Banana, Wave, Fire, Dragon, Flower)
+├── assets/audio/             # CC0 audio assets (BGM bossa loop + 3 SFX: dice-roll/dice-hold/category-confirm)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht mode DP lookup table (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee mode DP lookup table (Uint16, 2MB)

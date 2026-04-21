@@ -272,6 +272,7 @@
 
     resetIdleTimer();
     isAnimating = true;
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('roll');
 
     var UI = window.YachtGame.UI;
     var Dice = window.YachtGame.Dice;
@@ -335,6 +336,7 @@
     if ((roomData.rollCount || 0) < 1) return;
 
     resetIdleTimer();
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('hold');
 
     var hd = roomData.heldDice || {};
     var isCurrentlyHeld = hd[index] === true;
@@ -369,6 +371,7 @@
     if (myScores[category] !== null && myScores[category] !== undefined) return;
 
     if (pendingCategory === category) {
+      if (window.YachtGame.SFX) window.YachtGame.SFX.play('confirm');
       selectCategory('player1', category);
       pendingCategory = null;
     } else {
@@ -510,6 +513,7 @@
     if (!roomData || roomData.status === 'finished' || roomData.currentTurn !== 'player2') return;
 
     isAnimating = true;
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('roll');
     var UI = window.YachtGame.UI;
     var Dice = window.YachtGame.Dice;
     var DiceSkins = window.YachtGame.DiceSkins;
@@ -621,6 +625,7 @@
             } else {
               addTimer(function () {
                 if (!roomData || roomData.status === 'finished' || roomData.currentTurn !== 'player2') return;
+                if (window.YachtGame.SFX) window.YachtGame.SFX.play('confirm');
                 selectCategory('player2', result.category);
               }, randRange(Math.round(1200 / ed), Math.round(1800 / ed)));
             }
@@ -681,6 +686,7 @@
           if (!roomData) return;
           if (!roomData.heldDice) roomData.heldDice = {};
           roomData.heldDice[change.index] = change.newHeld;
+          if (window.YachtGame.SFX) window.YachtGame.SFX.play('hold');
 
           var el = dieEls[change.index];
           if (el) {
@@ -720,6 +726,7 @@
     var category = BotAI.chooseCategory(diceValues, botScores, roomData.gameMode, effectiveDiff, myScores);
     if (!category) return;
 
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('confirm');
     selectCategory('player2', category);
   }
 

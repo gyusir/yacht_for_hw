@@ -152,6 +152,26 @@
       return;
     }
 
+    // SFX for opponent actions
+    var SFX = window.YachtGame.SFX;
+    if (SFX && prevRoom && prevRoom.players) {
+      var prevOpp = prevRoom.players[opponentKey];
+      // Confirm: opponent gained a newly filled score entry
+      if (prevOpp) {
+        var countFilled = function (s) {
+          var n = 0;
+          if (s) { for (var k in s) { if (s[k] !== null && s[k] !== undefined) n++; } }
+          return n;
+        };
+        if (countFilled(oppData.scores) > countFilled(prevOpp.scores)) SFX.play('confirm');
+      }
+      // Roll / hold during opponent's turn
+      if (prevRoom.currentTurn === opponentKey && room.currentTurn === opponentKey) {
+        if ((room.rollCount || 0) > (prevRoom.rollCount || 0)) SFX.play('roll');
+        else if (JSON.stringify(prevRoom.heldDice || {}) !== JSON.stringify(room.heldDice || {})) SFX.play('hold');
+      }
+    }
+
     // Handle disconnection with 10s auto-win countdown
     if (oppData.connected === false && room.status === 'playing') {
       UI.showDisconnectOverlay(true);
@@ -382,6 +402,7 @@
     if ((room.rollCount || 0) >= 3) return;
 
     isRolling = true;
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('roll');
     window.YachtGame.UI.setRollButtonEnabled(false, true);
 
     // Apply skin immediately so the animation renders with the correct skin
@@ -525,6 +546,8 @@
     if (room.currentTurn !== localPlayerKey) return;
     if ((room.rollCount || 0) < 1) return; // Can't hold before first roll
 
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('hold');
+
     // Determine current held state from heldDice (single source of truth)
     var heldData = room.heldDice || {};
     var isCurrentlyHeld = heldData[index] === true;
@@ -581,6 +604,7 @@
     if (myScores[category] !== null && myScores[category] !== undefined) return;
 
     if (pendingCategory === category) {
+      if (window.YachtGame.SFX) window.YachtGame.SFX.play('confirm');
       selectCategory(category);
       pendingCategory = null;
     } else {
