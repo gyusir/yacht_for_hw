@@ -122,6 +122,7 @@
   var lobbyError = document.getElementById('lobby-error');
   var displayRoomCode = document.getElementById('display-room-code');
   var btnCopyCode = document.getElementById('btn-copy-code');
+  var btnShareLink = document.getElementById('btn-share-link');
   var btnRoll = document.getElementById('btn-roll');
   var btnNewGame = document.getElementById('btn-new-game');
   var modeRadios = document.querySelectorAll('input[name="mode"]');
@@ -546,6 +547,29 @@
     }
   });
 
+  // --- Copy Share Link ---
+  if (btnShareLink) {
+    btnShareLink.addEventListener('click', function () {
+      var code = displayRoomCode.textContent;
+      if (!code) return;
+      var link = Lobby.buildShareLink(code);
+      var doneMsg = I18n ? I18n.t('toast_link_copied') : 'Link copied!';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(function () {
+          UI.showToast(doneMsg);
+        });
+      } else {
+        var textArea = document.createElement('textarea');
+        textArea.value = link;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        UI.showToast(doneMsg);
+      }
+    });
+  }
+
   // --- Fast Mode Toggle ---
   btnFastMode.addEventListener('click', function () {
     if (window.YachtGame.BotGame) window.YachtGame.BotGame.toggleFastMode();
@@ -918,25 +942,109 @@
     }
   };
 
-  // --- Reconnection on page load ---
-  Lobby.tryReconnect(function (session) {
-    if (session && session.status === 'playing') {
-      playerName = Auth.getPlayerName() || 'Player';
-      Game.init(session.roomCode, session.playerKey);
-      UI.showToast(I18n ? I18n.t('toast_reconnected') : 'Reconnected to game!');
-    } else if (session && session.status === 'waiting') {
-      var waitType = session.roomType || 'private';
-      document.getElementById('screen-waiting').setAttribute('data-wait-type', waitType);
-      displayRoomCode.textContent = session.roomCode;
-      currentWaitingRoomCode = session.roomCode;
-      UI.showScreen('screen-waiting');
-      if (waitType === 'random') showRandomTip();
-      cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
-        cancelOpponentListener = null;
-        var oppName = Game.resolvePlayerName(player2, player2.name);
-        UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+  // --- Initial entry: shared link → auto-join, otherwise reconnect ---
+  function reconnectFlow() {
+    Lobby.tryReconnect(function (session) {
+      if (session && session.status === 'playing') {
+        playerName = Auth.getPlayerName() || 'Player';
         Game.init(session.roomCode, session.playerKey);
+        UI.showToast(I18n ? I18n.t('toast_reconnected') : 'Reconnected to game!');
+      } else if (session && session.status === 'waiting') {
+        var waitType = session.roomType || 'private';
+        document.getElementById('screen-waiting').setAttribute('data-wait-type', waitType);
+        displayRoomCode.textContent = session.roomCode;
+        currentWaitingRoomCode = session.roomCode;
+        UI.showScreen('screen-waiting');
+        if (waitType === 'random') showRandomTip();
+        cancelOpponentListener = Lobby.listenForOpponent(session.roomCode, function (player2) {
+          cancelOpponentListener = null;
+          var oppName = Game.resolvePlayerName(player2, player2.name);
+          UI.showToast(oppName + ' ' + (I18n ? I18n.t('toast_player_joined') : 'joined!'));
+          Game.init(session.roomCode, session.playerKey);
+        });
+      }
+    });
+  }
+
+  function parseRoomFromUrl() {
+    try {
+      var raw = new URLSearchParams(window.location.search).get('room');
+      if (!raw) return null;
+      var code = raw.toUpperCase().trim();
+      // Match the server's 6-char alphabet (no 0/1/I/O/L)
+      if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(code)) return null;
+      return code;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function tryJoinFromUrl(onDone) {
+    var code = parseRoomFromUrl();
+    if (!code) { onDone(false); return; }
+
+    // Strip the query string immediately so refresh / back-navigation
+    // doesn't repeatedly re-trigger the auto-join flow.
+    try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
+
+    // If the active session already targets this room, defer to reconnect.
+    var savedRoom = sessionStorage.getItem('yacht-room');
+    if (savedRoom && savedRoom === code) { onDone(false); return; }
+    if (savedRoom && savedRoom !== code) {
+      Lobby.clearSession();
+    }
+
+    function fallback(msg) {
+      if (msg) UI.showToast(msg);
+      onDone(false);
+    }
+
+    function doJoin() {
+      playerName = Auth.getPlayerName();
+      updateScreenNicknames();
+      if (Auth.isGuestMode && Auth.isGuestMode() && btnMyStats) {
+        btnMyStats.style.display = 'none';
+        DiceSkins.applySkin('classic');
+      }
+
+      Lobby.joinRoom(playerName, code, function (result) {
+        if (result.error) {
+          // Land somewhere usable: lobby for signed-in users, login for guests.
+          if (Auth.isSignedIn && Auth.isSignedIn()) {
+            UI.showScreen('screen-lobby');
+            Lobby.cleanupStaleRooms();
+          } else {
+            UI.showScreen('screen-login');
+          }
+          UI.showToast(result.error);
+          onDone(true);
+          return;
+        }
+        UI.showToast((I18n ? I18n.t('toast_joined_room') : 'Joined room') + ' ' + result.roomCode);
+        Game.init(result.roomCode, result.playerKey);
+        onDone(true);
       });
     }
+
+    // Wait for the first auth state resolution so isSignedIn() is accurate.
+    var unsub = firebase.auth().onAuthStateChanged(function (user) {
+      unsub();
+      if (user) {
+        // Either Google-signed-in or anonymous: reuse current account.
+        doJoin();
+      } else {
+        Auth.setGuest(function (err) {
+          if (err) {
+            fallback(I18n ? I18n.t('toast_signin_failed') : 'Sign-in failed');
+            return;
+          }
+          doJoin();
+        });
+      }
+    });
+  }
+
+  tryJoinFromUrl(function (handled) {
+    if (!handled) reconnectFlow();
   });
 })();
