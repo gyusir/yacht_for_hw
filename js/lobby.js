@@ -306,6 +306,11 @@
     // This function is kept as a no-op for backward compatibility
   }
 
+  function buildShareLink(roomCode) {
+    var loc = window.location;
+    return loc.origin + loc.pathname + '?room=' + encodeURIComponent(roomCode);
+  }
+
   window.YachtGame.Lobby = {
     getOrCreateUid: getOrCreateUid,
     createRoom: createRoom,
@@ -317,6 +322,7 @@
     clearSession: clearSession,
     cancelRoom: cancelRoom,
     buildEmptyScores: buildEmptyScores,
-    updateGameMode: updateGameMode
+    updateGameMode: updateGameMode,
+    buildShareLink: buildShareLink
   };
 })();
