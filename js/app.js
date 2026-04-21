@@ -195,6 +195,7 @@
     BGMAudio.init();
     bgmToggle.addEventListener('click', function () { BGMAudio.toggleMuted(); });
   }
+  if (window.YachtGame.SFX) window.YachtGame.SFX.init();
 
   // --- Language Toggle ---
   var langToggle = document.getElementById('lang-toggle');

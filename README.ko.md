@@ -31,6 +31,7 @@
 - **서버사이드 검증** — Cloud Functions 기반 점수 계산 안티치트, Transaction 기반 레이트 제한
 - **어뷰징 방지** — 봇 게임 탭 닫기 시 패배 저장(sendBeacon), 최소 점수 미달 게임 무효 처리(승률·연승에 미반영)
 - **App Check** — Firebase App Check (reCAPTCHA v3)로 포크 앱의 무단 백엔드 사용 차단
+- **사운드** — 루프 BGM + 저지연 폴리포닉 SFX (주사위 굴림/홀드/확정), 단일 ♪ 토글, 기본 음소거, localStorage로 상태 유지
 - **다국어** — 영어/한국어 이중 언어 지원, 실시간 전환
 - **튜토리얼** — 인터랙티브 단계별 게임 안내
 - **접근성** — aria-label, 키보드 내비게이션, 스크린리더 지원
@@ -68,11 +69,14 @@ yacht_for_hw/
 │   ├── endgame-worker.js     # Web Worker. 승률 근사 모델 (Wave 봇 종반전)
 │   ├── history.js            # 전적 저장·조회
 │   ├── i18n.js               # 영어/한국어 이중 언어
+│   ├── audio.js              # BGM 매니저 (HTMLAudioElement, 첫 인터랙션 lazy 시작, localStorage 음소거)
+│   ├── sfx.js                # SFX 매니저 (Web Audio API, 폴리포닉 주사위/홀드/확정 효과음, audio.js와 음소거 공유)
 │   ├── nickname.js           # 닉네임 생성·관리 (언어별)
 │   ├── tutorial.js           # 인터랙티브 튜토리얼
 │   ├── ui.js                 # 화면 전환, 스코어카드(이벤트 위임), 토스트(동적 표시 시간)
 │   └── app.js                # 엔트리포인트, 모듈 연결, 이모트, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱
 ├── die_image/                # 이미지 기반 주사위 스킨 에셋 (Banana, Wave, Fire, Dragon, Flower)
+├── assets/audio/             # CC0 오디오 에셋 (BGM 보사노바 루프 + SFX 3종: dice-roll/dice-hold/category-confirm)
 ├── data/
 │   ├── dp_yacht.bin          # Yacht 모드 DP 룩업 테이블 (Uint16, 8KB)
 │   └── dp_yahtzee.bin        # Yahtzee 모드 DP 룩업 테이블 (Uint16, 2MB)

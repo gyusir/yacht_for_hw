@@ -27,6 +27,7 @@
 | `history.js` | 전적 저장·조회 (로그인 유저 전용) |
 | `i18n.js` | 영어/한국어 이중 언어. `I18n.t(key)` / `I18n.getLang()` |
 | `audio.js` | BGM 매니저. `<audio loop>` 기반, 첫 사용자 인터랙션에 lazy 시작, `localStorage`('yacht-bgm-muted')로 음소거 상태 영구 저장 |
+| `sfx.js` | SFX 매니저. Web Audio API 기반, 폴리포닉 효과음 (주사위 굴림/홀드 토글/카테고리 확정). 음소거 상태는 `audio.js`와 공유 (단일 ♪ 토글) |
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
@@ -55,6 +56,9 @@
 | 파일 | 출처 | 라이선스 |
 | --- | --- | --- |
 | `assets/audio/bgm-bossa.mp3` | Joth - "8bit Bossa" (OpenGameArt) | CC0 (표기 의무 없음) |
+| `assets/audio/sfx/dice-roll.ogg` | Kenney Casino Audio (dice-shake-1, loudnorm -14 LUFS) | CC0 |
+| `assets/audio/sfx/dice-hold.ogg` | Kenney UI Audio (toggle_002, lowpass 4kHz + treble -6dB) | CC0 |
+| `assets/audio/sfx/category-confirm.ogg` | Kenney UI Audio (confirmation_001) | CC0 |
 
 ### Backend (`functions/`)
 
