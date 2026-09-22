@@ -964,6 +964,80 @@
         ctx.restore();
       },
       maxFrames: 130
+    },
+
+    // Siru: puppies romping across the bottom, leaving paw prints
+    siru: {
+      createParticles: function(canvas) {
+        var img = new Image();
+        img.src = 'die_image/siru/siru_body.png';
+        var ground = canvas.height - 24;
+        var paws = [];
+        var particles = [];
+        for (var i = 0; i < 7; i++) {
+          var fromLeft = i % 2 === 0;
+          var size = 85 + Math.random() * 55;
+          particles.push({
+            img: img,
+            x: fromLeft ? -size - Math.random() * canvas.width * 0.4
+                        : canvas.width + size + Math.random() * canvas.width * 0.4,
+            y: ground - Math.random() * 100,
+            size: size,
+            vx: (fromLeft ? 1 : -1) * (3 + Math.random() * 3),
+            vy: -(2 + Math.random() * 4),
+            ground: ground,
+            canvasW: canvas.width,
+            paws: paws
+          });
+        }
+        particles._paws = paws;
+        return particles;
+      },
+      updateParticle: function(p, frame) {
+        p.x += p.vx;
+        p.vy += 0.28;
+        p.y += p.vy;
+        if (p.y > p.ground) {
+          p.y = p.ground;
+          p.vy = -(5 + Math.random() * 5);
+          if (p.x > -30 && p.x < p.canvasW + 30) {
+            p.paws.push({ x: p.x, y: p.ground + 6, born: frame, rot: (Math.random() - 0.5) * 60 });
+          }
+        }
+        // Turn around at the edges so they keep playing on screen
+        if (p.x > p.canvasW + p.size) p.vx = -Math.abs(p.vx);
+        if (p.x < -p.size) p.vx = Math.abs(p.vx);
+      },
+      renderParticle: function(ctx, p) {
+        if (!p.img.complete || !p.img.naturalWidth) return;
+        var w = p.size;
+        var h = w * p.img.naturalHeight / p.img.naturalWidth;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        // The art faces right; flip when running left. Tilt with the hop arc.
+        ctx.scale(p.vx < 0 ? -1 : 1, 1);
+        ctx.rotate(Math.max(-0.3, Math.min(0.3, p.vy * 0.03)));
+        ctx.drawImage(p.img, -w / 2, -h, w, h);
+        ctx.restore();
+      },
+      afterRender: function(ctx, particles, frame, canvas) {
+        var paws = particles._paws;
+        for (var i = 0; i < paws.length; i++) {
+          var pw = paws[i];
+          var age = frame - pw.born;
+          if (age > 80) continue;
+          ctx.save();
+          ctx.globalAlpha = ctx.globalAlpha * (1 - age / 80) * 0.8;
+          ctx.translate(pw.x, pw.y);
+          ctx.rotate(pw.rot * Math.PI / 180);
+          ctx.font = '22px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🐾', 0, 0);
+          ctx.restore();
+        }
+      },
+      maxFrames: 200
     }
   };
 
