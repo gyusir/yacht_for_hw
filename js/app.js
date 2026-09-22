@@ -514,7 +514,7 @@
       if (botModeRadios[i].checked) gameMode = botModeRadios[i].value;
     }
     var diffRadios = document.querySelectorAll('input[name="bot-difficulty"]');
-    var diff = 'basic';
+    var diff = 'wave';
     for (var i = 0; i < diffRadios.length; i++) {
       if (diffRadios[i].checked) diff = diffRadios[i].value;
     }
