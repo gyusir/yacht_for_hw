@@ -35,6 +35,12 @@
     { id: 'siru',      name: 'Siru',      unlockAt: -1, unlockAtWins: 1500 }
   ];
 
+  // Gift unlocks: these UIDs get the skin without meeting the stat requirement
+  // (client-side only — skins are cosmetic and never validated server-side)
+  var GIFT_UNLOCK_UIDS = {
+    siru: ['TEST_UID_PLACEHOLDER']
+  };
+
   // Calligraphy characters for Crimson skin
   var CRIMSON_CHARS = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六' };
 
@@ -55,7 +61,20 @@
     return count;
   }
 
+  function isGiftUnlocked(skinId) {
+    var list = GIFT_UNLOCK_UIDS[skinId];
+    if (!list) return false;
+    var Auth = window.YachtGame.Auth;
+    var uid = (Auth && Auth.isSignedIn()) ? Auth.getPlayerUid() : null;
+    if (!uid) return false;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] === uid) return true;
+    }
+    return false;
+  }
+
   function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements) {
+    if (isGiftUnlocked(def.id)) return true;
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
       return wins >= BOT_WIN_THRESHOLD;
