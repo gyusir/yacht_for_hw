@@ -31,7 +31,8 @@
     { id: 'fire',      name: 'Fire',      unlockAt: -1, unlockAtStreak: 5 },
     { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 },
     { id: 'dragon',    name: 'Dragon',    unlockAt: -1, unlockAtExactScore: 256 },
-    { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 }
+    { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 },
+    { id: 'siru',      name: 'Siru',      unlockAt: -1, unlockAtWins: 1500 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -157,7 +158,7 @@
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/13 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/14 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
@@ -213,6 +214,12 @@
         img.className = 'flower-preview';
         img.alt = 'Flower 5';
         miniDie.appendChild(img);
+      } else if (def.id === 'siru') {
+        var img = document.createElement('img');
+        img.src = 'die_image/siru/siru1.png';
+        img.className = 'siru-preview';
+        img.alt = 'Siru 1';
+        miniDie.appendChild(img);
       } else {
         // Render 5 pips in mini format
         var pipPositions = [1, 3, 5, 7, 9]; // value 5 layout
@@ -264,7 +271,7 @@
       }
 
       // Click handler
-      var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1 };
+      var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1, siru: 1 };
       (function (skinDef, skinUnlocked, optionEl) {
         optionEl.addEventListener('click', function () {
           if (!skinUnlocked) return;
@@ -308,6 +315,8 @@
       html += '<img class="dragon-preview" src="die_image/dragon/dragon' + value + '.png" alt="Dragon ' + value + '">';
     } else if (skinId === 'flower') {
       html += '<img class="flower-preview" src="die_image/flower/flower' + value + '.png" alt="Flower ' + value + '">';
+    } else if (skinId === 'siru') {
+      html += '<img class="siru-preview" src="die_image/siru/siru' + value + '.png" alt="Siru ' + value + '">';
     } else {
       var positions = MINI_PIP_LAYOUTS[value] || [];
       for (var p = 1; p <= 9; p++) {
