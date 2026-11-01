@@ -87,6 +87,29 @@
     }, 3000000);
   }
 
+  // --- Refresh cached tokens when the tab becomes visible ---
+  // Background tabs throttle the 50-minute setInterval above, so the cached
+  // tokens used by sendBeacon (bot game tab close) were often expired.
+  // getIdToken(false)/getToken(false) only hit the network when near expiry.
+  window.YachtGame.refreshCachedTokens = function () {
+    var user = firebase.auth().currentUser;
+    if (user) {
+      user.getIdToken(false).then(function (token) {
+        window.YachtGame._cachedIdToken = token;
+      }).catch(function () {});
+    }
+    if (!window.YachtGame.isEmulator) {
+      firebase.appCheck().getToken(false).then(function (result) {
+        window.YachtGame._cachedAppCheckToken = result.token;
+      }).catch(function () {});
+    }
+  };
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      window.YachtGame.refreshCachedTokens();
+    }
+  });
+
   // --- Warn before closing tab during active game ---
   window.addEventListener('beforeunload', function (e) {
     if (document.body.classList.contains('in-game')) {

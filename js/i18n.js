@@ -177,6 +177,7 @@
       toast_join_failed: 'Failed to join room.',
       toast_random_failed: 'Random match failed.',
       toast_rate_limit: 'Too many requests. Please wait.',
+      toast_appcheck_failed: 'Security check failed. Disable ad blockers or refresh the page and try again.',
 
       // Draw
       draw_proposal_msg: 'Opponent proposes a draw. Accept?',
@@ -449,6 +450,7 @@
       toast_join_failed: '\ubc29 \ucc38\uc5ec\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
       toast_random_failed: '\ub79c\ub364 \ub9e4\uce58\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.',
       toast_rate_limit: '\uc694\uccad\uc774 \ub108\ubb34 \ub9ce\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694.',
+      toast_appcheck_failed: '\ubcf4\uc548 \ud655\uc778\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uad11\uace0 \ucc28\ub2e8\uae30\ub97c \ub044\uac70\ub098 \uc0c8\ub85c\uace0\uce68 \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574\uc8fc\uc138\uc694.',
 
       draw_proposal_msg: '\uc0c1\ub300\ubc29\uc774 \ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc218\ub77d\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?',
       draw_proposed: '\ubb34\uc2b9\ubd80\ub97c \uc81c\uc548\ud588\uc2b5\ub2c8\ub2e4.\n\uc751\ub2f5 \ub300\uae30 \uc911...',

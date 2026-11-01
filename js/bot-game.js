@@ -870,6 +870,7 @@
     }
 
     window.YachtGame._isBotGame = true;
+    if (window.YachtGame.refreshCachedTokens) window.YachtGame.refreshCachedTokens();
     document.body.classList.add('is-bot-game');
     initFastMode();
 
