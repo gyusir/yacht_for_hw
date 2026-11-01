@@ -1082,6 +1082,8 @@ function staleReason(room, now) {
   return null;
 }
 
+// Cloud Scheduler job: firebase-schedule-cleanupStaleRooms-asia-northeast3 (us-central1).
+// The CI deploy service account needs roles/cloudscheduler.admin to manage it.
 exports.cleanupStaleRooms = regionFn.pubsub.schedule("every 30 minutes")
   .timeZone("Asia/Seoul")
   .onRun(async () => {
