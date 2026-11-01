@@ -244,7 +244,9 @@ exports.findOrCreateRandomRoom = regionFn.https.onCall(async (data, context) => 
   }
 
   // Search for existing random waiting rooms
-  const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").limitToFirst(20).once("value");
+  // No limit: stale rooms are purged by cleanupStaleRooms, and a fixed limit
+  // let old abandoned rooms crowd out fresh random rooms.
+  const snap = await db.ref("rooms").orderByChild("status").equalTo("waiting").once("value");
   const now = Date.now();
   const available = [];
   if (snap.exists()) {
@@ -906,11 +908,13 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
 
   // App Check verification
   if (!appCheckToken) {
+    console.warn("saveBotGameResultBeacon: missing App Check token");
     res.status(403).json({ error: "App Check token required" }); return;
   }
   try {
     await admin.appCheck().verifyToken(appCheckToken);
-  } catch (_) {
+  } catch (e) {
+    console.warn("saveBotGameResultBeacon: invalid App Check token:", e.code || e.message);
     res.status(403).json({ error: "Invalid App Check token" }); return;
   }
 
@@ -922,6 +926,7 @@ exports.saveBotGameResultBeacon = regionFn.https.onRequest(async (req, res) => {
     await saveBotResult(decoded.uid, gameMode, botDifficulty, myScore, oppScore, result, nKo, nEn, scoredYacht === true);
     res.status(200).json({ success: true });
   } catch (e) {
+    console.warn("saveBotGameResultBeacon failed:", e.code || "", e.message);
     res.status(400).json({ error: e.message });
   }
 });
@@ -1052,12 +1057,47 @@ exports.onGameFinished = functions.region("asia-southeast1")
 
     await Promise.all(playerUpdates);
 
-    // Schedule room cleanup
-    setTimeout(async () => {
-      try {
-        await db.ref("rooms/" + roomCode).remove();
-      } catch (e) {
-        console.error("Failed to cleanup room " + roomCode + ":", e);
-      }
-    }, 30000);
+    // Room removal is handled by cleanupStaleRooms (FINISHED_ROOM_TTL_MS).
+    // A detached setTimeout here was unreliable: Gen1 instances are throttled
+    // after the function returns, so finished rooms were often never removed.
+  });
+
+// ─── cleanupStaleRooms (scheduled) ───
+
+const WAITING_ROOM_TTL_MS = 2 * 60 * 60 * 1000; // private/random rooms nobody joined
+const PLAYING_ROOM_TTL_MS = 24 * 60 * 60 * 1000; // abandoned games (no activity)
+const FINISHED_ROOM_TTL_MS = 10 * 60 * 1000; // results already saved by onGameFinished
+
+function staleReason(room, now) {
+  if (!room || typeof room !== "object") return "empty";
+  // Nodes without status are orphans re-created by a late onDisconnect write
+  // (players/{key}/connected=false) after the room was removed.
+  if (!room.status) return "orphan";
+  const last = (typeof room.lastActivityAt === "number" ? room.lastActivityAt : 0) ||
+    (typeof room.createdAt === "number" ? room.createdAt : 0);
+  const age = now - last;
+  if (room.status === "waiting" && age > WAITING_ROOM_TTL_MS) return "waiting";
+  if (room.status === "playing" && age > PLAYING_ROOM_TTL_MS) return "playing";
+  if (room.status === "finished" && age > FINISHED_ROOM_TTL_MS) return "finished";
+  return null;
+}
+
+exports.cleanupStaleRooms = regionFn.pubsub.schedule("every 30 minutes")
+  .timeZone("Asia/Seoul")
+  .onRun(async () => {
+    const snap = await db.ref("rooms").once("value");
+    if (!snap.exists()) return null;
+    const now = Date.now();
+    const updates = {};
+    const counts = {};
+    snap.forEach((child) => {
+      const reason = staleReason(child.val(), now);
+      if (!reason) return;
+      updates[child.key] = null;
+      counts[reason] = (counts[reason] || 0) + 1;
+    });
+    const n = Object.keys(updates).length;
+    if (n > 0) await db.ref("rooms").update(updates);
+    console.log("cleanupStaleRooms removed", n, JSON.stringify(counts));
+    return null;
   });

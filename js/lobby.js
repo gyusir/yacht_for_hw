@@ -6,13 +6,15 @@
 
   var db = null;
   var presenceRef = null;
+  var presenceConnRef = null;
 
   // Map server error messages to i18n keys
   var ERROR_MAP = {
     'Room not found.': 'toast_room_not_found',
     'Room is full.': 'toast_room_full',
     'Room is already in a game.': 'toast_room_in_game',
-    'Too many requests. Please wait.': 'toast_rate_limit'
+    'Too many requests. Please wait.': 'toast_rate_limit',
+    'App Check verification failed.': 'toast_appcheck_failed'
   };
 
   function translateError(msg, fallbackKey) {
@@ -139,6 +141,7 @@
 
     var database = getDb();
     var connRef = database.ref('rooms/' + roomCode + '/players/' + playerKey + '/connected');
+    presenceConnRef = connRef;
     presenceRef = database.ref('.info/connected');
     presenceCallback = presenceRef.on('value', function (snap) {
       if (snap.val() === true) {
@@ -152,6 +155,12 @@
     if (presenceRef && presenceCallback) {
       presenceRef.off('value', presenceCallback);
     }
+    // Cancel the pending onDisconnect write; otherwise it fires after the room
+    // is removed and re-creates an orphan rooms/{code}/players/{key} node.
+    if (presenceConnRef) {
+      presenceConnRef.onDisconnect().cancel().catch(function () {});
+    }
+    presenceConnRef = null;
     presenceRef = null;
     presenceCallback = null;
   }
