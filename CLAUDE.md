@@ -69,7 +69,8 @@
 
 ### Key Constraints
 
-- Cloud Functions region: `asia-northeast3` (callable), `asia-southeast1` (DB trigger)
+- Cloud Functions region: `asia-southeast1` (callable·HTTP·DB trigger·scheduler 모두 RTDB와 같은 리전)
+- Rate limit: createRoom/joinRoom에만 적용. rollDice/selectCategory는 성능을 위해 제외 (턴 순서는 room 트랜잭션에서 검증)
 - Database: Firebase Realtime Database (`asia-southeast1`)
 - playerName 최대 12자 (클라이언트 + 서버 양쪽에서 검증/truncate)
 - 게스트는 Anonymous Auth로 uid 발급, classic 스킨만 사용 가능
