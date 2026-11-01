@@ -31,7 +31,7 @@ if (!window.YachtGame.isEmulator) {
 window.YachtGame.db = firebase.database();
 window.YachtGame.auth = firebase.auth();
 window.YachtGame.googleProvider = new firebase.auth.GoogleAuthProvider();
-window.YachtGame.functions = firebase.app().functions('asia-northeast3');
+window.YachtGame.functions = firebase.app().functions('asia-southeast1');
 
 if (window.YachtGame.isEmulator) {
   window.YachtGame.auth.useEmulator('http://localhost:9099');
@@ -41,5 +41,5 @@ if (window.YachtGame.isEmulator) {
 
 // Beacon URL for sendBeacon (bot game tab close)
 window.YachtGame.beaconUrl = window.YachtGame.isEmulator
-  ? 'http://localhost:5001/yacht-ff0c8/asia-northeast3/saveBotGameResultBeacon'
-  : 'https://asia-northeast3-yacht-ff0c8.cloudfunctions.net/saveBotGameResultBeacon';
+  ? 'http://localhost:5001/yacht-ff0c8/asia-southeast1/saveBotGameResultBeacon'
+  : 'https://asia-southeast1-yacht-ff0c8.cloudfunctions.net/saveBotGameResultBeacon';

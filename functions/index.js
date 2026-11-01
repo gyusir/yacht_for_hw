@@ -68,9 +68,10 @@ function randomDie() {
 
 const RATE_LIMITS = {
   createRoom: { windowMs: 10000, maxRequests: 3 },
-  joinRoom: { windowMs: 10000, maxRequests: 5 },
-  rollDice: { windowMs: 2000, maxRequests: 3 },
-  selectCategory: { windowMs: 2000, maxRequests: 2 }
+  joinRoom: { windowMs: 10000, maxRequests: 5 }
+  // rollDice / selectCategory are intentionally not rate-limited: the extra DB
+  // transaction per call roughly doubled their latency, and turn order is
+  // already enforced inside each function's room transaction.
 };
 
 async function checkRateLimit(uid, action) {
@@ -97,7 +98,10 @@ async function checkRateLimit(uid, action) {
 
 const ROOM_CODE_MAX_RETRIES = 5;
 
-const regionFn = functions.region("asia-northeast3");
+// Same region as the RTDB instance (asia-southeast1) so every DB round trip stays
+// in-region. Callables previously ran in asia-northeast3 and paid Seoul<->Singapore
+// latency on each transaction.
+const regionFn = functions.region("asia-southeast1");
 
 // ─── createRoom ───
 
@@ -398,7 +402,6 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
 exports.rollDice = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
-  await checkRateLimit(uid, "rollDice");
   const { roomCode } = data;
 
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
@@ -461,7 +464,6 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
 exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
-  await checkRateLimit(uid, "selectCategory");
   const { roomCode, category } = data;
 
   if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
@@ -1082,7 +1084,7 @@ function staleReason(room, now) {
   return null;
 }
 
-// Cloud Scheduler job: firebase-schedule-cleanupStaleRooms-asia-northeast3 (us-central1).
+// Cloud Scheduler job: firebase-schedule-cleanupStaleRooms-asia-southeast1 (us-central1).
 // The CI deploy service account needs roles/cloudscheduler.admin to manage it.
 exports.cleanupStaleRooms = regionFn.pubsub.schedule("every 30 minutes")
   .timeZone("Asia/Seoul")
