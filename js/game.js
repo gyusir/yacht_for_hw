@@ -45,6 +45,16 @@
   var disconnectCountdownId = null;
   var DISCONNECT_TIMEOUT = 10;
 
+  function AugUI() { return window.YachtGame.AugmentUI; }
+
+  // Roll cap / availability for the current turn (augment mode can exceed 3 rolls).
+  function rollInfoFor(room) {
+    var A = AugUI();
+    if (A && room) return A.rollInfo(room);
+    var rc = (room && room.rollCount) || 0;
+    return { cap: 3, canRoll: rc < 3 };
+  }
+
   function getFunctions() {
     if (!rollDiceFn) {
       var fns = window.YachtGame.functions;
@@ -94,6 +104,7 @@
     opponentKey = playerKey === 'player1' ? 'player2' : 'player1';
     roomRef = window.YachtGame.db.ref('rooms/' + roomCode);
     getFunctions();
+    if (AugUI()) AugUI().reset(function () { return roomCode; });
 
     // Show game screen immediately (don't wait for first Firebase callback)
     window.YachtGame.UI.showScreen('screen-game');
@@ -151,6 +162,9 @@
     if (!myData || !oppData) {
       return;
     }
+
+    // Augment mode: pick modal, augment bar, notifications
+    if (AugUI()) AugUI().update(room, prevRoom, localPlayerKey);
 
     // SFX for opponent actions
     var SFX = window.YachtGame.SFX;
@@ -210,7 +224,8 @@
         JSON.stringify(prevRoom.players && prevRoom.players.player1 && prevRoom.players.player1.scores) ===
         JSON.stringify(room.players && room.players.player1 && room.players.player1.scores) &&
         JSON.stringify(prevRoom.players && prevRoom.players.player2 && prevRoom.players.player2.scores) ===
-        JSON.stringify(room.players && room.players.player2 && room.players.player2.scores)) {
+        JSON.stringify(room.players && room.players.player2 && room.players.player2.scores) &&
+        (!AugUI() || AugUI().signature(prevRoom) === AugUI().signature(room))) {
       return;
     }
 
@@ -229,6 +244,7 @@
         p1.scores || {}, p2.scores || {},
         gameMode, room.winner, localPlayerKey
       );
+      if (AugUI()) AugUI().renderGameOverExtras(room, localPlayerKey);
       // History is now saved by server-side trigger (onGameFinished)
       return;
     }
@@ -263,7 +279,8 @@
     UI.updateTurnIndicator(isMyTurn, resolvePlayerName(oppData, 'Opponent'));
 
     // Update roll counter
-    UI.updateRollCounter(room.rollCount || 0);
+    var rollInfo = rollInfoFor(room);
+    UI.updateRollCounter(room.rollCount || 0, rollInfo);
 
     // Render dice (heldDice is the single source of truth for held state)
     var diceState = [];
@@ -344,7 +361,7 @@
     Dice.setInteractive(isMyTurn && room.rollCount > 0);
 
     // Roll button state
-    UI.setRollButtonEnabled(isMyTurn && (room.rollCount || 0) < 3 && !isRolling, isMyTurn, room.rollCount || 0);
+    UI.setRollButtonEnabled(isMyTurn && rollInfo.canRoll && !isRolling, isMyTurn, room.rollCount || 0, rollInfo);
 
     // Render scorecard (skip during rolling animation — staggerStop callback will render)
     if (!isRolling) {
@@ -399,7 +416,7 @@
 
     var room = lastRoomData;
     if (room.currentTurn !== localPlayerKey) return;
-    if ((room.rollCount || 0) >= 3) return;
+    if (!rollInfoFor(room).canRoll) return;
 
     isRolling = true;
     if (window.YachtGame.SFX) window.YachtGame.SFX.play('roll');
@@ -494,7 +511,9 @@
       if (lastRoomData) {
         var newRollCount = lastRoomData.rollCount || 0;
         var isMyTurn = lastRoomData.currentTurn === localPlayerKey;
-        window.YachtGame.UI.setRollButtonEnabled(isMyTurn && newRollCount < 3, isMyTurn, newRollCount);
+        var _ri = rollInfoFor(lastRoomData);
+        window.YachtGame.UI.updateRollCounter(newRollCount, _ri);
+        window.YachtGame.UI.setRollButtonEnabled(isMyTurn && _ri.canRoll, isMyTurn, newRollCount, _ri);
         // Re-trigger scorecard render so the kb-focus wrapper sees the enabled roll button
         var Scoring = window.YachtGame.Scoring;
         var Dice = window.YachtGame.Dice;
@@ -634,8 +653,10 @@
     window.YachtGame.UI.showCellLoading(category);
 
     // Call Cloud Function — server calculates score and updates game state
-    selectCategoryFn({ roomCode: roomCode, category: category }).then(function (result) {
+    var useDouble = !!(AugUI() && AugUI().isDoubleArmed());
+    selectCategoryFn({ roomCode: roomCode, category: category, useDouble: useDouble }).then(function (result) {
       isWriting = false;
+      if (AugUI()) AugUI().onSelectResult(result.data);
       if (result.data && result.data.yahtzeeBonus) {
         window.YachtGame.UI.showToast('Yahtzee Bonus! +100');
       }
@@ -712,6 +733,7 @@
     lastCelebrationTs = 0;
     celebratedBonuses = {};
     clearDisconnectTimer();
+    if (AugUI()) AugUI().reset();
     // Restore player's own skin
     var DiceSkins = window.YachtGame.DiceSkins;
     if (DiceSkins) DiceSkins.loadSkin();
@@ -770,8 +792,10 @@
           _p1.scores || {}, _p2.scores || {},
           room.gameMode, room.winner, localPlayerKey
         );
+        if (AugUI()) AugUI().renderGameOverExtras(room, localPlayerKey);
         return;
       }
+      if (AugUI()) AugUI().refresh();
       var myData = room.players[localPlayerKey] || {};
       var oppKey = localPlayerKey === 'player1' ? 'player2' : 'player1';
       var oppData = room.players[oppKey] || {};

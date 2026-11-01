@@ -4,6 +4,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const Scoring = require("./scoring");
+const Rules = require("./game-rules");
 const { ServerValue } = require("firebase-admin/database");
 
 admin.initializeApp();
@@ -146,6 +147,8 @@ exports.createRoom = regionFn.https.onCall(async (data, context) => {
   const roomData = {
     type: "private",
     gameMode: gameMode,
+    // Augment mode is Yacht-only (v1) and only for private rooms.
+    augmentMode: gameMode === "yacht" && data.augmentMode === true,
     status: "waiting",
     createdAt: ServerValue.TIMESTAMP,
     lastActivityAt: ServerValue.TIMESTAMP,
@@ -209,6 +212,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     room.players.player2 = p2;
     room.status = "playing";
     room.lastActivityAt = { ".sv": "timestamp" };
+    Rules.startGame(room, cryptoRand);
     return room;
   });
 
@@ -223,7 +227,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
   }
 
   const finalRoom = result.snapshot.val();
-  return { roomCode: targetCode, playerKey: "player2", gameMode: finalRoom.gameMode };
+  return { roomCode: targetCode, playerKey: "player2", gameMode: finalRoom.gameMode, augmentMode: finalRoom.augmentMode === true };
 });
 
 // ─── findOrCreateRandomRoom ───
@@ -389,74 +393,69 @@ exports.updateGameMode = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("permission-denied", "Only the host can change mode.");
   }
 
+  // augmentMode: optional boolean; omitted = keep current. Always off for Yahtzee.
+  const wantAugment = typeof data.augmentMode === "boolean" ? data.augmentMode : room.augmentMode === true;
   const updates = {
     gameMode: gameMode,
+    augmentMode: gameMode === "yacht" && wantAugment,
     "players/player1/scores": buildEmptyScores(gameMode)
   };
   await roomRef.update(updates);
   return { success: true };
 });
 
+// ─── Rule-engine helpers ───
+
+function throwRule(code) {
+  const e = Rules.ERRORS[code] || ["aborted", "Could not update game state. Try again."];
+  throw new functions.https.HttpsError(e[0], e[1]);
+}
+
+const cryptoRand = (n) => crypto.randomInt(0, n);
+
+// Runs a Rules reducer inside a room transaction. reducer(room) returns
+// { error } to abort or a result object to commit.
+async function runRoomTransaction(roomCode, reducer) {
+  const roomRef = db.ref("rooms/" + roomCode);
+  let ruleError = null;
+  let out = null;
+  const result = await roomRef.transaction((room) => {
+    ruleError = null;
+    out = null;
+    if (!room) return room;
+    const r = reducer(room);
+    if (r.error) { ruleError = r.error; return; }
+    out = r;
+    return room;
+  });
+  if (!result.committed) {
+    if (ruleError) throwRule(ruleError);
+    throw new functions.https.HttpsError("aborted", "Could not update game state. Try again.");
+  }
+  if (!result.snapshot.exists() || !out) throw new functions.https.HttpsError("not-found", "Room not found.");
+  return { out: out, room: result.snapshot.val() };
+}
+
+function requireRoomCode(data) {
+  if (!data || !data.roomCode || typeof data.roomCode !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Room code required.");
+  }
+  return data.roomCode;
+}
+
 // ─── rollDice ───
 
 exports.rollDice = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
-  const { roomCode } = data;
-
-  if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
-
-  const roomRef = db.ref("rooms/" + roomCode);
+  const roomCode = requireRoomCode(data);
 
   // Pre-generate dice values (transaction callback must be pure/deterministic)
   const randomValues = [];
   for (let i = 0; i < 5; i++) randomValues.push(randomDie());
 
-  const result = await roomRef.transaction((room) => {
-    if (!room) return room;
-    if (room.status !== "playing") return;
-
-    const playerKey = findPlayerKey(room.players || {}, uid);
-    if (!playerKey) return;
-    if (room.currentTurn !== playerKey) return;
-
-    const rollCount = room.rollCount || 0;
-    if (rollCount >= 3) return;
-
-    const heldData = room.heldDice || {};
-    const newDice = {};
-    for (let i = 0; i < 5; i++) {
-      const currentDie = room.dice && room.dice[i];
-      const isHeld = rollCount > 0 && heldData[i] === true && currentDie && currentDie.value >= 1;
-
-      if (isHeld) {
-        newDice[i] = { value: currentDie.value, held: true };
-      } else {
-        newDice[i] = { value: randomValues[i], held: false };
-      }
-    }
-
-    room.dice = newDice;
-    room.rollCount = rollCount + 1;
-    room.lastActivityAt = { ".sv": "timestamp" };
-    return room;
-  });
-
-  if (!result.committed) {
-    // Determine specific error reason
-    const snap = await roomRef.once("value");
-    if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
-    const room = snap.val();
-    if (room.status !== "playing") throw new functions.https.HttpsError("failed-precondition", "Game is not in progress.");
-    const pk = findPlayerKey(room.players || {}, uid);
-    if (!pk) throw new functions.https.HttpsError("permission-denied", "Not a player in this room.");
-    if (room.currentTurn !== pk) throw new functions.https.HttpsError("failed-precondition", "Not your turn.");
-    if ((room.rollCount || 0) >= 3) throw new functions.https.HttpsError("failed-precondition", "No rolls remaining.");
-    throw new functions.https.HttpsError("aborted", "Could not roll dice. Try again.");
-  }
-
-  const finalRoom = result.snapshot.val();
-  return { dice: finalRoom.dice, rollCount: finalRoom.rollCount };
+  const { out } = await runRoomTransaction(roomCode, (room) => Rules.applyRoll(room, uid, randomValues));
+  return { dice: out.dice, rollCount: out.rollCount, extraUsed: out.extraUsed };
 });
 
 // ─── selectCategory ───
@@ -464,115 +463,86 @@ exports.rollDice = regionFn.https.onCall(async (data, context) => {
 exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
-  const { roomCode, category } = data;
-
-  if (!roomCode) throw new functions.https.HttpsError("invalid-argument", "Room code required.");
+  const roomCode = requireRoomCode(data);
+  const { category } = data;
   if (!category || typeof category !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Category required.");
   }
+  const useDouble = data.useDouble === true;
+
+  const { out, room } = await runRoomTransaction(roomCode, (r) =>
+    Rules.applySelect(r, uid, category, { useDouble: useDouble, rand: cryptoRand }));
+
+  const winner = room.winner || null;
+  return {
+    score: out.score,
+    effects: out.effects,
+    yahtzeeBonus: out.yahtzeeBonus,
+    steals: out.steals,
+    gameOver: !!winner && room.status === "finished",
+    winner: winner
+  };
+});
+
+// ─── pickAugment (augment mode) ───
+// Picks are hidden until both players choose: each pick is first written to
+// augmentPicks/{room}/{tier} (no client read access), and only the second
+// picker's call reveals both picks in the room.
+
+exports.pickAugment = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
+  const uid = requireAuth(context);
+  const roomCode = requireRoomCode(data);
+  const augmentId = data.augmentId;
+  if (typeof augmentId !== "string") throw new functions.https.HttpsError("invalid-argument", "Augment required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
+  const snap = await roomRef.once("value");
+  if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
+  const v = Rules.validatePick(snap.val(), uid, augmentId);
+  if (v.error) throwRule(v.error);
+  const pk = v.playerKey;
+  const tier = v.tier;
 
-  // Use transaction to prevent race conditions (duplicate category writes)
-  const result = await roomRef.transaction((room) => {
+  const pickRef = db.ref("augmentPicks/" + roomCode + "/" + tier);
+  const pr = await pickRef.transaction((cur) => {
+    cur = cur || {};
+    if (cur[pk]) return; // already picked this tier
+    cur[pk] = augmentId;
+    return cur;
+  });
+  if (!pr.committed) throw new functions.https.HttpsError("failed-precondition", "Augment already picked.");
+  const picks = pr.snapshot.val() || {};
+  const both = !!(picks.player1 && picks.player2);
+
+  let ruleError = null;
+  await roomRef.transaction((room) => {
+    ruleError = null;
     if (!room) return room;
-
-    if (room.status !== "playing") return;
-    const playerKey = findPlayerKey(room.players, uid);
-    if (!playerKey) return;
-    if (room.currentTurn !== playerKey) return;
-    if ((room.rollCount || 0) < 1) return;
-
-    const gameMode = room.gameMode;
-    const validCategories = Scoring.getCategories(gameMode);
-    if (validCategories.indexOf(category) === -1) return;
-
-    const myScores = (room.players[playerKey] && room.players[playerKey].scores) || {};
-    if (myScores[category] !== null && myScores[category] !== undefined) return;
-
-    const diceValues = [];
-    for (let i = 0; i < 5; i++) {
-      const d = room.dice && room.dice[i];
-      const v = (d && d.value) || 0;
-      if (v < 1 || v > 6) return;
-      diceValues.push(v);
-    }
-
-    const score = Scoring.calculate(diceValues, category, gameMode);
-    const oppKey = opponentOf(playerKey);
-
-    room.players[playerKey].scores[category] = score;
-    room.players[playerKey].lastCategory = category;
-
-    if ((category === "yacht" || category === "yahtzee") && score === 50) {
-      room.celebration = { player: playerKey, ts: { ".sv": "timestamp" } };
-    }
-
-    let yahtzeeBonus = false;
-    if (gameMode === "yahtzee") {
-      let allSame = true;
-      for (let i = 1; i < diceValues.length; i++) {
-        if (diceValues[i] !== diceValues[0]) { allSame = false; break; }
-      }
-      if (allSame && myScores.yahtzee === 50 && category !== "yahtzee") {
-        const currentBonus = myScores.yahtzeeBonus || 0;
-        room.players[playerKey].scores.yahtzeeBonus = currentBonus + 100;
-        yahtzeeBonus = true;
-      }
-    }
-
-    room.lastActivityAt = { ".sv": "timestamp" };
-    room.currentTurn = oppKey;
-    room.rollCount = 0;
-    for (let i = 0; i < 5; i++) {
-      if (room.dice[i]) {
-        room.dice[i].held = false;
-        room.dice[i].value = 0;
-      }
-    }
-    room.heldDice = null;
-
-    const updatedScores = room.players[playerKey].scores;
-    const oppScores = (room.players[oppKey] && room.players[oppKey].scores) || {};
-    const myAllFilled = Scoring.allFilled(updatedScores, gameMode);
-    const oppAllFilled = Scoring.allFilled(oppScores, gameMode);
-
-    if (myAllFilled && oppAllFilled) {
-      const myTotal = Scoring.totalScore(updatedScores, gameMode, updatedScores.yahtzeeBonus);
-      const oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
-
-      if (myTotal > oppTotal) {
-        room.winner = playerKey;
-      } else if (oppTotal > myTotal) {
-        room.winner = oppKey;
-      } else {
-        room.winner = "tie";
-      }
-      room.status = "finished";
-    }
-
-    // Store transient data for response
-    room._transient = { score, yahtzeeBonus, playerKey };
-
+    const r = both
+      ? Rules.applyPicks(room, picks, tier, { ".sv": "timestamp" })
+      : Rules.markReady(room, pk, tier);
+    if (r.error) { ruleError = r.error; return; }
+    if (r.stale) return; // phase already resolved by the other call
     return room;
   });
+  if (ruleError) throwRule(ruleError);
+  if (both) await pickRef.remove();
+  return { success: true, revealed: both };
+});
 
-  if (!result.committed) {
-    throw new functions.https.HttpsError("failed-precondition", "Could not update game state. Try again.");
-  }
+// ─── useAugment (augment mode, active augments) ───
 
-  const room = result.snapshot.val();
-  if (!room || !room._transient) {
-    throw new functions.https.HttpsError("failed-precondition", "Invalid game state.");
-  }
+exports.useAugment = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
+  const uid = requireAuth(context);
+  const roomCode = requireRoomCode(data);
+  const a = data.action || {};
+  // Whitelist fields; the rule engine validates types and ranges.
+  const action = { type: a.type, die: a.die, from: a.from, delta: a.delta, value: a.value, category: a.category };
 
-  const { score, yahtzeeBonus, playerKey } = room._transient;
-  const winner = room.winner || null;
-
-  // Clean up transient data
-  await roomRef.child("_transient").remove();
-
-  return { score, yahtzeeBonus, gameOver: !!winner && room.status === "finished", winner };
+  const { out } = await runRoomTransaction(roomCode, (room) => Rules.applyAction(room, uid, action));
+  return out;
 });
 
 // ─── leaveGame ───
@@ -1019,10 +989,14 @@ exports.onGameFinished = functions.region("asia-southeast1")
       };
       if (oppNicknameKo) historyEntry.oppNicknameKo = oppNicknameKo;
       if (oppNicknameEn) historyEntry.oppNicknameEn = oppNicknameEn;
+      // Augment games are shown in history but excluded from stats (win rate,
+      // streaks, skin unlocks), since augments change the scoring baseline.
+      const isAugmentGame = room.augmentMode === true;
+      if (isAugmentGame) historyEntry.augment = true;
 
       await userRef.child("history").push(historyEntry);
 
-      if (valid) {
+      if (valid && !isAugmentGame) {
         await userRef.child("stats").transaction((stats) => {
           if (!stats) stats = { totalGames: 0, wins: 0, losses: 0, ties: 0 };
           stats.totalGames = (stats.totalGames || 0) + 1;
@@ -1102,6 +1076,16 @@ exports.cleanupStaleRooms = regionFn.pubsub.schedule("every 30 minutes")
     });
     const n = Object.keys(updates).length;
     if (n > 0) await db.ref("rooms").update(updates);
+
+    // Hidden augment picks whose room no longer exists (abandoned mid-pick).
+    const picksSnap = await db.ref("augmentPicks").once("value");
+    if (picksSnap.exists()) {
+      const orphanPicks = {};
+      picksSnap.forEach((child) => {
+        if (!snap.child(child.key).exists() || updates[child.key] === null) orphanPicks[child.key] = null;
+      });
+      if (Object.keys(orphanPicks).length) await db.ref("augmentPicks").update(orphanPicks);
+    }
     console.log("cleanupStaleRooms removed", n, JSON.stringify(counts));
     return null;
   });

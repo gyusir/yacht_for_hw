@@ -81,9 +81,11 @@
     var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
 
     var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
+    var sm = splitMode(gameMode);
     createRoomFn({
       playerName: playerName,
-      gameMode: gameMode,
+      gameMode: sm.gameMode,
+      augmentMode: sm.augmentMode,
       diceSkin: diceSkin,
       nicknameKo: nicks ? nicks.ko : null,
       nicknameEn: nicks ? nicks.en : null
@@ -250,9 +252,17 @@
     return scores;
   }
 
+  // Lobby radio value 'yacht-augment' = Yacht rules + augment mode
+  function splitMode(mode) {
+    return mode === 'yacht-augment'
+      ? { gameMode: 'yacht', augmentMode: true }
+      : { gameMode: mode, augmentMode: false };
+  }
+
   function updateGameMode(roomCode, gameMode) {
     getFunctions();
-    updateGameModeFn({ roomCode: roomCode, gameMode: gameMode }).catch(function (error) {
+    var sm = splitMode(gameMode);
+    updateGameModeFn({ roomCode: roomCode, gameMode: sm.gameMode, augmentMode: sm.augmentMode }).catch(function (error) {
       console.error('updateGameMode error:', error);
       var I18n = window.YachtGame.I18n;
       window.YachtGame.UI.showToast(I18n ? I18n.t('mode_change_failed') : 'Failed to change game mode.');
