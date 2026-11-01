@@ -173,6 +173,11 @@
             <span class="mode-label" data-i18n="mode_yacht">Yacht</span>
             <span class="mode-desc" data-i18n="yacht_desc">12 categories, classic rules</span>
           </label>
+          <label class="mode-option mode-option-augment">
+            <input type="radio" name="mode" value="yacht-augment">
+            <span class="mode-label" data-i18n="mode_yacht_augment">Augment Yacht</span>
+            <span class="mode-desc" data-i18n="yacht_augment_desc">Yacht + pick 3 augments</span>
+          </label>
 
         </div>
       </div>
@@ -272,6 +277,9 @@
 
       <!-- Scorecard -->
       <div id="scorecard" class="scorecard"></div>
+
+      <!-- Augment mode: owned augments + active augment buttons -->
+      <div id="augment-bar" class="augment-bar hidden"></div>
 
       <!-- Bottom Controls: Dice + Roll + Emote -->
       <div class="bottom-controls">
@@ -423,11 +431,13 @@
   <script src="js/sfx.js?v=4.5"></script>
   <script src="js/nickname.js?v=4.5"></script>
   <script src="js/scoring.js?v=4.5"></script>
+  <script src="js/augments.js?v=4.5"></script>
   <script src="js/dice.js?v=4.5"></script>
   <script src="js/dice-skins.js?v=4.5"></script>
   <script src="js/auth.js?v=4.5"></script>
   <script src="js/history.js?v=4.5"></script>
   <script src="js/ui.js?v=4.5"></script>
+  <script src="js/augment-ui.js?v=4.5"></script>
   <script src="js/lobby.js?v=4.5"></script>
   <script src="js/bot-ai.js?v=4.5"></script>
   <script src="js/bot-game.js?v=4.5"></script>

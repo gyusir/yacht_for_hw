@@ -31,6 +31,8 @@
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
+| `augments.js` | 증강 15종 정의·점수 파이프라인. `functions/augments.js`의 **동일 사본** (수정은 functions 쪽에서 하고 복사. `tools/augment_sim.js --conflict`가 일치 여부 검사) |
+| `augment-ui.js` | 증강 모드 UI: 선택 모달(비공개 동시 선택)·공개, 증강 바, 능동 증강 시트(주사위 변경/봉인/교환/더블), 점수 미리보기 보정, 굴림 상한 계산 |
 | `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱 (emulator 모드에서는 App Check 토큰 캐싱 비활성화) |
 
 ### Bot AI (`data/`, `tools/`)
@@ -40,6 +42,7 @@
 | `data/dp_yacht.bin` | Yacht 모드 DP 룩업 테이블 (4,096 상태, Uint16, 8KB) |
 | `data/dp_yahtzee.bin` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, Uint16, 2MB) |
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
+| `tools/augment_sim.js` | 증강 시뮬레이터. `--conflict N`: 무작위 행동 퍼징 + 불변식 검사, `--balance N`: 증강별 점수 차 측정. 증강 규칙·수치를 바꾸면 둘 다 다시 돌린다 |
 
 ### 주사위 스킨 에셋 (`die_image/`)
 
@@ -64,7 +67,9 @@
 
 | 파일 | 역할 |
 | --- | --- |
-| `index.js` | Cloud Functions: createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함. botDifficulty로 basic/gambler/wave 지원 |
+| `game-rules.js` | 게임 상태 순수 리듀서(applyRoll/applySelect/applyAction/applyPicks). Cloud Functions 트랜잭션과 시뮬레이터가 같은 코드를 사용. 검증 후 변경, 실패 시 상태 무변경 |
+| `augments.js` | 증강 정의·점수 파이프라인(기본→봉인→더블→보험 순서)·굴림 상한·강탈 계산. `js/augments.js`와 동일 |
+| `index.js` | Cloud Functions: pickAugment, useAugment, createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함. botDifficulty로 basic/gambler/wave 지원 |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
 ### Key Constraints
@@ -78,6 +83,7 @@
 - 봇 게임 탭 닫기 시 `sendBeacon`으로 패배 결과 저장 (`saveBotGameResultBeacon`)
 - 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 또는 게임 시간 2분 미만 시 `"invalid"` (전적 표시되나 승률·연승에 미반영)
 - Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
+- 증강 모드: 비공개 방 + Yacht 전용(`room.augmentMode`). 1·5·9턴 전에 초급·중급·고급 증강을 단계별 5개 중 랜덤 2개에서 선택. 선택은 `augmentPicks/{room}/{tier}`(클라이언트 접근 불가)에 저장 후 둘 다 고르면 공개. 증강 게임은 history에 `augment: true`, 통계 집계 제외. 단계 내 증강 가치 편차는 ±3점 이내로 유지(`tools/augment_sim.js --balance`)
 
 ## Hosting & Deploy
 

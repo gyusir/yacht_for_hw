@@ -138,24 +138,29 @@
   function updateTurnIndicator(isMyTurn, opponentName) {}
 
   // Roll counter — updates roll button text
-  function updateRollCounter(count) {
+  // info (optional, augment mode): { cap, canRoll, extra, extraLeft, locked }
+  function updateRollCounter(count, info) {
     var btn = document.getElementById('btn-roll');
     var I18n = window.YachtGame.I18n;
-    if (count >= 3) {
+    var cap = (info && info.cap) || 3;
+    if (info && info.extra && !info.locked) {
+      btn.innerHTML = (I18n ? I18n.t('aug_extra_roll') : 'Extra roll') + '<br><small>(' + info.extraLeft + ')</small>';
+    } else if (count >= cap || (info && info.locked)) {
       btn.innerHTML = I18n ? I18n.t('roll_end') : 'Roll End';
     } else {
-      btn.innerHTML = (I18n ? I18n.t('lets_roll') : "Let's Roll!") + '<br><small>(' + count + '/3)</small>';
+      btn.innerHTML = (I18n ? I18n.t('lets_roll') : "Let's Roll!") + '<br><small>(' + count + '/' + cap + ')</small>';
     }
   }
 
   // Roll button state
-  function setRollButtonEnabled(enabled, isMyTurn, rollCount) {
+  function setRollButtonEnabled(enabled, isMyTurn, rollCount, info) {
     var btn = document.getElementById('btn-roll');
     var I18n = window.YachtGame.I18n;
     btn.disabled = !enabled;
     if (!isMyTurn) {
       var rc = rollCount || 0;
-      btn.innerHTML = (I18n ? I18n.t('foes_turn') : "Foe's turn") + '<br><small>(' + rc + '/3)</small>';
+      var cap = (info && info.cap) || 3;
+      btn.innerHTML = (I18n ? I18n.t('foes_turn') : "Foe's turn") + '<br><small>(' + rc + '/' + cap + ')</small>';
     }
   }
 
@@ -171,6 +176,9 @@
     var previews = {};
     if (hasRolled && currentDice && currentDice[0] > 0) {
       previews = Scoring.calculateAll(currentDice, gameMode);
+      // Augment mode: passives, seal, armed double and insurance change the preview
+      var AugUI = window.YachtGame.AugmentUI;
+      if (AugUI && AugUI.isActive()) previews = AugUI.adjustPreviews(previews, currentDice);
     }
 
     var myScores = myPlayerKey === 'player1' ? player1Scores : player2Scores;
@@ -246,6 +254,7 @@
     html += '</tbody></table>';
     container.innerHTML = html;
     initScorecardDelegation();
+    if (window.YachtGame.AugmentUI) window.YachtGame.AugmentUI.decorateScorecard(container);
   }
 
   function showScoreConfirmHint(category) {
@@ -305,7 +314,7 @@
     var oppVal = oppScores[category];
     var isMyLast = category === myLastCat;
     var isOppLast = category === oppLastCat;
-    var html = '<tr' + (rowClass ? ' class="' + rowClass + '"' : '') + '>';
+    var html = '<tr data-cat="' + category + '"' + (rowClass ? ' class="' + rowClass + '"' : '') + '>';
 
     html += '<td class="category-name">' + displayName + '</td>';
 
@@ -495,7 +504,7 @@
       else if (g.result === 'loss') resultText = I18n ? I18n.t('result_l') : 'L';
       else if (g.result === 'invalid') resultText = I18n ? I18n.t('result_inv') : 'INV';
       else resultText = I18n ? I18n.t('result_t') : 'T';
-      var modeText = g.mode ? (I18n ? I18n.t('mode_' + g.mode) : g.mode) : '-';
+      var modeText = g.mode ? (I18n ? I18n.t(g.augment ? 'mode_yacht_augment' : 'mode_' + g.mode) : g.mode) : '-';
       listHtml += '<tr>';
       listHtml += '<td>' + dateStr + '</td>';
       listHtml += '<td>' + escapeHtml(modeText) + '</td>';
