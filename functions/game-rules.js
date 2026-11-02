@@ -62,9 +62,10 @@ function filledCount(scores, gameMode) {
   return Scoring.getCategories(gameMode).filter((c) => filled(scores, c)).length;
 }
 
-function total(player, gameMode) {
+// augment=true: augment-mode total (includes the upper-section bonus).
+function total(player, gameMode, augment) {
   const s = (player && player.scores) || {};
-  return Scoring.totalScore(s, gameMode, s.yahtzeeBonus);
+  return augment ? Aug.totalScore(s) : Scoring.totalScore(s, gameMode, s.yahtzeeBonus);
 }
 
 function isInt(v, lo, hi) {
@@ -73,9 +74,11 @@ function isInt(v, lo, hi) {
 
 // ─── Augment phase ───
 
-function openAugmentPhase(room, tier, rand) {
+// now: server time in ms (sets the pick deadline)
+function openAugmentPhase(room, tier, rand, now) {
   room.augmentPhase = {
     tier: tier,
+    deadline: (typeof now === "number" ? now : 0) + Aug.PICK_TIME_MS,
     offers: {
       player1: Aug.drawOffers(tier, rand),
       player2: Aug.drawOffers(tier, rand)
@@ -85,12 +88,12 @@ function openAugmentPhase(room, tier, rand) {
 }
 
 // Called when player2 joins (status -> playing).
-function startGame(room, rand) {
+function startGame(room, rand, now) {
   if (!isAugment(room)) return;
   ensureAug(room.players.player1);
   ensureAug(room.players.player2);
   room.turnFlags = null;
-  openAugmentPhase(room, 1, rand);
+  openAugmentPhase(room, 1, rand, now);
 }
 
 function validatePick(room, uid, augmentId) {
@@ -154,7 +157,7 @@ function applyRoll(room, uid, randomValues) {
     ensureAug(me);
     if (flags.locked) return fail("ROLL_LOCKED");
     cap = rollCount === 0
-      ? Aug.rollCap(me.aug, total(me, room.gameMode), total(room.players[opponentOf(pk)], room.gameMode))
+      ? Aug.rollCap(me.aug, total(me, room.gameMode, true), total(room.players[opponentOf(pk)], room.gameMode, true))
       : (flags.rollCap || Aug.BASE_ROLLS);
     if (rollCount >= cap) {
       if (rollCount < Aug.MAX_ROLLS && Aug.charge(me.aug, "extraRoll") > 0) useExtra = true;
@@ -221,7 +224,8 @@ function applyAction(room, uid, action) {
       if (action.delta !== 1 && action.delta !== -1) return fail("INVALID_TARGET");
       v = cur + action.delta;
     } else if (type === "nudge") {
-      v = cur + 1;
+      if (action.delta !== 1 && action.delta !== -1) return fail("INVALID_TARGET");
+      v = cur + action.delta;
     } else {
       v = action.value;
     }
@@ -236,6 +240,7 @@ function applyAction(room, uid, action) {
     room.dice[action.die].value = v;
     aug.charges[type] -= 1;
     flags.dieEdited = true;
+    flags.editType = type;
     flags.locked = true;
     if (type === "copy" || type === "wild") flags.noYacht = true;
     room.turnFlags = flags;
@@ -274,7 +279,7 @@ function applyAction(room, uid, action) {
 
 // ─── Select category ───
 
-// opts: { useDouble: bool, rand: (n) => int }
+// opts: { useDouble: bool, useInsurance: 'safetyNet'|'bigInsurance'|null, rand: (n) => int, now: ms }
 function applySelect(room, uid, category, opts) {
   opts = opts || {};
   if (room.status !== "playing") return fail("NOT_PLAYING");
@@ -301,7 +306,11 @@ function applySelect(room, uid, category, opts) {
       if (category === "yacht") return fail("DOUBLE_YACHT");
       if (Aug.charge(me.aug, "double") < 1) return fail("NO_CHARGE");
     }
-  } else if (opts.useDouble) {
+    if (opts.useInsurance) {
+      if (Aug.INSURANCE.indexOf(opts.useInsurance) === -1) return fail("INVALID_ACTION");
+      if (Aug.charge(me.aug, opts.useInsurance) < 1) return fail("NO_CHARGE");
+    }
+  } else if (opts.useDouble || opts.useInsurance) {
     return fail("NOT_AUGMENT");
   }
 
@@ -317,7 +326,9 @@ function applySelect(room, uid, category, opts) {
   let score;
   let effects = [];
   if (aug) {
-    const r = Aug.finalScore(diceValues, category, { aug: me.aug, sealed: me.sealed, useDouble: !!opts.useDouble });
+    const r = Aug.finalScore(diceValues, category, {
+      aug: me.aug, sealed: me.sealed, useDouble: !!opts.useDouble, useInsurance: opts.useInsurance || null
+    });
     score = r.score;
     effects = r.effects;
     for (const pool of Object.keys(r.consume)) me.aug.charges[pool] -= r.consume[pool];
@@ -361,8 +372,8 @@ function applySelect(room, uid, category, opts) {
 
   if (Scoring.allFilled(me.scores, gameMode) && Scoring.allFilled(oppScores, gameMode)) {
     if (aug) steals = applySteals(room, gameMode);
-    const myTotal = total(me, gameMode);
-    const oppTotal = total(opp, gameMode);
+    const myTotal = total(me, gameMode, aug);
+    const oppTotal = total(opp, gameMode, aug);
     if (myTotal > oppTotal) room.winner = pk;
     else if (oppTotal > myTotal) room.winner = oppKey;
     else room.winner = "tie";
@@ -375,7 +386,7 @@ function applySelect(room, uid, category, opts) {
       for (const tier of [2, 3]) {
         if (Aug.TIER_ROUNDS[tier] === mine) {
           if (typeof opts.rand !== "function") throw new Error("applySelect: rand required");
-          openAugmentPhase(room, tier, opts.rand);
+          openAugmentPhase(room, tier, opts.rand, opts.now);
         }
       }
     }
@@ -404,6 +415,20 @@ function applySteals(room, gameMode) {
   return plan;
 }
 
+// Timeout: fill in a random offer for every player who has not picked yet.
+// picks: hidden picks already stored; returns a complete { player1, player2 } map.
+function fillMissingPicks(room, picks, rand) {
+  const phase = room.augmentPhase;
+  const out = Object.assign({}, picks || {});
+  for (const pk of ["player1", "player2"]) {
+    if (out[pk]) continue;
+    const offers = (phase.offers && phase.offers[pk]) || [];
+    const list = Object.keys(offers).map((k) => offers[k]);
+    out[pk] = list[rand(list.length)];
+  }
+  return out;
+}
+
 module.exports = {
   ERRORS,
   findPlayerKey,
@@ -417,6 +442,7 @@ module.exports = {
   validatePick,
   markReady,
   applyPicks,
+  fillMissingPicks,
   applyRoll,
   applyAction,
   applySelect

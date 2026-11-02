@@ -654,7 +654,8 @@
 
     // Call Cloud Function — server calculates score and updates game state
     var useDouble = !!(AugUI() && AugUI().isDoubleArmed());
-    selectCategoryFn({ roomCode: roomCode, category: category, useDouble: useDouble }).then(function (result) {
+    var useInsurance = (AugUI() && AugUI().getArmedInsurance()) || null;
+    selectCategoryFn({ roomCode: roomCode, category: category, useDouble: useDouble, useInsurance: useInsurance }).then(function (result) {
       isWriting = false;
       if (AugUI()) AugUI().onSelectResult(result.data);
       if (result.data && result.data.yahtzeeBonus) {

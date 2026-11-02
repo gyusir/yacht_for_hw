@@ -17,12 +17,12 @@
   //       roll     = automatic extra roll when the normal roll cap is reached
   //       dieEdit  = active, changes one die after rolling (ends rolling for the turn)
   //       target   = active, targets a category (seal: opponent / swap: both players)
-  //       toggle   = active, chosen together with selectCategory (double)
+  //       toggle   = active, armed by the player and applied with selectCategory (double, insurance)
   // pool: charge pool the augment adds to (augments sharing a pool stack their charges)
   var DEFS = {
     // ── Tier 1 (picked before turn 1) ──
     extraRoll:      { tier: 1, kind: 'roll',    pool: 'extraRoll',   charges: 3 },
-    safetyNet:      { tier: 1, kind: 'passive', pool: 'safetyNet',   charges: 1 },
+    safetyNet:      { tier: 1, kind: 'toggle',  pool: 'safetyNet',   charges: 1 },   // armed: a 0 becomes 10
     straightRelax:  { tier: 1, kind: 'passive' },
     fullHouseBonus: { tier: 1, kind: 'passive' },
     copy:           { tier: 1, kind: 'dieEdit', pool: 'copy',        charges: 1 },
@@ -31,11 +31,11 @@
     seal:           { tier: 2, kind: 'target',  pool: 'seal',        charges: 1 },
     double:         { tier: 2, kind: 'toggle',  pool: 'double',      charges: 1 },
     comeback:       { tier: 2, kind: 'passive' },
-    nudge:          { tier: 2, kind: 'dieEdit', pool: 'nudge',       charges: 1 },   // +1 only
+    nudge:          { tier: 2, kind: 'dieEdit', pool: 'nudge',       charges: 1 },   // +1 or -1, once
     // ── Tier 3 (picked before turn 9) ──
     swap:           { tier: 3, kind: 'target',  pool: 'swap',        charges: 1 },
     wild:           { tier: 3, kind: 'dieEdit', pool: 'wild',        charges: 1 },
-    bigInsurance:   { tier: 3, kind: 'passive', pool: 'bigInsurance', charges: 1 },
+    bigInsurance:   { tier: 3, kind: 'toggle',  pool: 'bigInsurance', charges: 1 },  // armed: a 0 becomes 20
     steal:          { tier: 3, kind: 'passive' },
     fineTune:       { tier: 3, kind: 'dieEdit', pool: 'adjust',      charges: 2 }    // +1 or -1
   };
@@ -45,10 +45,16 @@
   var MAX_ROLLS = 5;
   var BASE_ROLLS = 3;
   var FULL_HOUSE_BONUS = 10;
-  var SAFETY_NET_SCORE = 12;
+  var SAFETY_NET_SCORE = 10;
   var BIG_INSURANCE_SCORE = 20;
   var STEAL_PERCENT = 30;
   var UPPER = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
+  var INSURANCE = ['safetyNet', 'bigInsurance'];
+  // Upper-section bonus (augment mode only). Computed from current scores, so it
+  // disappears if a steal/swap drops the upper sum below the hurdle.
+  var UPPER_BONUS_HURDLE = 63;
+  var UPPER_BONUS = 35;
+  var PICK_TIME_MS = 90000; // augment pick time limit
 
   function idsOfTier(tier) {
     var out = [];
@@ -104,7 +110,8 @@
   }
 
   // Full scoring pipeline (fixed order): base -> seal -> double -> insurance.
-  // ctx: { aug, sealed (category sealed on this player), useDouble }
+  // ctx: { aug, sealed (category sealed on this player), useDouble, useInsurance ('safetyNet'|'bigInsurance'|null) }
+  // Insurance only applies when the player armed it AND the score would be 0; otherwise it is kept.
   // Returns { score, effects: [..], consume: { pool: n } } without mutating anything.
   function finalScore(dice, category, ctx) {
     var aug = ctx.aug;
@@ -122,12 +129,11 @@
       consume.double = 1;
       effects.push('double');
     }
-    if (s === 0) {
-      if (charge(aug, 'bigInsurance') > 0) {
-        s = BIG_INSURANCE_SCORE; consume.bigInsurance = 1; effects.push('bigInsurance');
-      } else if (charge(aug, 'safetyNet') > 0) {
-        s = SAFETY_NET_SCORE; consume.safetyNet = 1; effects.push('safetyNet');
-      }
+    var ins = ctx.useInsurance;
+    if (s === 0 && ins && INSURANCE.indexOf(ins) !== -1 && charge(aug, ins) > 0) {
+      s = ins === 'bigInsurance' ? BIG_INSURANCE_SCORE : SAFETY_NET_SCORE;
+      consume[ins] = 1;
+      effects.push(ins);
     }
     return { score: s, effects: effects, consume: consume };
   }
@@ -138,6 +144,24 @@
     if (owns(aug, 'fourthRoll')) cap += 1;
     if (owns(aug, 'comeback') && myTotal < oppTotal) cap += 2;
     return Math.min(cap, MAX_ROLLS);
+  }
+
+  function upperSum(scores) {
+    var s = 0;
+    for (var i = 0; i < UPPER.length; i++) {
+      var v = scores && scores[UPPER[i]];
+      if (v !== null && v !== undefined) s += v;
+    }
+    return s;
+  }
+
+  function upperBonus(scores) {
+    return upperSum(scores) >= UPPER_BONUS_HURDLE ? UPPER_BONUS : 0;
+  }
+
+  // Total score in augment mode (Yacht categories + upper-section bonus).
+  function totalScore(scores) {
+    return Scoring.totalScore(scores || {}, 'yacht') + upperBonus(scores || {});
   }
 
   // Steal amount this player takes from the opponent at game end (pre-steal scores).
@@ -159,6 +183,13 @@
     MAX_ROLLS: MAX_ROLLS,
     BASE_ROLLS: BASE_ROLLS,
     UPPER: UPPER,
+    INSURANCE: INSURANCE,
+    UPPER_BONUS_HURDLE: UPPER_BONUS_HURDLE,
+    UPPER_BONUS: UPPER_BONUS,
+    PICK_TIME_MS: PICK_TIME_MS,
+    upperSum: upperSum,
+    upperBonus: upperBonus,
+    totalScore: totalScore,
     idsOfTier: idsOfTier,
     drawOffers: drawOffers,
     owns: owns,

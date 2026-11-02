@@ -9,12 +9,16 @@
   var myKey = null;
   var oppKey = null;
   var doubleArmed = false;
+  var armedInsurance = null; // 'safetyNet' | 'bigInsurance' | null
   var pickPending = false;
   var lastRevealKey = null;
-  var lastSwapKey = null;
-  var lastSealed = null;
-  var lastOppFilled = -1;
   var initialized = false;
+  var peeking = false;          // pick modal hidden to look at the scorecard
+  var serverOffset = 0;         // .info/serverTimeOffset
+  var offsetSubscribed = false;
+  var timerId = null;
+  var autoPickedTier = null;    // tier auto-picked on time-out (once)
+  var claimSentTier = null;     // tier for which a timeout claim was sent (once)
   var pickFn = null;
   var useFn = null;
 
@@ -58,6 +62,17 @@
     return out;
   }
   function isMyTurn() { return room && room.status === 'playing' && room.currentTurn === myKey && !room.augmentPhase; }
+  function UIx() { return window.YachtGame.UI; }
+  function announce(msg) { UIx().showToast(msg, { strong: true }); }
+  function whoLabel(pk) { return '[' + t(pk === myKey ? 'aug_you' : 'aug_opp') + '] '; }
+  function filledCount(scores) {
+    return window.YachtGame.Scoring.getCategories('yacht').filter(function (c) { return filled(scores, c); }).length;
+  }
+  function serverNow() { return Date.now() + serverOffset; }
+  function fmtTime(ms) {
+    var sec = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(sec / 60) + ':' + (sec % 60 < 10 ? '0' : '') + (sec % 60);
+  }
   function gameRolling() { return window.YachtGame.Game && window.YachtGame.Game.isRolling && window.YachtGame.Game.isRolling(); }
 
   // ─── Roll info (used by game.js for the roll button) ───
@@ -72,9 +87,8 @@
     var opp = r.players[(pk || r.currentTurn) === 'player1' ? 'player2' : 'player1'];
     var aug = augOf(me);
     var flags = r.turnFlags || {};
-    var Scoring = window.YachtGame.Scoring;
     var cap = rc === 0
-      ? A.rollCap(aug, Scoring.totalScore((me && me.scores) || {}, 'yacht'), Scoring.totalScore((opp && opp.scores) || {}, 'yacht'))
+      ? A.rollCap(aug, A.totalScore((me && me.scores) || {}), A.totalScore((opp && opp.scores) || {}))
       : (flags.rollCap || 3);
     var extraLeft = A.charge(aug, 'extraRoll');
     var extra = rc >= cap && rc < A.MAX_ROLLS && extraLeft > 0;
@@ -95,7 +109,8 @@
       if (!previews.hasOwnProperty(c)) continue;
       if (c === 'yacht' && flags.noYacht) continue; // blocked: rendered as '-' and not clickable
       var useDouble = pk === myKey && doubleArmed && c !== 'yacht';
-      out[c] = A.finalScore(currentDice, c, { aug: aug, sealed: p.sealed, useDouble: useDouble }).score;
+      var useInsurance = pk === myKey ? armedInsurance : null;
+      out[c] = A.finalScore(currentDice, c, { aug: aug, sealed: p.sealed, useDouble: useDouble, useInsurance: useInsurance }).score;
     }
     return out;
   }
@@ -132,15 +147,87 @@
     if (el) el.classList.add('hidden');
   }
 
+  function peekBar() {
+    var bar = document.getElementById('aug-peek-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'aug-peek-bar';
+      bar.className = 'aug-peek-bar hidden';
+      bar.innerHTML = '<button class="btn-primary aug-peek-back"></button>';
+      document.body.appendChild(bar);
+      bar.querySelector('button').addEventListener('click', function () { peeking = false; renderPickModal(); });
+    }
+    return bar;
+  }
+
+  function timerText() {
+    var phase = room && room.augmentPhase;
+    if (!phase || !phase.deadline) return '';
+    return t('aug_time_left') + ' ' + fmtTime(phase.deadline - serverNow());
+  }
+
+  function updateTimerTexts() {
+    var phase = room && room.augmentPhase;
+    var txt = timerText();
+    var low = phase && phase.deadline && phase.deadline - serverNow() <= 10000;
+    var els = document.querySelectorAll('.aug-timer');
+    for (var i = 0; i < els.length; i++) {
+      els[i].textContent = txt;
+      els[i].classList.toggle('low', !!low);
+    }
+    var back = document.querySelector('#aug-peek-bar .aug-peek-back');
+    if (back) back.textContent = t('aug_peek_back') + (txt ? ' · ' + txt : '');
+  }
+
+  // 1s ticker while a pick phase is open: countdown, auto-pick, timeout claim.
+  function tick() {
+    var phase = room && room.augmentPhase;
+    if (!phase || room.status !== 'playing') { stopTimer(); return; }
+    updateTimerTexts();
+    if (!phase.deadline) return;
+    var left = phase.deadline - serverNow();
+    var ready = phase.ready && phase.ready[myKey];
+    if (left <= 0 && !ready && !pickPending && autoPickedTier !== phase.tier) {
+      autoPickedTier = phase.tier;
+      var offers = toArray(phase.offers && phase.offers[myKey]);
+      if (offers.length) {
+        UIx().showToast(t('aug_auto_picked'), { strong: true });
+        doPick(offers[Math.floor(Math.random() * offers.length)]);
+      }
+    }
+    // Opponent idle (e.g. app in background): ask the server to pick for them.
+    if (left <= -5000 && ready && claimSentTier !== phase.tier) {
+      claimSentTier = phase.tier;
+      fns();
+      pickFn({ roomCode: currentRoomCode(), claimTimeout: true }).catch(function () { claimSentTier = null; });
+    }
+  }
+  function startTimer() { if (!timerId) timerId = setInterval(tick, 1000); }
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
   function renderPickModal() {
     var el = overlay('aug-pick');
     var phase = room.augmentPhase;
-    if (!phase || room.status !== 'playing') { el.classList.add('hidden'); pickPending = false; return; }
+    var bar = peekBar();
+    if (!phase || room.status !== 'playing') {
+      el.classList.add('hidden'); bar.classList.add('hidden');
+      pickPending = false; peeking = false; stopTimer();
+      return;
+    }
+    startTimer();
+    if (peeking) {
+      el.classList.add('hidden');
+      bar.classList.remove('hidden');
+      updateTimerTexts();
+      return;
+    }
+    bar.classList.add('hidden');
     var offers = toArray(phase.offers && phase.offers[myKey]);
     var ready = phase.ready && phase.ready[myKey];
     var oppReady = phase.ready && phase.ready[oppKey];
     var html = '<div class="aug-tier-badge tier-' + phase.tier + '">' + esc(t('aug_tier_' + phase.tier)) + '</div>';
     html += '<h3 class="aug-title">' + esc(t('aug_pick_title')) + '</h3>';
+    html += '<div class="aug-timer">' + esc(timerText()) + '</div>';
     if (ready || pickPending) {
       html += '<p class="aug-sub">' + esc(t('aug_waiting_opp')) + '</p><div class="spinner"></div>';
     } else {
@@ -153,16 +240,22 @@
       }
       html += '</div>';
     }
+    html += '<button class="btn-secondary aug-peek">' + esc(t('aug_peek')) + '</button>';
     el.firstChild.innerHTML = html;
     el.classList.remove('hidden');
+    updateTimerTexts();
     var cards = el.querySelectorAll('.aug-card');
     for (var j = 0; j < cards.length; j++) {
       cards[j].addEventListener('click', onPick);
     }
+    el.querySelector('.aug-peek').addEventListener('click', function () { peeking = true; renderPickModal(); });
   }
 
   function onPick(e) {
-    var id = e.currentTarget.getAttribute('data-aug');
+    doPick(e.currentTarget.getAttribute('data-aug'));
+  }
+
+  function doPick(id) {
     if (!id || pickPending || !room) return;
     fns();
     pickPending = true;
@@ -199,6 +292,21 @@
   }
 
   // ─── Augment bar ───
+  // "Turn r/12 · next augment in n" — picks happen before turns 5 and 9.
+  function turnInfoText() {
+    var n1 = filledCount(scoresOf('player1')), n2 = filledCount(scoresOf('player2'));
+    var round = Math.min(Math.min(n1, n2) + 1, 12);
+    if (room.augmentPhase) return t('aug_turn_picking').replace('{r}', round);
+    var next = null;
+    [2, 3].forEach(function (tier) {
+      var r = Aug().TIER_ROUNDS[tier] + 1;
+      if (next === null && r > round) next = r;
+    });
+    return next === null
+      ? t('aug_turn_last').replace('{r}', round)
+      : t('aug_turn_info').replace('{r}', round).replace('{n}', next - round);
+  }
+
   function chipState(id, aug) {
     var A = Aug();
     var def = A.DEFS[id];
@@ -216,7 +324,7 @@
       usable = my && left > 0 && !room.players[oppKey].sealed && sealTargets().length > 0;
     } else if (id === 'swap') {
       usable = my && left > 0 && swapTargets().length > 0;
-    } else if (id === 'double') {
+    } else if (def.kind === 'toggle') {
       usable = my && left > 0;
     }
     return { def: def, left: left, usable: usable };
@@ -239,7 +347,7 @@
       var badge = st.left !== null && !poolShared ? '<span class="aug-badge">' + st.left + '</span>' : '';
       var interactive = st.def.kind === 'dieEdit' || st.def.kind === 'target' || st.def.kind === 'toggle';
       var cls = 'aug-chip tier-' + st.def.tier + (interactive ? ' active-kind' : '') +
-        (id === 'double' && doubleArmed ? ' armed' : '') + (st.left === 0 ? ' spent' : '');
+        ((id === 'double' && doubleArmed) || armedInsurance === id ? ' armed' : '') + (st.left === 0 ? ' spent' : '');
       if (interactive) {
         html += '<button class="' + cls + '" data-aug="' + id + '"' + (st.usable ? '' : ' disabled') +
           ' title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</button>';
@@ -247,6 +355,7 @@
         html += '<span class="' + cls + '" title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</span>';
       }
     }
+    html += '<span class="aug-turn-info">' + esc(turnInfoText()) + '</span>';
     html += '</div><div class="aug-row opp"><span class="aug-row-label">' + esc(t('aug_opp')) + '</span>';
     for (var j = 0; j < theirs.owned.length; j++) {
       var oid = theirs.owned[j];
@@ -269,6 +378,13 @@
     if (id === 'double') {
       doubleArmed = !doubleArmed;
       window.YachtGame.UI.showToast(t(doubleArmed ? 'aug_double_on' : 'aug_double_off'));
+      renderBar();
+      if (window.YachtGame.Game && window.YachtGame.Game.refreshUI) window.YachtGame.Game.refreshUI();
+      return;
+    }
+    if (id === 'safetyNet' || id === 'bigInsurance') {
+      armedInsurance = armedInsurance === id ? null : id;
+      window.YachtGame.UI.showToast(t(armedInsurance ? 'aug_' + id + '_on' : 'aug_insurance_off'));
       renderBar();
       if (window.YachtGame.Game && window.YachtGame.Game.refreshUI) window.YachtGame.Game.refreshUI();
       return;
@@ -300,7 +416,7 @@
       if (state.die === null) {
         html += '<p class="aug-sub">' + esc(t('aug_choose_die')) + '</p><div class="aug-choice-row">';
         for (var i = 0; i < 5; i++) {
-          var ok = type !== 'nudge' || dice[i] < 6;
+          var ok = true;
           if (type === 'copy') ok = dice.some(function (v, j) { return j !== i && v !== dice[i]; });
           html += '<button class="aug-choice" data-die="' + i + '"' + (ok ? '' : ' disabled') + '>' + dieFace(dice[i]) + '</button>';
         }
@@ -314,7 +430,7 @@
             html += '<button class="aug-choice" data-from="' + j + '">' + dieFace(dice[j]) + '</button>';
           }
         } else {
-          var vals = type === 'adjust' ? [cur - 1, cur + 1] : type === 'nudge' ? [cur + 1] : [1, 2, 3, 4, 5, 6];
+          var vals = (type === 'adjust' || type === 'nudge') ? [cur - 1, cur + 1] : [1, 2, 3, 4, 5, 6];
           for (var k = 0; k < vals.length; k++) {
             if (vals[k] < 1 || vals[k] > 6 || vals[k] === cur) continue;
             html += '<button class="aug-choice" data-value="' + vals[k] + '">' + dieFace(vals[k]) + '</button>';
@@ -333,12 +449,11 @@
       var b = e.currentTarget;
       if (b.hasAttribute('data-die')) {
         state.die = parseInt(b.getAttribute('data-die'), 10);
-        if (type === 'nudge') return submit({ type: 'nudge', die: state.die });
         return draw();
       }
       if (b.hasAttribute('data-from')) return submit({ type: 'copy', die: state.die, from: parseInt(b.getAttribute('data-from'), 10) });
       var v = parseInt(b.getAttribute('data-value'), 10);
-      if (type === 'adjust') return submit({ type: 'adjust', die: state.die, delta: v - dice[state.die] });
+      if (type === 'adjust' || type === 'nudge') return submit({ type: type, die: state.die, delta: v - dice[state.die] });
       return submit({ type: 'wild', die: state.die, value: v });
     }
     draw();
@@ -378,48 +493,54 @@
     }
     useFn({ roomCode: currentRoomCode(), action: action }).then(function () {
       closeOverlay('aug-sheet');
-      if (action.type === 'swap') {
-        window.YachtGame.UI.showToast(t('aug_swap_toast_me') + catName(action.category));
-      }
     }).catch(function (err) {
       closeOverlay('aug-sheet');
       window.YachtGame.UI.showToast(err.message || 'Error');
     });
   }
 
-  // ─── Notifications driven by room changes ───
+  // ─── Announcements: diff prev → current room so both players see every augment use ───
+  var EDIT_AUG = { copy: 'copy', nudge: 'nudge', adjust: 'fineTune', wild: 'wild' };
+
   function notify(prev) {
-    var UI = window.YachtGame.UI;
-    var me = room.players[myKey] || {};
-    var opp = room.players[oppKey] || {};
-    // Opponent sealed one of my categories
-    if (me.sealed && me.sealed !== lastSealed && initialized) {
-      UI.showToast(t('aug_sealed_toast') + catName(me.sealed));
+    if (!initialized || !prev || !prev.players) return;
+    var A = Aug();
+    var used = t('aug_used');
+    var turn = room.currentTurn;
+    var pf = (prev.currentTurn === turn && prev.turnFlags) || {};
+    var cf = room.turnFlags || {};
+    // Die edits (copy / nudge / fine tune / wild)
+    if (cf.editType && !pf.editType) announce(whoLabel(turn) + augName(EDIT_AUG[cf.editType] || cf.editType) + used);
+    // Extra roll
+    if ((cf.extraUsed || 0) > (pf.extraUsed || 0)) announce(whoLabel(turn) + augName('extraRoll') + used);
+    ['player1', 'player2'].forEach(function (pk) {
+      var cur = room.players[pk] || {};
+      var old = prev.players[pk] || {};
+      // Seal placed on this player (by the other one)
+      if (cur.sealed && cur.sealed !== old.sealed) {
+        announce(whoLabel(pk === 'player1' ? 'player2' : 'player1') + augName('seal') + ': ' + catName(cur.sealed));
+      }
+      // Scoring effects of a new record (double, insurance, sealed 0, passive boosts)
+      if (filledCount(cur.scores) > filledCount(old.scores)) {
+        var eff = toArray(cur.lastEffects);
+        if (eff.length) announce(whoLabel(pk) + eff.map(function (x) { return t('aug_effect_' + x, x); }).join(', '));
+      }
+      // Upper-section bonus gained / lost (swap, steal)
+      var had = A.upperBonus(old.scores || {}) > 0;
+      var has = A.upperBonus(cur.scores || {}) > 0;
+      if (has !== had) announce(whoLabel(pk) + t(has ? 'aug_bonus_gained' : 'aug_bonus_lost') + ' (' + (has ? '+' : '−') + A.UPPER_BONUS + ')');
+    });
+    // Swap
+    var sw = room.lastSwap, psw = prev.lastSwap;
+    if (sw && (!psw || psw.ts !== sw.ts || psw.category !== sw.category || psw.by !== sw.by)) {
+      announce(whoLabel(sw.by) + augName('swap') + ': ' + catName(sw.category));
     }
-    lastSealed = me.sealed || null;
-    // Opponent swap
-    var sw = room.lastSwap;
-    var swKey = sw ? sw.by + ':' + sw.category + ':' + sw.ts : null;
-    if (sw && swKey !== lastSwapKey && initialized && sw.by === oppKey) {
-      UI.showToast(t('aug_swap_toast_opp') + catName(sw.category));
-    }
-    lastSwapKey = swKey;
-    // Opponent scoring effects
-    var oppFilled = window.YachtGame.Scoring.getCategories('yacht').filter(function (c) { return filled(opp.scores, c); }).length;
-    if (initialized && oppFilled > lastOppFilled && lastOppFilled >= 0) {
-      var eff = toArray(opp.lastEffects);
-      if (eff.length) UI.showToast(t('aug_opp_effect') + eff.map(function (x) { return t('aug_effect_' + x, x); }).join(', '));
-    }
-    lastOppFilled = oppFilled;
   }
 
-  // Result of my own selectCategory call.
-  function onSelectResult(data) {
+  // Result of my own selectCategory call (announcements come from the room diff).
+  function onSelectResult() {
     doubleArmed = false;
-    var eff = (data && data.effects) || [];
-    if (eff.length) {
-      window.YachtGame.UI.showToast(eff.map(function (x) { return t('aug_effect_' + x, x); }).join(', '));
-    }
+    armedInsurance = null;
   }
 
   function renderGameOverExtras(r, pk) {
@@ -449,7 +570,11 @@
       if (bar) bar.classList.add('hidden');
       return;
     }
-    if (room.currentTurn !== myKey || room.status !== 'playing') doubleArmed = false;
+    if (!offsetSubscribed && window.YachtGame.db) {
+      offsetSubscribed = true;
+      window.YachtGame.db.ref('.info/serverTimeOffset').on('value', function (snap) { serverOffset = snap.val() || 0; });
+    }
+    if (room.currentTurn !== myKey || room.status !== 'playing') { doubleArmed = false; armedInsurance = null; }
     if (room.status !== 'playing') { closeOverlay('aug-pick'); closeOverlay('aug-sheet'); }
     renderPickModal();
     renderReveal();
@@ -469,8 +594,11 @@
 
   function reset(getRoomCode) {
     room = null; myKey = null; oppKey = null;
-    doubleArmed = false; pickPending = false; initialized = false;
-    lastRevealKey = null; lastSwapKey = null; lastSealed = null; lastOppFilled = -1;
+    doubleArmed = false; armedInsurance = null; pickPending = false; initialized = false;
+    lastRevealKey = null; peeking = false; autoPickedTier = null; claimSentTier = null;
+    stopTimer();
+    var pb = document.getElementById('aug-peek-bar');
+    if (pb) pb.classList.add('hidden');
     roomCodeGetter = getRoomCode || null;
     closeOverlay('aug-pick'); closeOverlay('aug-sheet'); closeOverlay('aug-reveal');
     var bar = document.getElementById('augment-bar');
@@ -486,6 +614,7 @@
     decorateScorecard: decorateScorecard,
     isActive: isActive,
     isDoubleArmed: function () { return isActive() && doubleArmed; },
+    getArmedInsurance: function () { return isActive() ? armedInsurance : null; },
     onSelectResult: onSelectResult,
     renderGameOverExtras: renderGameOverExtras,
     refresh: function () { if (room && isActive()) { renderBar(); renderPickModal(); } }

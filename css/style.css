@@ -3279,3 +3279,53 @@ button.aug-chip.armed:not(:disabled):hover {
   font-size: 0.75rem;
   margin-top: 6px;
 }
+
+/* Augment usage announcements: bold, highlighted, longer (see UI.showToast opts.strong) */
+.toast.toast-strong {
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-left: 5px solid var(--aug-tier3);
+  background: color-mix(in srgb, var(--aug-tier3) 12%, var(--surface));
+}
+
+/* Augment pick: countdown, scorecard peek */
+.aug-timer {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.aug-timer.low {
+  color: var(--danger);
+}
+
+.aug-sheet .aug-peek {
+  width: 100%;
+}
+
+.aug-peek-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  z-index: 150;
+}
+
+.aug-peek-bar.hidden {
+  display: none;
+}
+
+.aug-peek-bar .btn-primary {
+  box-shadow: var(--shadow-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Turn info at the right end of my augment row */
+.aug-turn-info {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

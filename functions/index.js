@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const crypto = require("crypto");
 const Scoring = require("./scoring");
 const Rules = require("./game-rules");
+const Aug = require("./augments");
 const { ServerValue } = require("firebase-admin/database");
 
 admin.initializeApp();
@@ -212,7 +213,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     room.players.player2 = p2;
     room.status = "playing";
     room.lastActivityAt = { ".sv": "timestamp" };
-    Rules.startGame(room, cryptoRand);
+    Rules.startGame(room, cryptoRand, Date.now());
     return room;
   });
 
@@ -469,9 +470,10 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Category required.");
   }
   const useDouble = data.useDouble === true;
+  const useInsurance = (data.useInsurance === "safetyNet" || data.useInsurance === "bigInsurance") ? data.useInsurance : null;
 
   const { out, room } = await runRoomTransaction(roomCode, (r) =>
-    Rules.applySelect(r, uid, category, { useDouble: useDouble, rand: cryptoRand }));
+    Rules.applySelect(r, uid, category, { useDouble: useDouble, useInsurance: useInsurance, rand: cryptoRand, now: Date.now() }));
 
   const winner = room.winner || null;
   return {
@@ -484,6 +486,8 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   };
 });
 
+const PICK_TIMEOUT_GRACE_MS = 3000;
+
 // ─── pickAugment (augment mode) ───
 // Picks are hidden until both players choose: each pick is first written to
 // augmentPicks/{room}/{tier} (no client read access), and only the second
@@ -493,20 +497,36 @@ exports.pickAugment = regionFn.https.onCall(async (data, context) => {
   requireAppCheck(context);
   const uid = requireAuth(context);
   const roomCode = requireRoomCode(data);
+  const claimTimeout = data.claimTimeout === true;
   const augmentId = data.augmentId;
-  if (typeof augmentId !== "string") throw new functions.https.HttpsError("invalid-argument", "Augment required.");
+  if (!claimTimeout && typeof augmentId !== "string") throw new functions.https.HttpsError("invalid-argument", "Augment required.");
 
   const roomRef = db.ref("rooms/" + roomCode);
   const snap = await roomRef.once("value");
   if (!snap.exists()) throw new functions.https.HttpsError("not-found", "Room not found.");
-  const v = Rules.validatePick(snap.val(), uid, augmentId);
-  if (v.error) throwRule(v.error);
-  const pk = v.playerKey;
-  const tier = v.tier;
+  const roomNow = snap.val();
+  let pk, tier;
+  if (claimTimeout) {
+    // Either player may resolve an expired pick: missing picks become random offers.
+    pk = Rules.findPlayerKey(roomNow.players || {}, uid);
+    if (!pk) throwRule("NOT_PLAYER");
+    const phase = roomNow.augmentPhase;
+    if (!phase) return { success: true, revealed: false };
+    if (Date.now() < (phase.deadline || 0) + PICK_TIMEOUT_GRACE_MS) {
+      throw new functions.https.HttpsError("failed-precondition", "Pick time has not expired.");
+    }
+    tier = phase.tier;
+  } else {
+    const v = Rules.validatePick(roomNow, uid, augmentId);
+    if (v.error) throwRule(v.error);
+    pk = v.playerKey;
+    tier = v.tier;
+  }
 
   const pickRef = db.ref("augmentPicks/" + roomCode + "/" + tier);
   const pr = await pickRef.transaction((cur) => {
     cur = cur || {};
+    if (claimTimeout) return Rules.fillMissingPicks(roomNow, cur, cryptoRand);
     if (cur[pk]) return; // already picked this tier
     cur[pk] = augmentId;
     return cur;
@@ -934,8 +954,9 @@ exports.onGameFinished = functions.region("asia-southeast1")
 
       const myScores = player.scores || {};
       const oppScores = opponent.scores || {};
-      const myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
-      const oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
+      const isAug = room.augmentMode === true;
+      const myTotal = isAug ? Aug.totalScore(myScores) : Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
+      const oppTotal = isAug ? Aug.totalScore(oppScores) : Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
 
       let result;
       if (winner === playerKey) result = "win";
