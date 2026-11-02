@@ -84,6 +84,8 @@
 - 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 또는 게임 시간 2분 미만 시 `"invalid"` (전적 표시되나 승률·연승에 미반영)
 - Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
 - 증강 모드: 비공개 방 + Yacht 전용(`room.augmentMode`). 1·5·9턴 전에 초급·중급·고급 증강을 단계별 5개 중 랜덤 2개에서 선택. 선택은 `augmentPicks/{room}/{tier}`(클라이언트 접근 불가)에 저장 후 둘 다 고르면 공개. 증강 게임은 history에 `augment: true`, 통계 집계 제외. 단계 내 증강 가치 편차는 ±3점 이내로 유지(`tools/augment_sim.js --balance`)
+- 증강 모드 1~6 보너스: 1~6 칸 합 63 이상이면 +35 (`augments.js`의 `UPPER_BONUS_HURDLE`/`UPPER_BONUS`). 현재 점수로 매번 계산하므로 강탈·교환으로 63 미만이 되면 사라진다. 달성률은 `tools/augment_sim.js --bonus`로 확인
+- 증강 선택 제한 시간 90초(`PICK_TIME_MS`). 시간 초과 시 클라이언트가 자동 선택, 상대가 응답 없으면 `pickAugment({claimTimeout:true})`로 서버가 랜덤 선택
 
 ## Hosting & Deploy
 

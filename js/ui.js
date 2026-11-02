@@ -85,13 +85,19 @@
   }
 
   // Toast notifications
-  function showToast(message) {
+  // opts.strong: bold, highlighted and longer (augment usage announcements)
+  function showToast(message, opts) {
     var container = document.getElementById('toast-container');
     var toast = document.createElement('div');
-    toast.className = 'toast';
+    var strong = !!(opts && opts.strong);
+    toast.className = 'toast' + (strong ? ' toast-strong' : '');
     toast.textContent = message;
+    var duration = strong
+      ? Math.max(5500, 2500 + message.length * 70)
+      : Math.max(3100, 1500 + message.length * 50);
+    // Fade out right before removal (the CSS default fades at 2.7s regardless of length)
+    toast.style.animation = 'toastIn 0.3s ease, toastOut 0.3s ease ' + ((duration - 400) / 1000) + 's forwards';
     container.appendChild(toast);
-    var duration = Math.max(3100, 1500 + message.length * 50);
     setTimeout(function () {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, duration);
@@ -164,6 +170,17 @@
     }
   }
 
+  // Augment-mode games score the Yacht categories plus an upper-section bonus.
+  function isAugmentScoring() {
+    var A = window.YachtGame.AugmentUI;
+    return !!(A && A.isActive() && window.YachtGame.Augments);
+  }
+
+  function totalFor(scores, gameMode) {
+    if (isAugmentScoring()) return window.YachtGame.Augments.totalScore(scores);
+    return window.YachtGame.Scoring.totalScore(scores, gameMode, scores.yahtzeeBonus);
+  }
+
   // Scorecard rendering
   function renderScorecard(player1Scores, player2Scores, gameMode, currentDice, isMyTurn, myPlayerKey, player1Name, player2Name, myLastCat, oppLastCat, hasRolled, myDiceSkin, oppDiceSkin) {
     var container = document.getElementById('scorecard');
@@ -213,16 +230,20 @@
       html += renderCategoryRow(upperCats[i], myScores, oppScores, previews, isMyTurn, gameMode, myLastCat, oppLastCat, '');
     }
 
-    // Upper bonus row (Yahtzee only)
-    if (gameMode === 'yahtzee') {
+    // Upper bonus row (Yahtzee, and Yacht in augment mode)
+    var augBonus = isAugmentScoring();
+    if (gameMode === 'yahtzee' || augBonus) {
+      var Aug = window.YachtGame.Augments;
+      var hurdle = augBonus ? Aug.UPPER_BONUS_HURDLE : 63;
+      var bonusPts = augBonus ? Aug.UPPER_BONUS : 35;
       var myUpperSum = Scoring.upperSum(myScores);
       var oppUpperSum = Scoring.upperSum(oppScores);
-      var myBonus = Scoring.upperBonus(myScores);
-      var oppBonus = Scoring.upperBonus(oppScores);
+      var myBonus = myUpperSum >= hurdle;
+      var oppBonus = oppUpperSum >= hurdle;
       html += '<tr class="bonus-row">';
       html += '<td class="category-name">' + (I18n ? I18n.t('bonus') : 'Bonus') + '</td>';
-      html += '<td class="score-cell mine">' + myUpperSum + '/63' + (myBonus ? ' +35' : '') + '</td>';
-      html += '<td class="score-cell opponent">' + oppUpperSum + '/63' + (oppBonus ? ' +35' : '') + '</td>';
+      html += '<td class="score-cell mine">' + myUpperSum + '/' + hurdle + (myBonus ? ' +' + bonusPts : '') + '</td>';
+      html += '<td class="score-cell opponent">' + oppUpperSum + '/' + hurdle + (oppBonus ? ' +' + bonusPts : '') + '</td>';
       html += '</tr>';
     }
 
@@ -243,8 +264,8 @@
     }
 
     // Total row
-    var myTotal = Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
-    var oppTotal = Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
+    var myTotal = totalFor(myScores, gameMode);
+    var oppTotal = totalFor(oppScores, gameMode);
     html += '<tr class="total-row">';
     html += '<td class="category-name">' + (I18n ? I18n.t('total') : 'Total') + '</td>';
     html += '<td class="score-cell mine">' + myTotal + '</td>';
@@ -343,8 +364,8 @@
   // Render game over screen
   function renderGameOver(player1Name, player2Name, player1Scores, player2Scores, gameMode, winner, myPlayerKey) {
     var Scoring = window.YachtGame.Scoring;
-    var p1Total = Scoring.totalScore(player1Scores, gameMode, player1Scores.yahtzeeBonus);
-    var p2Total = Scoring.totalScore(player2Scores, gameMode, player2Scores.yahtzeeBonus);
+    var p1Total = totalFor(player1Scores, gameMode);
+    var p2Total = totalFor(player2Scores, gameMode);
 
     var I18n = window.YachtGame.I18n;
     var winnerEl = document.getElementById('winner-text');
