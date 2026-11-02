@@ -3366,12 +3366,12 @@ button.aug-chip.armed:not(:disabled):hover {
 [data-theme="dark"] [data-dice-skin="ascend"] .pip {
   position: relative;
   z-index: 1;
-  width: 62%;
+  width: 74%;
   height: auto;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 60%, #ffb060 0%, #c4461a 38%, #15110f 74%);
-  box-shadow: inset 0 2px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.15);
+  background: radial-gradient(circle at 50% 55%, #ffe2b4 0 14%, #ff9a3a 32%, #d84c14 54%, #3a160a 68%, #120c0a 100%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.65), 0 0 6px rgba(255,120,30,0.55), 0 1px 0 rgba(255,255,255,0.18);
 }
 @keyframes ascendEmber { 50% { opacity: 0.72; } }
 
