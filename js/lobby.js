@@ -12,6 +12,7 @@
   var ERROR_MAP = {
     'Room not found.': 'toast_room_not_found',
     'Room is full.': 'toast_room_full',
+    'Cannot join your own room.': 'toast_room_own',
     'Room is already in a game.': 'toast_room_in_game',
     'Too many requests. Please wait.': 'toast_rate_limit',
     'App Check verification failed.': 'toast_appcheck_failed'
