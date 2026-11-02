@@ -79,8 +79,8 @@ function checkInvariants(room, ctx) {
     for (const pk of ["player1", "player2"]) {
       if (!Scoring.allFilled(room.players[pk].scores, "yacht")) errs.push("finished but " + pk + " not filled");
     }
-    const t1 = Rules.total(room.players.player1, "yacht");
-    const t2 = Rules.total(room.players.player2, "yacht");
+    const t1 = Rules.total(room.players.player1, "yacht", room.augmentMode);
+    const t2 = Rules.total(room.players.player2, "yacht", room.augmentMode);
     const w = t1 > t2 ? "player1" : t2 > t1 ? "player2" : "tie";
     if (room.winner !== w) errs.push("winner " + room.winner + " vs " + w);
     if (room.augmentMode && (room.players.player1.aug.owned || []).length !== 3) errs.push("finished with " + room.players.player1.aug.owned.length + " augments");
@@ -134,7 +134,10 @@ function randomStep(room, rng) {
   const cands = rng() < 0.9 ? empty(sc) : CATS;
   const cat = cands.length ? cands[randInt(rng, cands.length)] : CATS[0];
   const useDouble = rng() < 0.2;
-  return ["select " + pk + " " + cat + (useDouble ? " x2" : ""), (r) => Rules.applySelect(r, uid, cat, { useDouble: useDouble, rand: (n) => randInt(rng, n) })];
+  const insOpts = [null, null, "safetyNet", "bigInsurance", "bogus"];
+  const useInsurance = insOpts[randInt(rng, insOpts.length)];
+  return ["select " + pk + " " + cat + (useDouble ? " x2" : "") + (useInsurance ? " +" + useInsurance : ""),
+    (r) => Rules.applySelect(r, uid, cat, { useDouble: useDouble, useInsurance: useInsurance, rand: (n) => randInt(rng, n) })];
 }
 
 function runConflict(games) {
@@ -194,13 +197,20 @@ function holdsFor(d, avail) {
   return keep;
 }
 
+// Bonus-aware: while the upper sum is below the hurdle, reward upper records at or
+// above the per-face pace (3 of a kind for a 63 hurdle).
 function bestChoice(d, avail, me, ban) {
   let b = null;
+  const upSum = Aug.upperSum(me.scores || {});
   for (const c of avail) {
     let sc, u;
     if (ban && c === "yacht") continue;
     if (me.sealed === c) { sc = 0; u = -1; }
-    else { sc = Aug.baseScore(d, c, me.aug); u = sc - PAR[c]; }
+    else {
+      sc = Aug.baseScore(d, c, me.aug); u = sc - PAR[c];
+      const face = Aug.UPPER.indexOf(c) + 1;
+      if (face > 0 && upSum < Aug.UPPER_BONUS_HURDLE) u += 0.8 * (sc - face * 3 * Aug.UPPER_BONUS_HURDLE / 63);
+    }
     if (!b || u > b.u) b = { u: u, c: c, sc: sc };
   }
   return b;
@@ -216,7 +226,7 @@ function tryEdit(room, uid, me, avail) {
     const ban = type === "copy" || type === "wild";
     if (ban && !avail.some((c) => c !== "yacht")) continue; // EDIT_BLOCKED
     for (let i = 0; i < 5; i++) {
-      const vals = type === "nudge" ? [d[i] + 1] : type === "adjust" ? [d[i] - 1, d[i] + 1] : type === "copy" ? d.filter((_, j) => j !== i) : [1, 2, 3, 4, 5, 6];
+      const vals = (type === "nudge" || type === "adjust") ? [d[i] - 1, d[i] + 1] : type === "copy" ? d.filter((_, j) => j !== i) : [1, 2, 3, 4, 5, 6];
       for (const v of vals) {
         if (v < 1 || v > 6 || v === d[i]) continue;
         const dd = d.slice(); dd[i] = v;
@@ -224,7 +234,7 @@ function tryEdit(room, uid, me, avail) {
         if ((u - base >= thr || avail.length <= 1) && u > base && (!pick || u > pick.u)) {
           pick = { u: u, action: type === "copy" ? { type: type, die: i, from: d.indexOf(v) === i ? d.lastIndexOf(v) : d.indexOf(v) }
             : type === "adjust" ? { type: type, die: i, delta: v - d[i] }
-            : type === "nudge" ? { type: type, die: i } : { type: type, die: i, value: v } };
+            : type === "nudge" ? { type: type, die: i, delta: v - d[i] } : { type: type, die: i, value: v } };
         }
       }
     }
@@ -251,13 +261,18 @@ function playTurn(room, rng, pk) {
       Rules.applyAction(room, uid, { type: "seal", category: c });
     }
   }
-  // swap: on my last turn, best positive upper difference
+  // swap: on my last turn, the upper swap that most improves (my total - opp total), bonus included
   if (Aug.charge(me.aug, "swap") > 0 && avail.length === 1) {
+    const margin = (ms, os) => Aug.totalScore(ms) - Aug.totalScore(os);
+    const now = margin(me.scores, opp.scores);
     let best = null;
     for (const c of Aug.UPPER) {
       const a = me.scores[c], b = opp.scores[c];
-      if (a === undefined || b === undefined || a === null || b === null) continue;
-      if (b - a > 0 && (!best || b - a > best.d)) best = { c: c, d: b - a };
+      if (a === undefined || b === undefined || a === null || b === null || a === b) continue;
+      const ms = Object.assign({}, me.scores, { [c]: b });
+      const os = Object.assign({}, opp.scores, { [c]: a });
+      const gain = margin(ms, os) - now;
+      if (gain > 0 && (!best || gain > best.d)) best = { c: c, d: gain };
     }
     if (best) Rules.applyAction(room, uid, { type: "swap", category: best.c });
   }
@@ -280,7 +295,13 @@ function playTurn(room, rng, pk) {
   if (room.augmentMode) tryEdit(room, uid, me, avail);
   const ch = bestChoice(diceOf(room), avail, me, room.turnFlags && room.turnFlags.noYacht);
   const useDouble = Aug.charge(me.aug, "double") > 0 && ch.c !== "yacht" && (ch.sc >= 30 || avail.length === 1);
-  r = Rules.applySelect(room, uid, ch.c, { useDouble: useDouble, rand: (n) => randInt(rng, n) });
+  // Insurance is armed by the player: turn it on only when this record would be 0 (not sealed).
+  let useInsurance = null;
+  const pre = Aug.finalScore(diceOf(room), ch.c, { aug: me.aug, sealed: me.sealed, useDouble: useDouble });
+  if (pre.score === 0 && me.sealed !== ch.c) {
+    useInsurance = Aug.charge(me.aug, "bigInsurance") > 0 ? "bigInsurance" : Aug.charge(me.aug, "safetyNet") > 0 ? "safetyNet" : null;
+  }
+  r = Rules.applySelect(room, uid, ch.c, { useDouble: useDouble, useInsurance: useInsurance, rand: (n) => randInt(rng, n) });
   if (r.error) throw new Error("select rejected: " + r.error + " " + ch.c);
 }
 
@@ -302,7 +323,33 @@ function balanceGame(seed, give) {
     }
     playTurn(room, rng, room.currentTurn);
   }
-  return Rules.total(room.players.player1, "yacht") - Rules.total(room.players.player2, "yacht");
+  return Rules.total(room.players.player1, "yacht", true) - Rules.total(room.players.player2, "yacht", true);
+}
+
+// Upper-bonus analysis with real augment picks (both players pick a random offer each tier).
+function bonusGame(seed) {
+  const rng = mulberry32(seed);
+  const room = newRoom(true);
+  Rules.startGame(room, (n) => randInt(rng, n));
+  while (room.status === "playing") {
+    if (room.augmentPhase) {
+      const picks = Rules.fillMissingPicks(room, {}, (n) => randInt(rng, n));
+      Rules.applyPicks(room, picks, room.augmentPhase.tier, 0);
+      continue;
+    }
+    playTurn(room, rng, room.currentTurn);
+  }
+  return ["player1", "player2"].map((pk) => Aug.upperSum(room.players[pk].scores));
+}
+
+function runBonus(n) {
+  const sums = [];
+  for (let i = 0; i < n; i++) sums.push.apply(sums, bonusGame(5000 + i));
+  sums.sort((a, b) => a - b);
+  const q = (p) => sums[Math.floor(p * sums.length)];
+  const rate = (h) => (100 * sums.filter((x) => x >= h).length / sums.length).toFixed(1) + "%";
+  return { mean: sums.reduce((a, b) => a + b, 0) / sums.length, p50: q(0.5), p75: q(0.75), p90: q(0.9),
+    rates: [55, 58, 60, 63, 66, 70].map((h) => h + ":" + rate(h)).join(" ") };
 }
 
 function runBalance(n) {
@@ -345,7 +392,13 @@ if (args[0] === "--conflict") {
       return v.id + " +" + v.value.toFixed(1) + (Math.abs(off) > 3 ? " (!" + (off > 0 ? "+" : "") + off.toFixed(1) + ")" : "");
     }).join(" | "));
   }
+} else if (args[0] === "--bonus") {
+  const n = parseInt(args[1] || "10000", 10);
+  const r = runBonus(n);
+  console.log("upper sum with augments (N=" + n + " games, hurdle " + Aug.UPPER_BONUS_HURDLE + "): mean " + r.mean.toFixed(1) +
+    " p50 " + r.p50 + " p75 " + r.p75 + " p90 " + r.p90);
+  console.log("bonus hit rate by hurdle: " + r.rates);
 } else {
-  console.log("usage: node tools/augment_sim.js --conflict [games] | --balance [games]");
+  console.log("usage: node tools/augment_sim.js --conflict [games] | --balance [games] | --bonus [games]");
   process.exit(1);
 }
