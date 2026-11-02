@@ -32,7 +32,9 @@
     { id: 'star',      name: 'Star',      unlockAt: -1, unlockAtBotWinsTotal: 100 },
     { id: 'dragon',    name: 'Dragon',    unlockAt: -1, unlockAtExactScore: 256 },
     { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 },
-    { id: 'siru',      name: 'Siru',      unlockAt: -1, unlockAtWins: 1500 }
+    { id: 'siru',      name: 'Siru',      unlockAt: -1, unlockAtWins: 1500 },
+    // Ascend: evolves with augment picks in augment games (Lv1 → Lv3). Unlocked by augment-mode wins.
+    { id: 'ascend',    name: 'Ascend',    unlockAt: -1, unlockAtAugmentWins: 5 }
   ];
 
   // Calligraphy characters for Crimson skin
@@ -47,15 +49,18 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements) {
+  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak, achievements)) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak, achievements, augmentWins)) count++;
     }
     return count;
   }
 
-  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements) {
+  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
+    if (def.unlockAtAugmentWins) {
+      return (augmentWins || 0) >= def.unlockAtAugmentWins;
+    }
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
       return wins >= BOT_WIN_THRESHOLD;
@@ -80,9 +85,9 @@
     return totalGames >= def.unlockAt;
   }
 
-  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak, achievements) {
+  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
     var def = getSkinDef(skinId);
-    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements);
+    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
   }
 
   function applySkin(skinId) {
@@ -137,7 +142,7 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements) {
+  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements, augmentWins) {
     if (!containerEl) return;
     totalGames = totalGames || 0;
     totalWins = totalWins || 0;
@@ -145,6 +150,7 @@
     maxStreak = maxStreak || 0;
     currentStreak = currentStreak || 0;
     achievements = achievements || {};
+    augmentWins = augmentWins || 0;
 
     var playContainer = document.getElementById('skin-options-play');
     var botContainer = document.getElementById('skin-options-bot');
@@ -154,16 +160,16 @@
     playContainer.innerHTML = '';
     botContainer.innerHTML = '';
 
-    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements);
+    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/14 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/15 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements);
+      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
       var targetContainer = (def.unlockBy || def.unlockAtBotWinsTotal) ? botContainer : playContainer;
 
       var option = document.createElement('div');
@@ -248,7 +254,9 @@
         var progressEl = document.createElement('span');
         progressEl.className = 'lock-progress';
         var I18n = window.YachtGame.I18n;
-        if (def.unlockBy) {
+        if (def.unlockAtAugmentWins) {
+          progressEl.textContent = (I18n ? I18n.t('skin_aug_wins') : 'Augment') + ' ' + augmentWins + '/' + def.unlockAtAugmentWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
+        } else if (def.unlockBy) {
           var wins = (botWins[def.unlockBy]) || 0;
           var botLabel = def.unlockBy === 'wave' ? (I18n ? I18n.t('wave') : 'Wave') : (def.unlockBy === 'gambler' ? (I18n ? I18n.t('gambler') : 'Gambler') : (I18n ? I18n.t('basic') : 'Basic'));
           progressEl.textContent = (I18n ? I18n.t('skin_vs_bot') : 'vs') + ' ' + botLabel + ' ' + wins + '/' + BOT_WIN_THRESHOLD;
@@ -271,7 +279,7 @@
       }
 
       // Click handler
-      var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1, siru: 1 };
+      var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1, siru: 1, ascend: 1 };
       (function (skinDef, skinUnlocked, optionEl) {
         optionEl.addEventListener('click', function () {
           if (!skinUnlocked) return;
@@ -341,6 +349,26 @@
     return html;
   }
 
+  // Ascend skin level (1-3) = number of augments picked in the current augment game.
+  // Stored on #dice-area as data-ascend-level; CSS picks the look. Non-augment games stay at 1.
+  var ascendLevel = 1;
+  var ascendUpTimer = null;
+  function setAscendLevel(level, animate) {
+    level = Math.max(1, Math.min(3, level || 1));
+    var diceArea = document.getElementById('dice-area');
+    var prev = ascendLevel;
+    ascendLevel = level;
+    if (!diceArea) return;
+    diceArea.setAttribute('data-ascend-level', String(level));
+    if (animate && level > prev && currentSkinId === 'ascend') {
+      diceArea.classList.remove('ascend-up');
+      void diceArea.offsetWidth; // restart the animation
+      diceArea.classList.add('ascend-up');
+      clearTimeout(ascendUpTimer);
+      ascendUpTimer = setTimeout(function () { diceArea.classList.remove('ascend-up'); }, 1400);
+    }
+  }
+
   function getCurrentSkin() {
     return currentSkinId;
   }
@@ -356,6 +384,7 @@
     renderSkinSelector: renderSkinSelector,
     renderMiniDieHTML: renderMiniDieHTML,
     getCurrentSkin: getCurrentSkin,
+    setAscendLevel: setAscendLevel,
     getCrimsonChar: getCrimsonChar,
     SKIN_DEFS: SKIN_DEFS
   };

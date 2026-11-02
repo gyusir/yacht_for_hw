@@ -319,8 +319,9 @@
       var maxStreak = (stats && stats.maxStreak) || 0;
       var currentStreak = (stats && stats.currentStreak) || 0;
       var achievements = (stats && stats.achievements) || {};
+      var augmentWins = (stats && stats.augmentWins) || 0;
       if (skinSelector) skinSelector.hidden = false;
-      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements);
+      DiceSkins.renderSkinSelector(skinSelector, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements, augmentWins);
     });
   }
 

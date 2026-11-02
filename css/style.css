@@ -3329,3 +3329,119 @@ button.aug-chip.armed:not(:disabled):hover {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* ==========================================================================
+ * Ascend skin — evolves with augment picks (Lv1 잔불 → Lv2 용암 → Lv3 태양)
+ * Level comes from #dice-area[data-ascend-level] (set by DiceSkins.setAscendLevel).
+ * No attribute / non-augment games = Lv1. Same look in light & dark themes.
+ * Cracks (::before) share one shape across levels; ::after = runes / bronze
+ * brackets / gold gems. Pips sit above both layers.
+ * ========================================================================== */
+[data-dice-skin="ascend"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"] .die {
+  background: radial-gradient(circle at 25% 20%, #77706a 0%, transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(0,0,0,0.3) 0%, transparent 50%),
+    repeating-radial-gradient(circle at 37% 61%, transparent 0 3px, rgba(0,0,0,0.06) 3px 4px),
+    linear-gradient(145deg, #5f5a56, #3d3936 60%, #2b2826);
+  border: 2px solid #1f1c1a;
+  overflow: visible;
+  isolation: isolate;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -3px 0 rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.35);
+}
+[data-dice-skin="ascend"] .die::before,
+[data-dice-skin="ascend"] .die::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: center / 100% 100% no-repeat;
+}
+[data-dice-skin="ascend"] .die::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23000' stroke-opacity='.6' stroke-width='4.800000000000001'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ff5a0a' stroke-width='4.6' opacity='0.9' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ff8a2a' stroke-width='2.2'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffd2a6' stroke-width='0.8360000000000001'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-opacity='.45' stroke-width='1.6'%3E%3Cpath d='M7 5 v7 M4.5 8.5 h5'/%3E%3Cpath d='M89 6 l3.5 3 l-3.5 3 M87 6 v7'/%3E%3Cpath d='M6 92 l3.5 -5 l3.5 5'/%3E%3Cpath d='M88 90 h7 M91.5 86.5 v7'/%3E%3C/g%3E%3C/svg%3E");
+  animation: ascendEmber 2.8s ease-in-out infinite;
+}
+[data-dice-skin="ascend"] .die::after { background-image: none; }
+[data-dice-skin="ascend"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"] .pip {
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 60%, #ffb060 0%, #c4461a 38%, #15110f 74%);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.15);
+}
+@keyframes ascendEmber { 50% { opacity: 0.72; } }
+
+/* Lv2 — 용암: 균열이 타오르고 청동 모서리가 묶음 */
+[data-dice-skin="ascend"][data-ascend-level="2"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="2"] .die {
+  background: radial-gradient(circle at 50% 50%, rgba(255,106,26,0.16) 0%, transparent 62%),
+    radial-gradient(circle at 25% 20%, #5e4f45 0%, transparent 45%),
+    repeating-radial-gradient(circle at 37% 61%, transparent 0 3px, rgba(0,0,0,0.06) 3px 4px),
+    linear-gradient(145deg, #463a33, #2a221d 60%, #1b1512);
+  border-color: #5c3515;
+  box-shadow: inset 0 0 14px rgba(255,138,26,0.3), 0 0 12px rgba(255,138,26,0.45), 0 4px 10px rgba(0,0,0,0.4);
+}
+[data-dice-skin="ascend"][data-ascend-level="2"] .die::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23000' stroke-opacity='.6' stroke-width='4.6'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ff7a1a' stroke-width='4.4' opacity='0.75' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffb347' stroke-width='2'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23fff0d6' stroke-width='0.76'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); animation: none; }
+[data-dice-skin="ascend"][data-ascend-level="2"] .die::after { inset: -2px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f0bd7c'/%3E%3Cstop offset='.45' stop-color='%23a8692f'/%3E%3Cstop offset='.7' stop-color='%235c3515'/%3E%3Cstop offset='1' stop-color='%23f0bd7c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke-linejoin='round'%3E%3Cg stroke='%231d1007' stroke-width='6'%3E%3Cpath d='M4 24 V4 H24'/%3E%3Cpath d='M76 4 H96 V24'/%3E%3Cpath d='M96 76 V96 H76'/%3E%3Cpath d='M24 96 H4 V76'/%3E%3C/g%3E%3Cg stroke='url%28%23m%29' stroke-width='3.6'%3E%3Cpath d='M4 24 V4 H24'/%3E%3Cpath d='M76 4 H96 V24'/%3E%3Cpath d='M96 76 V96 H76'/%3E%3Cpath d='M24 96 H4 V76'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23f6cf98' stroke='%235c3515' stroke-width='.7'%3E%3Ccircle cx='10' cy='10' r='2.4'/%3E%3Ccircle cx='90' cy='10' r='2.4'/%3E%3Ccircle cx='90' cy='90' r='2.4'/%3E%3Ccircle cx='10' cy='90' r='2.4'/%3E%3C/g%3E%3C/svg%3E"); }
+[data-dice-skin="ascend"][data-ascend-level="2"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="2"] .pip {
+  width: 80%;
+  background: radial-gradient(circle, #fff 0 30%, #ffd9a0 42%, #ff8a1a 54%, #0b0b14 58% 62%, #f0bd7c 66%, #a8692f 82%, #5c3515 100%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 8px #ff8a1a, 0 2px 3px rgba(0,0,0,0.8);
+}
+
+/* Lv3 — 태양: 흑요석 속 황금빛 균열 + 황금 테두리 + 루비 */
+[data-dice-skin="ascend"][data-ascend-level="3"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .die {
+  background: radial-gradient(1px 1px at 18% 70%, rgba(255,217,160,0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 28%, rgba(255,217,160,0.7) 50%, transparent 51%),
+    radial-gradient(ellipse 70% 55% at 50% 50%, rgba(122,30,8,0.45), transparent 70%),
+    radial-gradient(circle at 50% 50%, #2e0d06, #140503 70%, #070101);
+  border-color: #fff0c0;
+  box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 12px rgba(224,169,58,0.6), 0 0 22px rgba(255,122,26,0.55), inset 0 0 14px rgba(255,122,26,0.35);
+}
+[data-dice-skin="ascend"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: ascendSun 2.6s ease-in-out infinite; }
+[data-dice-skin="ascend"][data-ascend-level="3"] .die::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffb020' stroke-width='4.699999999999999' opacity='1' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffe7a0' stroke-width='2.3'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='0.8739999999999999'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); animation: none; }
+[data-dice-skin="ascend"][data-ascend-level="3"] .die::after { inset: -4px; border-radius: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='7' y='7' width='86' height='86' rx='8' fill='none' stroke='%23ffe08a' stroke-opacity='.55' stroke-width='1'/%3E%3Cpath d='M50 -2 L55 3 L50 8 L45 3 Z' fill='%23ff5a3a' stroke='%23fff3c4' stroke-width='1.1'/%3E%3Cpath d='M50 -2 L55 3 L50 3 Z' fill='%23ffd0b8'/%3E%3Cpath d='M50 92 L55 97 L50 102 L45 97 Z' fill='%23ff5a3a' stroke='%23fff3c4' stroke-width='1.1'/%3E%3Cpath d='M50 92 L55 97 L50 97 Z' fill='%23ffd0b8'/%3E%3C/svg%3E"); }
+[data-dice-skin="ascend"][data-ascend-level="3"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .pip {
+  width: 86%;
+  background: radial-gradient(circle, #fff 0 38%, #fff3c4 50%, #ffbf3d 64%, #6a4508 72%, transparent 74%);
+  box-shadow: 0 0 5px rgba(255,255,255,0.4), 0 0 10px #ffbf3d, 0 0 18px #ff7a1a;
+}
+@keyframes ascendSun {
+  50% { box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 16px rgba(224,169,58,0.8), 0 0 30px rgba(255,122,26,0.7), inset 0 0 14px rgba(255,122,26,0.45); }
+}
+
+/* Level-up burst (DiceSkins.setAscendLevel adds .ascend-up for ~1.4s) */
+[data-dice-skin="ascend"].ascend-up .die { animation: ascendUp 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(2) { animation-delay: 0.08s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(3) { animation-delay: 0.16s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(4) { animation-delay: 0.24s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(5) { animation-delay: 0.32s; }
+@keyframes ascendUp {
+  0% { transform: scale(1) rotate(0); }
+  35% { transform: scale(0.6) rotate(-90deg); filter: brightness(3); }
+  100% { transform: scale(1) rotate(0); filter: none; }
+}
+
+/* Preview (skin selector + header cube) shows the final Lv3 form */
+.skin-preview-die[data-dice-skin="ascend"],
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"] {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffb020' stroke-width='4.699999999999999' opacity='1' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffe7a0' stroke-width='2.3'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='0.8739999999999999'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat,
+    radial-gradient(ellipse 70% 55% at 50% 50%, rgba(122,30,8,0.45), transparent 70%),
+    radial-gradient(circle at 50% 50%, #2e0d06, #140503 70%, #070101);
+  border-color: #e0a93a;
+  box-shadow: 0 0 6px rgba(255,122,26,0.5);
+}
+.skin-preview-die[data-dice-skin="ascend"] .mini-pip,
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"] .mini-pip {
+  background: radial-gradient(circle, #fff 0 38%, #fff3c4 50%, #ffbf3d 70%, #b8860b 100%);
+  box-shadow: 0 0 3px #ffbf3d;
+}
+.skin-option.active[data-skin-id="ascend"],
+[data-theme="dark"] .skin-option.active[data-skin-id="ascend"] { border-color: #e0a93a; }
