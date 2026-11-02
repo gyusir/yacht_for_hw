@@ -199,6 +199,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     if (!room) return room;
     if (room.status !== "waiting") return;
     if (room.players && room.players.player2) return;
+    if (room.players && room.players.player1 && room.players.player1.uid === uid) return;
 
     const p2 = {
       name: playerName,
@@ -224,6 +225,7 @@ exports.joinRoom = regionFn.https.onCall(async (data, context) => {
     const room = snap.val();
     if (room.status !== "waiting") throw new functions.https.HttpsError("failed-precondition", "Room is already in a game.");
     if (room.players && room.players.player2) throw new functions.https.HttpsError("failed-precondition", "Room is full.");
+    if (room.players && room.players.player1 && room.players.player1.uid === uid) throw new functions.https.HttpsError("failed-precondition", "Cannot join your own room.");
     throw new functions.https.HttpsError("aborted", "Could not join room. Try again.");
   }
 
