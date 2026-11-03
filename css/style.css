@@ -2984,10 +2984,13 @@ button.btn-full-width { width: 100%; }
   color: var(--aug-tier3);
 }
 
+/* Two rows (나 / 상대) on a shared grid so both chip lists start at the same x. */
 .augment-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 6px;
   padding: 8px 0 0;
 }
 
@@ -2996,33 +2999,93 @@ button.btn-full-width { width: 100%; }
 }
 
 .aug-row {
+  display: contents;
+}
+
+.aug-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+}
+
+.aug-next {
+  grid-column: 1 / -1;
+  justify-self: end;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .aug-row-label,
 .aug-empty {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-right: 2px;
 }
 
 .aug-chip {
   --tier: var(--aug-tier1);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 6px 10px;
-  min-height: 32px;
+  min-height: 30px;
   border-radius: 999px;
   border: 1.5px solid var(--tier);
   background: var(--surface);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   line-height: 1;
+  white-space: nowrap;
+}
+
+/* Last-resort squeeze on very narrow screens: truncate instead of wrapping. */
+.aug-chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aug-chip .aug-badge {
+  flex-shrink: 0;
+}
+
+/* Mobile: three chips per player must stay on one line even with the longest picks. */
+@media (max-width: 480px) {
+  .augment-bar { column-gap: 6px; }
+  .aug-chips { gap: 4px; }
+  .aug-chip {
+    gap: 4px;
+    padding: 5px 8px;
+    min-height: 28px;
+    font-size: 0.74rem;
+  }
+  .aug-chip .aug-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .augment-bar { column-gap: 5px; }
+  .aug-chip {
+    gap: 3px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+  }
+  .aug-chip .aug-badge {
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 0.6rem;
+  }
+  .aug-row-label { font-size: 0.7rem; }
 }
 
 .aug-chip.tier-2 { --tier: var(--aug-tier2); }
@@ -3059,11 +3122,7 @@ button.aug-chip.armed:not(:disabled):hover {
 }
 
 .aug-chip.opp-chip {
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  min-height: 24px;
   border-style: dashed;
-  font-weight: 500;
 }
 
 .aug-badge {
@@ -3322,13 +3381,6 @@ button.aug-chip.armed:not(:disabled):hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* Turn info at the right end of my augment row */
-.aug-turn-info {
-  margin-left: auto;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
 
 /* ==========================================================================
  * Ascend skin — evolves with augment picks (Lv1 잔불 → Lv2 용암 → Lv3 태양)

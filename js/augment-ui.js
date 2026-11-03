@@ -293,18 +293,17 @@
 
   // ─── Augment bar ───
   // "Turn r/12 · next augment in n" — picks happen before turns 5 and 9.
-  function turnInfoText() {
+  // "다음 증강 - n턴 뒤" — empty while picking or once every tier is picked.
+  function nextAugmentText() {
+    if (room.augmentPhase) return '';
     var n1 = filledCount(scoresOf('player1')), n2 = filledCount(scoresOf('player2'));
     var round = Math.min(Math.min(n1, n2) + 1, 12);
-    if (room.augmentPhase) return t('aug_turn_picking').replace('{r}', round);
     var next = null;
     [2, 3].forEach(function (tier) {
       var r = Aug().TIER_ROUNDS[tier] + 1;
       if (next === null && r > round) next = r;
     });
-    return next === null
-      ? t('aug_turn_last').replace('{r}', round)
-      : t('aug_turn_info').replace('{r}', round).replace('{n}', next - round);
+    return next === null ? '' : t('aug_next_in').replace('{n}', next - round);
   }
 
   function chipState(id, aug) {
@@ -336,8 +335,10 @@
     if (!isActive()) { bar.classList.add('hidden'); bar.innerHTML = ''; return; }
     var mine = augOf(room.players[myKey]);
     var theirs = augOf(room.players[oppKey]);
-    var html = '<div class="aug-row mine">';
-    if (!mine.owned.length) html += '<span class="aug-empty">' + esc(t('aug_you')) + ' —</span>';
+    var next = nextAugmentText();
+    var html = next ? '<div class="aug-next">' + esc(next) + '</div>' : '';
+    html += '<div class="aug-row mine"><span class="aug-row-label">' + esc(t('aug_you')) + '</span><div class="aug-chips">';
+    if (!mine.owned.length) html += '<span class="aug-empty">\u2014</span>';
     var seenPools = {};
     for (var i = 0; i < mine.owned.length; i++) {
       var id = mine.owned[i];
@@ -348,23 +349,24 @@
       var interactive = st.def.kind === 'dieEdit' || st.def.kind === 'target' || st.def.kind === 'toggle';
       var cls = 'aug-chip tier-' + st.def.tier + (interactive ? ' active-kind' : '') +
         ((id === 'double' && doubleArmed) || armedInsurance === id ? ' armed' : '') + (st.left === 0 ? ' spent' : '');
+      var inner = '<span class="aug-chip-name">' + esc(augName(id)) + '</span>' + badge;
       if (interactive) {
         html += '<button class="' + cls + '" data-aug="' + id + '"' + (st.usable ? '' : ' disabled') +
-          ' title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</button>';
+          ' title="' + esc(augDesc(id)) + '">' + inner + '</button>';
       } else {
-        html += '<span class="' + cls + '" title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</span>';
+        html += '<span class="' + cls + '" title="' + esc(augDesc(id)) + '">' + inner + '</span>';
       }
     }
-    html += '<span class="aug-turn-info">' + esc(turnInfoText()) + '</span>';
-    html += '</div><div class="aug-row opp"><span class="aug-row-label">' + esc(t('aug_opp')) + '</span>';
+    html += '</div></div><div class="aug-row opp"><span class="aug-row-label">' + esc(t('aug_opp')) + '</span><div class="aug-chips">';
+    if (!theirs.owned.length) html += '<span class="aug-empty">\u2014</span>';
     for (var j = 0; j < theirs.owned.length; j++) {
       var oid = theirs.owned[j];
       var od = Aug().DEFS[oid];
       var ol = od.pool ? Aug().charge(theirs, od.pool) : null;
       html += '<span class="aug-chip opp-chip tier-' + od.tier + (ol === 0 ? ' spent' : '') + '" title="' + esc(augDesc(oid)) + '">' +
-        esc(augName(oid)) + (ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '') + '</span>';
+        '<span class="aug-chip-name">' + esc(augName(oid)) + '</span>' + (ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '') + '</span>';
     }
-    html += '</div>';
+    html += '</div></div>';
     bar.innerHTML = html;
     bar.classList.remove('hidden');
     var btns = bar.querySelectorAll('button.aug-chip');
