@@ -61,10 +61,19 @@ function checkInvariants(room, ctx) {
       if (!Aug.DEFS[id] || Aug.DEFS[id].tier !== i + 1) errs.push(pk + " owned[" + i + "]=" + id);
     });
     if (p.sealed && CATS.indexOf(p.sealed) === -1) errs.push(pk + " sealed=" + p.sealed);
+    const extra = Object.keys(p.scores).filter((k) => CATS.indexOf(k) === -1 && k !== "_init" && k !== "lottery");
+    if (extra.length) errs.push(pk + " unexpected score keys " + extra.join(","));
+    if (p.scores.lottery !== undefined && p.scores.lottery !== 0 && p.scores.lottery !== Aug.LOTTERY_SCORE) errs.push(pk + " lottery=" + p.scores.lottery);
+    if (p.scores.lottery !== undefined && room.status !== "finished") errs.push(pk + " lottery before game end");
+    if (p.streak !== undefined && !(Number.isInteger(p.streak) && p.streak >= 0 && p.streak <= 12)) errs.push(pk + " streak=" + p.streak);
   }
   const cap = room.augmentMode ? Aug.MAX_ROLLS : Aug.BASE_ROLLS;
   if ((room.rollCount || 0) > cap) errs.push("rollCount=" + room.rollCount);
   if (room.turnFlags && room.turnFlags.rollCap > Aug.MAX_ROLLS) errs.push("rollCap=" + room.turnFlags.rollCap);
+  const tf = room.turnFlags || {};
+  if (tf.called && tf.allIn) errs.push("two declarations in one turn");
+  if (tf.called && Aug.CALL_CATS.indexOf(tf.called) === -1) errs.push("called=" + tf.called);
+  if (tf.called && Rules.filledCount && room.players[room.currentTurn].scores[tf.called] !== undefined) errs.push("called a filled category");
   for (let i = 0; i < 5; i++) {
     const v = room.dice[i].value;
     if (!(Number.isInteger(v) && v >= 0 && v <= 6)) errs.push("die" + i + "=" + v);
@@ -84,6 +93,10 @@ function checkInvariants(room, ctx) {
     const w = t1 > t2 ? "player1" : t2 > t1 ? "player2" : "tie";
     if (room.winner !== w) errs.push("winner " + room.winner + " vs " + w);
     if (room.augmentMode && (room.players.player1.aug.owned || []).length !== 3) errs.push("finished with " + room.players.player1.aug.owned.length + " augments");
+    for (const pk of ["player1", "player2"]) {
+      const has = room.augmentMode && Aug.owns(room.players[pk].aug, "lottery");
+      if (has !== (room.players[pk].scores.lottery !== undefined)) errs.push(pk + " lottery mismatch");
+    }
   }
   if (errs.length) {
     const e = new Error("invariant: " + errs.join("; "));
@@ -101,6 +114,13 @@ function randomStep(room, rng) {
       const offers = phase.offers[pk];
       // 5% invalid pick attempt (must be rejected)
       picks[pk] = rng() < 0.05 ? "fourthRoll_bogus" : offers[randInt(rng, offers.length)];
+      // 50%: replace the offer with a random augment of this tier so rare combos get covered
+      if (picks[pk] !== "fourthRoll_bogus" && rng() < 0.5) {
+        const ids = Aug.idsOfTier(phase.tier);
+        const forced = ids[randInt(rng, ids.length)];
+        phase.offers[pk] = [forced, offers[0] === forced ? offers[1] : offers[0]];
+        picks[pk] = forced;
+      }
     }
     return ["pick " + picks.player1 + "/" + picks.player2, (r) => {
       for (const pk of ["player1", "player2"]) {
@@ -124,10 +144,10 @@ function randomStep(room, rng) {
     return ["roll " + pk, (r) => Rules.applyRoll(r, uid, vals)];
   }
   if (x < 0.62) {
-    const types = ["copy", "adjust", "nudge", "wild", "seal", "swap", "bogus"];
+    const types = ["copy", "adjust", "nudge", "wild", "seal", "swap", "call", "allIn", "bogus"];
     const type = types[randInt(rng, types.length)];
     const action = { type: type, die: die, from: randInt(rng, 5), delta: rng() < 0.5 ? 1 : -1,
-      value: 1 + randInt(rng, 6), category: CATS[randInt(rng, CATS.length)] };
+      value: 1 + randInt(rng, 6), category: rng() < 0.6 ? Aug.CALL_CATS[randInt(rng, 4)] : CATS[randInt(rng, CATS.length)] };
     return ["action " + pk + " " + JSON.stringify(action), (r) => Rules.applyAction(r, uid, action)];
   }
   const sc = room.players[pk].scores;
@@ -136,12 +156,13 @@ function randomStep(room, rng) {
   const useDouble = rng() < 0.2;
   const insOpts = [null, null, "safetyNet", "bigInsurance", "bogus"];
   const useInsurance = insOpts[randInt(rng, insOpts.length)];
-  return ["select " + pk + " " + cat + (useDouble ? " x2" : "") + (useInsurance ? " +" + useInsurance : ""),
-    (r) => Rules.applySelect(r, uid, cat, { useDouble: useDouble, useInsurance: useInsurance, rand: (n) => randInt(rng, n) })];
+  const useCoin = rng() < 0.25;
+  return ["select " + pk + " " + cat + (useDouble ? " x2" : "") + (useCoin ? " coin" : "") + (useInsurance ? " +" + useInsurance : ""),
+    (r) => Rules.applySelect(r, uid, cat, { useDouble: useDouble, useInsurance: useInsurance, useCoin: useCoin, rand: (n) => randInt(rng, n) })];
 }
 
 function runConflict(games) {
-  const stats = { games: 0, steps: 0, ok: 0, rejected: 0, errors: {}, finished: 0, augUses: {} };
+  const stats = { games: 0, steps: 0, ok: 0, rejected: 0, errors: {}, finished: 0, augUses: {}, effects: {} };
   for (let g = 0; g < games; g++) {
     const rng = mulberry32(g + 1);
     const augmentMode = g % 10 !== 0; // 10% normal-mode games as regression
@@ -165,6 +186,8 @@ function runConflict(games) {
         if (!Rules.ERRORS[res.error]) throw new Error("unknown error code " + res.error);
       } else {
         stats.ok++;
+        (res.effects || []).forEach((x) => { stats.effects[x] = (stats.effects[x] || 0) + 1; });
+        if (res.steals !== undefined && room.lotteryLog) room.lotteryLog.forEach((l) => { const k = "lottery" + (l.prize ? "Win" : "Lose"); stats.effects[k] = (stats.effects[k] || 0) + 1; });
         if (desc.startsWith("action")) {
           const t = JSON.parse(desc.slice(desc.indexOf("{"))).type;
           stats.augUses[t] = (stats.augUses[t] || 0) + 1;
@@ -199,17 +222,27 @@ function holdsFor(d, avail) {
 
 // Bonus-aware: while the upper sum is below the hurdle, reward upper records at or
 // above the per-face pace (3 of a kind for a 63 hurdle).
+let FLAGS = null; // this turn's declarations (call / all-in) so bestChoice can value them
 function bestChoice(d, avail, me, ban) {
   let b = null;
   const upSum = Aug.upperSum(me.scores || {});
+  const hurdle = Aug.bonusHurdle(me.aug);
+  const f = FLAGS || {};
   for (const c of avail) {
     let sc, u;
     if (ban && c === "yacht") continue;
     if (me.sealed === c) { sc = 0; u = -1; }
     else {
-      sc = Aug.baseScore(d, c, me.aug); u = sc - PAR[c];
+      sc = Aug.baseScore(d, c, me.aug);
+      if (f.called === c && sc > 0) sc += Aug.CALL_BONUS;
+      if (f.allIn) sc = sc >= Aug.ALLIN_MIN ? sc * 2 : 0;
+      u = sc - PAR[c];
       const face = Aug.UPPER.indexOf(c) + 1;
-      if (face > 0 && upSum < Aug.UPPER_BONUS_HURDLE) u += 0.8 * (sc - face * 3 * Aug.UPPER_BONUS_HURDLE / 63);
+      if (face > 0 && upSum < hurdle) u += 0.8 * (sc - face * 3 * hurdle / 63);
+      if (Aug.owns(me.aug, "hotStreak")) {
+        const lvl = Math.min((me.streak || 0) + 1, Aug.STREAK_MAX_LEVEL);
+        u += sc >= Aug.STREAK_MIN ? 0.6 * Aug.STREAK_STEP * lvl : -0.6 * Aug.STREAK_STEP * Math.min(me.streak || 0, Aug.STREAK_MAX_LEVEL);
+      }
     }
     if (!b || u > b.u) b = { u: u, c: c, sc: sc };
   }
@@ -277,8 +310,19 @@ function playTurn(room, rng, pk) {
     if (best) Rules.applyAction(room, uid, { type: "swap", category: best.c });
   }
 
+  // Declarations before the first roll: call the easiest open combo, or go all-in with 2+ big boxes open.
+  if (Aug.charge(me.aug, "call") > 0) {
+    const c = ["smallStraight", "fullHouse", "largeStraight", "fourOfAKind"].find((x) => avail.indexOf(x) !== -1 && me.sealed !== x);
+    if (c) Rules.applyAction(room, uid, { type: "call", category: c });
+  }
+  if (!room.turnFlags && Aug.charge(me.aug, "allIn") > 0) {
+    const big = ["choice", "largeStraight", "smallStraight", "fullHouse", "fourOfAKind"].filter((c) => avail.indexOf(c) !== -1).length;
+    if (big >= 2 || avail.length <= 2) Rules.applyAction(room, uid, { type: "allIn" });
+  }
+  FLAGS = room.turnFlags;
   room.heldDice = null;
   let r = Rules.applyRoll(room, uid, dice5());
+  FLAGS = room.turnFlags;
   if (r.error) throw new Error("first roll rejected: " + r.error);
   for (;;) {
     const d = diceOf(room);
@@ -294,14 +338,22 @@ function playTurn(room, rng, pk) {
   }
   if (room.augmentMode) tryEdit(room, uid, me, avail);
   const ch = bestChoice(diceOf(room), avail, me, room.turnFlags && room.turnFlags.noYacht);
-  const useDouble = Aug.charge(me.aug, "double") > 0 && ch.c !== "yacht" && (ch.sc >= 30 || avail.length === 1);
+  const allInTurn = !!(room.turnFlags && room.turnFlags.allIn);
+  const useDouble = !allInTurn && Aug.charge(me.aug, "double") > 0 && ch.c !== "yacht" && (ch.sc >= 30 || avail.length === 1);
+  let useCoin = false;
+  if (!allInTurn && !useDouble && Aug.charge(me.aug, "coin") > 0 && ch.c !== "yacht") {
+    const sc0 = Aug.baseScore(diceOf(room), ch.c, me.aug);
+    useCoin = sc0 >= 24 || (avail.length <= Aug.charge(me.aug, "coin") && sc0 > 0);
+  }
   // Insurance is armed by the player: turn it on only when this record would be 0 (not sealed).
   let useInsurance = null;
-  const pre = Aug.finalScore(diceOf(room), ch.c, { aug: me.aug, sealed: me.sealed, useDouble: useDouble });
+  const pre = Aug.finalScore(diceOf(room), ch.c, { aug: me.aug, sealed: me.sealed, useDouble: useDouble,
+    called: room.turnFlags && room.turnFlags.called, allIn: allInTurn, coin: useCoin ? "lose" : null });
   if (pre.score === 0 && me.sealed !== ch.c) {
     useInsurance = Aug.charge(me.aug, "bigInsurance") > 0 ? "bigInsurance" : Aug.charge(me.aug, "safetyNet") > 0 ? "safetyNet" : null;
   }
-  r = Rules.applySelect(room, uid, ch.c, { useDouble: useDouble, useInsurance: useInsurance, rand: (n) => randInt(rng, n) });
+  r = Rules.applySelect(room, uid, ch.c, { useDouble: useDouble, useInsurance: useInsurance, useCoin: useCoin, rand: (n) => randInt(rng, n) });
+  FLAGS = null;
   if (r.error) throw new Error("select rejected: " + r.error + " " + ch.c);
 }
 
@@ -379,6 +431,7 @@ if (args[0] === "--conflict") {
   console.log("conflict fuzz: " + s.games + " games, " + s.finished + " finished, " + s.steps + " steps (" + s.ok + " ok / " + s.rejected + " rejected) in " + ((Date.now() - t0) / 1000).toFixed(1) + "s");
   console.log("rejections by code:", JSON.stringify(s.errors));
   console.log("successful augment actions:", JSON.stringify(s.augUses));
+  console.log("scoring effects:", JSON.stringify(s.effects));
   console.log("invariant violations: 0");
 } else if (args[0] === "--balance") {
   const n = parseInt(args[1] || "12000", 10);

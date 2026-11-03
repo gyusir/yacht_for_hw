@@ -353,6 +353,13 @@
               (_myData.diceSkin) || 'classic',
               (_oppData.diceSkin) || 'classic'
             );
+            // The opponent may have recorded while their dice were still animating here:
+            // re-sync dice, roll button and holds with the latest state (it may be my turn now).
+            var _ri = rollInfoFor(r);
+            if (r.currentTurn !== oppRollerKey) Dice.renderAll(_ds);
+            UI.updateRollCounter(r.rollCount || 0, _ri);
+            UI.setRollButtonEnabled(_isMyTurn && _ri.canRoll, _isMyTurn, r.rollCount || 0, _ri);
+            Dice.setInteractive(_isMyTurn && r.rollCount > 0);
           }
         });
       }, 400);
@@ -660,7 +667,8 @@
     // Call Cloud Function — server calculates score and updates game state
     var useDouble = !!(AugUI() && AugUI().isDoubleArmed());
     var useInsurance = (AugUI() && AugUI().getArmedInsurance()) || null;
-    selectCategoryFn({ roomCode: roomCode, category: category, useDouble: useDouble, useInsurance: useInsurance }).then(function (result) {
+    var useCoin = !!(AugUI() && AugUI().isCoinArmed());
+    selectCategoryFn({ roomCode: roomCode, category: category, useDouble: useDouble, useInsurance: useInsurance, useCoin: useCoin }).then(function (result) {
       isWriting = false;
       if (AugUI()) AugUI().onSelectResult(result.data);
       if (result.data && result.data.yahtzeeBonus) {

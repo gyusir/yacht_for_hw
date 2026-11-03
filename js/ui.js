@@ -176,8 +176,9 @@
     return !!(A && A.isActive() && window.YachtGame.Augments);
   }
 
-  function totalFor(scores, gameMode) {
-    if (isAugmentScoring()) return window.YachtGame.Augments.totalScore(scores);
+  // pk: 'player1' | 'player2' — augment totals depend on that player's augments (shortcut, lottery).
+  function totalFor(scores, gameMode, pk) {
+    if (isAugmentScoring()) return window.YachtGame.Augments.totalScore(scores, window.YachtGame.AugmentUI.playerAug(pk));
     return window.YachtGame.Scoring.totalScore(scores, gameMode, scores.yahtzeeBonus);
   }
 
@@ -200,6 +201,7 @@
 
     var myScores = myPlayerKey === 'player1' ? player1Scores : player2Scores;
     var oppScores = myPlayerKey === 'player1' ? player2Scores : player1Scores;
+    var oppPlayerKey = myPlayerKey === 'player1' ? 'player2' : 'player1';
     var myName = myPlayerKey === 'player1' ? player1Name : player2Name;
     var oppName = myPlayerKey === 'player1' ? player2Name : player1Name;
 
@@ -234,16 +236,19 @@
     var augBonus = isAugmentScoring();
     if (gameMode === 'yahtzee' || augBonus) {
       var Aug = window.YachtGame.Augments;
-      var hurdle = augBonus ? Aug.UPPER_BONUS_HURDLE : 63;
+      var AugUI = window.YachtGame.AugmentUI;
+      // Shortcut lowers the hurdle per player.
+      var myHurdle = augBonus ? Aug.bonusHurdle(AugUI.playerAug(myPlayerKey)) : 63;
+      var oppHurdle = augBonus ? Aug.bonusHurdle(AugUI.playerAug(oppPlayerKey)) : 63;
       var bonusPts = augBonus ? Aug.UPPER_BONUS : 35;
       var myUpperSum = Scoring.upperSum(myScores);
       var oppUpperSum = Scoring.upperSum(oppScores);
-      var myBonus = myUpperSum >= hurdle;
-      var oppBonus = oppUpperSum >= hurdle;
+      var myBonus = myUpperSum >= myHurdle;
+      var oppBonus = oppUpperSum >= oppHurdle;
       html += '<tr class="bonus-row">';
       html += '<td class="category-name">' + (I18n ? I18n.t('bonus') : 'Bonus') + '</td>';
-      html += '<td class="score-cell mine">' + myUpperSum + '/' + hurdle + (myBonus ? ' +' + bonusPts : '') + '</td>';
-      html += '<td class="score-cell opponent">' + oppUpperSum + '/' + hurdle + (oppBonus ? ' +' + bonusPts : '') + '</td>';
+      html += '<td class="score-cell mine">' + myUpperSum + '/' + myHurdle + (myBonus ? ' +' + bonusPts : '') + '</td>';
+      html += '<td class="score-cell opponent">' + oppUpperSum + '/' + oppHurdle + (oppBonus ? ' +' + bonusPts : '') + '</td>';
       html += '</tr>';
     }
 
@@ -263,9 +268,21 @@
       html += '</tr>';
     }
 
+    // Lottery row (augment mode, only when someone owns the lottery augment)
+    if (augBonus) {
+      var myLot = AugUI.lotteryCell(myPlayerKey), oppLot = AugUI.lotteryCell(oppPlayerKey);
+      if (myLot !== null || oppLot !== null) {
+        html += '<tr class="bonus-row">';
+        html += '<td class="category-name">' + escapeHtml(I18n ? I18n.t('aug_name_lottery') : 'Lucky Die') + '</td>';
+        html += '<td class="score-cell mine">' + escapeHtml(myLot === null ? '' : myLot) + '</td>';
+        html += '<td class="score-cell opponent">' + escapeHtml(oppLot === null ? '' : oppLot) + '</td>';
+        html += '</tr>';
+      }
+    }
+
     // Total row
-    var myTotal = totalFor(myScores, gameMode);
-    var oppTotal = totalFor(oppScores, gameMode);
+    var myTotal = totalFor(myScores, gameMode, myPlayerKey);
+    var oppTotal = totalFor(oppScores, gameMode, oppPlayerKey);
     html += '<tr class="total-row">';
     html += '<td class="category-name">' + (I18n ? I18n.t('total') : 'Total') + '</td>';
     html += '<td class="score-cell mine">' + myTotal + '</td>';
@@ -364,8 +381,8 @@
   // Render game over screen
   function renderGameOver(player1Name, player2Name, player1Scores, player2Scores, gameMode, winner, myPlayerKey) {
     var Scoring = window.YachtGame.Scoring;
-    var p1Total = totalFor(player1Scores, gameMode);
-    var p2Total = totalFor(player2Scores, gameMode);
+    var p1Total = totalFor(player1Scores, gameMode, 'player1');
+    var p2Total = totalFor(player2Scores, gameMode, 'player2');
 
     var I18n = window.YachtGame.I18n;
     var winnerEl = document.getElementById('winner-text');

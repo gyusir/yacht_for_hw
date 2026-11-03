@@ -472,9 +472,17 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   }
   const useDouble = data.useDouble === true;
   const useInsurance = (data.useInsurance === "safetyNet" || data.useInsurance === "bigInsurance") ? data.useInsurance : null;
+  const useCoin = data.useCoin === true;
+  // Coin flip / lottery dice are drawn outside the transaction so a retried
+  // transaction keeps the same outcome.
+  const coinFlip = cryptoRand(2);
+  const lotteryDice = { player1: 1 + cryptoRand(6), player2: 1 + cryptoRand(6) };
 
   const { out, room } = await runRoomTransaction(roomCode, (r) =>
-    Rules.applySelect(r, uid, category, { useDouble: useDouble, useInsurance: useInsurance, rand: cryptoRand, now: Date.now() }));
+    Rules.applySelect(r, uid, category, {
+      useDouble: useDouble, useInsurance: useInsurance, useCoin: useCoin,
+      coinFlip: coinFlip, lotteryDice: lotteryDice, rand: cryptoRand, now: Date.now()
+    }));
 
   const winner = room.winner || null;
   return {
@@ -956,8 +964,8 @@ exports.onGameFinished = functions.region("asia-southeast1")
       const myScores = player.scores || {};
       const oppScores = opponent.scores || {};
       const isAug = room.augmentMode === true;
-      const myTotal = isAug ? Aug.totalScore(myScores) : Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
-      const oppTotal = isAug ? Aug.totalScore(oppScores) : Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
+      const myTotal = isAug ? Aug.totalScore(myScores, player.aug) : Scoring.totalScore(myScores, gameMode, myScores.yahtzeeBonus);
+      const oppTotal = isAug ? Aug.totalScore(oppScores, opponent.aug) : Scoring.totalScore(oppScores, gameMode, oppScores.yahtzeeBonus);
 
       let result;
       if (winner === playerKey) result = "win";

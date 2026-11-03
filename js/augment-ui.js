@@ -10,6 +10,7 @@
   var oppKey = null;
   var doubleArmed = false;
   var armedInsurance = null; // 'safetyNet' | 'bigInsurance' | null
+  var coinArmed = false;
   var pickPending = false;
   var lastRevealKey = null;
   var initialized = false;
@@ -88,7 +89,7 @@
     var aug = augOf(me);
     var flags = r.turnFlags || {};
     var cap = rc === 0
-      ? A.rollCap(aug, A.totalScore((me && me.scores) || {}), A.totalScore((opp && opp.scores) || {}))
+      ? A.rollCap(aug, A.totalScore((me && me.scores) || {}, aug), A.totalScore((opp && opp.scores) || {}, augOf(opp)))
       : (flags.rollCap || 3);
     var extraLeft = A.charge(aug, 'extraRoll');
     var extra = rc >= cap && rc < A.MAX_ROLLS && extraLeft > 0;
@@ -105,12 +106,16 @@
     var aug = augOf(p);
     var flags = room.turnFlags || {};
     var out = {};
+    var lastStand = filledCount(p.scores) >= window.YachtGame.Scoring.getCategories('yacht').length - A.LAST_STAND_RECORDS;
     for (var c in previews) {
       if (!previews.hasOwnProperty(c)) continue;
       if (c === 'yacht' && flags.noYacht) continue; // blocked: rendered as '-' and not clickable
       var useDouble = pk === myKey && doubleArmed && c !== 'yacht';
       var useInsurance = pk === myKey ? armedInsurance : null;
-      out[c] = A.finalScore(currentDice, c, { aug: aug, sealed: p.sealed, useDouble: useDouble, useInsurance: useInsurance }).score;
+      // An armed coin is shown unresolved (the flip happens on the server).
+      var s = A.finalScore(currentDice, c, { aug: aug, sealed: p.sealed, useDouble: useDouble, useInsurance: useInsurance,
+        called: flags.called || null, allIn: flags.allIn === true, isLastStand: lastStand }).score;
+      out[c] = s + A.streakStep(aug, p.streak || 0, s).bonus;
     }
     return out;
   }
@@ -118,6 +123,15 @@
   // Marks sealed cells after the scorecard is rendered (rows carry data-cat).
   function decorateScorecard(container) {
     if (!isActive() || !container) return;
+    var called = room.turnFlags && room.turnFlags.called;
+    if (called && room.currentTurn) {
+      var crow = container.querySelector('tr[data-cat="' + called + '"]');
+      var col = room.currentTurn === myKey ? 1 : 2;
+      if (crow && crow.children[col]) {
+        crow.children[col].classList.add('aug-called');
+        crow.children[col].setAttribute('title', augName('callShot'));
+      }
+    }
     var pairs = [[myKey, 1], [oppKey, 2]];
     for (var i = 0; i < pairs.length; i++) {
       var p = room.players[pairs[i][0]];
@@ -323,8 +337,14 @@
       usable = my && left > 0 && !room.players[oppKey].sealed && sealTargets().length > 0;
     } else if (id === 'swap') {
       usable = my && left > 0 && swapTargets().length > 0;
+    } else if (id === 'coin') {
+      usable = my && left > 0 && !flags.allIn;
+    } else if (id === 'double') {
+      usable = my && left > 0 && !flags.allIn;
     } else if (def.kind === 'toggle') {
       usable = my && left > 0;
+    } else if (def.kind === 'declare') {
+      usable = my && left > 0 && rc === 0 && !flags.called && !flags.allIn && (id !== 'callShot' || callTargets().length > 0);
     }
     return { def: def, left: left, usable: usable };
   }
@@ -348,9 +368,17 @@
       var poolShared = st.def.pool && seenPools[st.def.pool];
       if (st.def.pool) seenPools[st.def.pool] = true;
       var badge = st.left !== null && !poolShared ? '<span class="aug-badge">' + st.left + '</span>' : '';
-      var interactive = st.def.kind === 'dieEdit' || st.def.kind === 'target' || st.def.kind === 'toggle';
+      var interactive = st.def.kind === 'dieEdit' || st.def.kind === 'target' || st.def.kind === 'toggle' || st.def.kind === 'declare';
+      var tf = room.turnFlags || {};
+      var armed = (id === 'double' && doubleArmed) || (id === 'coin' && coinArmed) || armedInsurance === id ||
+        (id === 'callShot' && !!tf.called && room.currentTurn === myKey) || (id === 'allIn' && !!tf.allIn && room.currentTurn === myKey);
       var cls = 'aug-chip tier-' + st.def.tier + (interactive ? ' active-kind' : '') +
-        ((id === 'double' && doubleArmed) || armedInsurance === id ? ' armed' : '') + (st.left === 0 ? ' spent' : '');
+        (armed ? ' armed' : '') + (st.left === 0 && !armed ? ' spent' : '');
+      // Hot streak shows the bonus the next 12+ record would get.
+      if (id === 'hotStreak') {
+        var nb = Aug().STREAK_STEP * Math.min(room.players[myKey].streak || 0, Aug().STREAK_MAX_LEVEL);
+        if (nb > 0) badge = '<span class="aug-badge">+' + nb + '</span>';
+      }
       var inner = '<span class="aug-chip-name">' + esc(augName(id)) + '</span>' + badge;
       if (interactive) {
         html += '<button class="' + cls + '" data-aug="' + id + '"' + (st.usable ? '' : ' disabled') +
@@ -365,8 +393,15 @@
       var oid = theirs.owned[j];
       var od = Aug().DEFS[oid];
       var ol = od.pool ? Aug().charge(theirs, od.pool) : null;
-      html += '<span class="aug-chip opp-chip tier-' + od.tier + (ol === 0 ? ' spent' : '') + '" title="' + esc(augDesc(oid)) + '">' +
-        '<span class="aug-chip-name">' + esc(augName(oid)) + '</span>' + (ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '') + '</span>';
+      var otf = room.turnFlags || {};
+      var oArmed = room.currentTurn === oppKey && ((oid === 'callShot' && !!otf.called) || (oid === 'allIn' && !!otf.allIn));
+      var obadge = ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '';
+      if (oid === 'hotStreak') {
+        var onb = Aug().STREAK_STEP * Math.min(room.players[oppKey].streak || 0, Aug().STREAK_MAX_LEVEL);
+        obadge = onb > 0 ? '<span class="aug-badge">+' + onb + '</span>' : '';
+      }
+      html += '<span class="aug-chip opp-chip tier-' + od.tier + (oArmed ? ' armed' : ol === 0 ? ' spent' : '') + '" title="' + esc(augDesc(oid)) + '">' +
+        '<span class="aug-chip-name">' + esc(augName(oid)) + '</span>' + obadge + '</span>';
     }
     html += '</div></div>';
     bar.innerHTML = html;
@@ -380,8 +415,19 @@
     if (gameRolling()) return; // dice still animating; state will settle on the next snapshot
     var id = e.currentTarget.getAttribute('data-aug');
     var def = Aug().DEFS[id];
+    if (id === 'coin') {
+      coinArmed = !coinArmed;
+      if (coinArmed) doubleArmed = false; // one multiplier per record
+      window.YachtGame.UI.showToast(t(coinArmed ? 'aug_coin_on' : 'aug_coin_off'));
+      renderBar();
+      if (window.YachtGame.Game && window.YachtGame.Game.refreshUI) window.YachtGame.Game.refreshUI();
+      return;
+    }
+    if (id === 'callShot') return openTargetSheet('call');
+    if (id === 'allIn') return openAllInSheet();
     if (id === 'double') {
       doubleArmed = !doubleArmed;
+      if (doubleArmed) coinArmed = false;
       window.YachtGame.UI.showToast(t(doubleArmed ? 'aug_double_on' : 'aug_double_off'));
       renderBar();
       if (window.YachtGame.Game && window.YachtGame.Game.refreshUI) window.YachtGame.Game.refreshUI();
@@ -403,6 +449,10 @@
   function sealTargets() {
     var opp = scoresOf(oppKey);
     return window.YachtGame.Scoring.getCategories('yacht').filter(function (c) { return !filled(opp, c); });
+  }
+  function callTargets() {
+    var me = room.players[myKey] || {};
+    return Aug().CALL_CATS.filter(function (c) { return !filled(me.scores, c) && me.sealed !== c; });
   }
   function swapTargets() {
     var me = scoresOf(myKey), opp = scoresOf(oppKey);
@@ -466,10 +516,10 @@
 
   function openTargetSheet(type) {
     var el = overlay('aug-sheet');
-    var targets = type === 'seal' ? sealTargets() : swapTargets();
+    var targets = type === 'seal' ? sealTargets() : type === 'call' ? callTargets() : swapTargets();
     var me = scoresOf(myKey), opp = scoresOf(oppKey);
-    var html = '<h3 class="aug-title">' + esc(augName(type)) + '</h3>';
-    html += '<p class="aug-sub">' + esc(t(type === 'seal' ? 'aug_choose_seal' : 'aug_choose_swap')) + '</p>';
+    var html = '<h3 class="aug-title">' + esc(augName(type === 'call' ? 'callShot' : type)) + '</h3>';
+    html += '<p class="aug-sub">' + esc(t(type === 'seal' ? 'aug_choose_seal' : type === 'call' ? 'aug_choose_call' : 'aug_choose_swap')) + '</p>';
     if (!targets.length) html += '<p class="aug-sub">' + esc(t('aug_no_target')) + '</p>';
     html += '<div class="aug-target-list">';
     for (var i = 0; i < targets.length; i++) {
@@ -487,6 +537,21 @@
         submit({ type: type, category: e.currentTarget.getAttribute('data-cat') });
       });
     }
+  }
+
+  function openAllInSheet() {
+    var el = overlay('aug-sheet');
+    var html = '<h3 class="aug-title">' + esc(augName('allIn')) + '</h3>';
+    html += '<p class="aug-sub">' + esc(t('aug_confirm_allin')) + '</p>';
+    html += '<div class="aug-target-list"><button class="btn-primary aug-allin-go">' + esc(t('aug_allin_go')) + '</button></div>';
+    html += '<button class="btn-secondary aug-close">' + esc(t('aug_cancel')) + '</button>';
+    el.firstChild.innerHTML = html;
+    el.classList.remove('hidden');
+    el.querySelector('.aug-close').addEventListener('click', function () { closeOverlay('aug-sheet'); });
+    el.querySelector('.aug-allin-go').addEventListener('click', function () {
+      doubleArmed = false; coinArmed = false;
+      submit({ type: 'allIn' });
+    });
   }
 
   function submit(action) {
@@ -518,6 +583,9 @@
     if (cf.editType && !pf.editType) announce(whoLabel(turn) + augName(EDIT_AUG[cf.editType] || cf.editType) + used);
     // Extra roll
     if ((cf.extraUsed || 0) > (pf.extraUsed || 0)) announce(whoLabel(turn) + augName('extraRoll') + used);
+    // Declarations (before the first roll)
+    if (cf.called && cf.called !== pf.called) announce(whoLabel(turn) + augName('callShot') + ': ' + catName(cf.called));
+    if (cf.allIn && !pf.allIn) announce(whoLabel(turn) + t('aug_allin_declared'));
     ['player1', 'player2'].forEach(function (pk) {
       var cur = room.players[pk] || {};
       var old = prev.players[pk] || {};
@@ -531,8 +599,8 @@
         if (eff.length) announce(whoLabel(pk) + eff.map(function (x) { return t('aug_effect_' + x, x); }).join(', '));
       }
       // Upper-section bonus gained / lost (swap, steal)
-      var had = A.upperBonus(old.scores || {}) > 0;
-      var has = A.upperBonus(cur.scores || {}) > 0;
+      var had = A.upperBonus(old.scores || {}, augOf(old)) > 0;
+      var has = A.upperBonus(cur.scores || {}, augOf(cur)) > 0;
       if (has !== had) announce(whoLabel(pk) + t(has ? 'aug_bonus_gained' : 'aug_bonus_lost') + ' (' + (has ? '+' : '−') + A.UPPER_BONUS + ')');
     });
     // Swap
@@ -546,6 +614,21 @@
   function onSelectResult() {
     doubleArmed = false;
     armedInsurance = null;
+    coinArmed = false;
+  }
+
+  // Lottery cell for the scorecard: null when the player doesn't own it, '' before the roll,
+  // otherwise "🎲4 +40" / "🎲2 0".
+  function lotteryCell(pk) {
+    if (!isActive() || !room.players[pk]) return null;
+    var p = room.players[pk];
+    if (!Aug().owns(augOf(p), 'lottery')) return null;
+    var log = toArray(room.lotteryLog).filter(function (l) { return l.by === pk; })[0];
+    if (!log) return '-';
+    return '\uD83C\uDFB2' + log.die + ' ' + (log.prize > 0 ? '+' + log.prize : '0');
+  }
+  function playerAug(pk) {
+    return room && room.players && room.players[pk] ? augOf(room.players[pk]) : { owned: [], charges: {} };
   }
 
   function renderGameOverExtras(r, pk) {
@@ -557,6 +640,12 @@
     for (var i = 0; i < log.length; i++) {
       var who = log[i].by === myKey ? t('aug_you') : t('aug_opp');
       html += '<p>' + esc(who + t('aug_steal_line') + catName(log[i].category) + ' +' + log[i].amount) + '</p>';
+    }
+    var lot = toArray(room.lotteryLog);
+    for (var j = 0; j < lot.length; j++) {
+      var who2 = lot[j].by === myKey ? t('aug_you') : t('aug_opp');
+      html += '<p>' + esc(who2 + ' ' + augName('lottery') + ' \uD83C\uDFB2' + lot[j].die + ' \u2192 ' +
+        (lot[j].prize > 0 ? '+' + lot[j].prize : t('aug_lottery_miss'))) + '</p>';
     }
     html += '<p class="aug-note">' + esc(t('aug_game_note')) + '</p></div>';
     host.insertAdjacentHTML('beforeend', html);
@@ -581,7 +670,8 @@
       offsetSubscribed = true;
       window.YachtGame.db.ref('.info/serverTimeOffset').on('value', function (snap) { serverOffset = snap.val() || 0; });
     }
-    if (room.currentTurn !== myKey || room.status !== 'playing') { doubleArmed = false; armedInsurance = null; }
+    if (room.currentTurn !== myKey || room.status !== 'playing') { doubleArmed = false; armedInsurance = null; coinArmed = false; }
+    if (room.turnFlags && room.turnFlags.allIn) { doubleArmed = false; coinArmed = false; }
     if (room.status !== 'playing') { closeOverlay('aug-pick'); closeOverlay('aug-sheet'); }
     // Ascend skin level per player = augments owned (the visible evolution waits for their next roll).
     if (Skins && Skins.setAscendTargets) {
@@ -603,12 +693,13 @@
     var p = r.players || {};
     return JSON.stringify([r.augmentPhase || null, r.turnFlags || null,
       p.player1 && p.player1.aug, p.player2 && p.player2.aug,
-      p.player1 && p.player1.sealed, p.player2 && p.player2.sealed]);
+      p.player1 && p.player1.sealed, p.player2 && p.player2.sealed,
+      p.player1 && p.player1.streak, p.player2 && p.player2.streak, r.lotteryLog || null]);
   }
 
   function reset(getRoomCode) {
     room = null; myKey = null; oppKey = null;
-    doubleArmed = false; armedInsurance = null; pickPending = false; initialized = false;
+    doubleArmed = false; armedInsurance = null; coinArmed = false; pickPending = false; initialized = false;
     lastRevealKey = null; peeking = false; autoPickedTier = null; claimSentTier = null;
     stopTimer();
     var pb = document.getElementById('aug-peek-bar');
@@ -630,6 +721,9 @@
     isActive: isActive,
     isDoubleArmed: function () { return isActive() && doubleArmed; },
     getArmedInsurance: function () { return isActive() ? armedInsurance : null; },
+    isCoinArmed: function () { return isActive() && coinArmed; },
+    lotteryCell: lotteryCell,
+    playerAug: playerAug,
     onSelectResult: onSelectResult,
     renderGameOverExtras: renderGameOverExtras,
     refresh: function () { if (room && isActive()) { renderBar(); renderPickModal(); } }
