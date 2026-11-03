@@ -2798,7 +2798,6 @@ p.session-notice {
    roll button keeps room for a one-line label and the row never overflows. */
 @media (max-width: 370px) {
   .dice-roll-row { gap: 8px; }
-  .dice-area { gap: 5px; }
   .die {
     width: clamp(42px, 13vw, 52px);
     height: clamp(42px, 13vw, 52px);
@@ -3501,6 +3500,18 @@ button.aug-chip.armed:not(:disabled):hover {
 }
 @keyframes ascendSun {
   50% { box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 16px rgba(224,169,58,0.8), 0 0 30px rgba(255,122,26,0.7), inset 0 0 14px rgba(255,122,26,0.45); }
+}
+
+/* Mobile: dice sit 6px apart, so keep Lv3's outer gold rings within 2.5px per side. */
+@media (max-width: 480px) {
+  [data-dice-skin="ascend"][data-ascend-level="3"] .die,
+  [data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .die {
+    box-shadow: 0 0 0 1.5px #e0a93a, 0 0 0 2.5px #6a4508, 0 0 10px rgba(224,169,58,0.55), 0 0 18px rgba(255,122,26,0.5), inset 0 0 12px rgba(255,122,26,0.35);
+  }
+  [data-dice-skin="ascend"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation-name: ascendSunSm; }
+}
+@keyframes ascendSunSm {
+  50% { box-shadow: 0 0 0 1.5px #e0a93a, 0 0 0 2.5px #6a4508, 0 0 14px rgba(224,169,58,0.75), 0 0 24px rgba(255,122,26,0.65), inset 0 0 12px rgba(255,122,26,0.45); }
 }
 
 /* Level-up burst (DiceSkins.ascendRollStopped adds .ascend-up for ~1.4s) */

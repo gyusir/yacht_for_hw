@@ -292,7 +292,7 @@
   }
 
   // ─── Augment bar ───
-  // "Turn r/12 · next augment in n" — picks happen before turns 5 and 9.
+  // Picks happen before turns 5 and 9.
   // Turns until the next augment pick; '' while picking or once every tier is picked.
   function nextAugmentText() {
     if (room.augmentPhase) return '';

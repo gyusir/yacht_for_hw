@@ -150,9 +150,9 @@
     var I18n = window.YachtGame.I18n;
     var cap = (info && info.cap) || 3;
     if (info && info.extra && !info.locked) {
-      btn.innerHTML = (I18n ? I18n.t('aug_extra_roll') : 'Extra roll') + '<br><small>(' + info.extraLeft + ')</small>';
+      btn.innerHTML = (I18n ? I18n.t('aug_extra_roll') : 'Extra!') + '<br><small>(' + info.extraLeft + ')</small>';
     } else if (count >= cap || (info && info.locked)) {
-      btn.innerHTML = I18n ? I18n.t('roll_end') : 'Roll End';
+      btn.innerHTML = I18n ? I18n.t('roll_end') : 'Done';
     } else {
       btn.innerHTML = (I18n ? I18n.t('lets_roll') : 'Roll!') + '<br><small>(' + count + '/' + cap + ')</small>';
     }
