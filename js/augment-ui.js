@@ -292,19 +292,18 @@
   }
 
   // ─── Augment bar ───
-  // "Turn r/12 · next augment in n" — picks happen before turns 5 and 9.
-  function turnInfoText() {
+  // Picks happen before turns 5 and 9.
+  // Turns until the next augment pick; '' while picking or once every tier is picked.
+  function nextAugmentText() {
+    if (room.augmentPhase) return '';
     var n1 = filledCount(scoresOf('player1')), n2 = filledCount(scoresOf('player2'));
     var round = Math.min(Math.min(n1, n2) + 1, 12);
-    if (room.augmentPhase) return t('aug_turn_picking').replace('{r}', round);
     var next = null;
     [2, 3].forEach(function (tier) {
       var r = Aug().TIER_ROUNDS[tier] + 1;
       if (next === null && r > round) next = r;
     });
-    return next === null
-      ? t('aug_turn_last').replace('{r}', round)
-      : t('aug_turn_info').replace('{r}', round).replace('{n}', next - round);
+    return next === null ? '' : String(next - round);
   }
 
   function chipState(id, aug) {
@@ -336,8 +335,12 @@
     if (!isActive()) { bar.classList.add('hidden'); bar.innerHTML = ''; return; }
     var mine = augOf(room.players[myKey]);
     var theirs = augOf(room.players[oppKey]);
-    var html = '<div class="aug-row mine">';
-    if (!mine.owned.length) html += '<span class="aug-empty">' + esc(t('aug_you')) + ' —</span>';
+    var next = nextAugmentText();
+    // Shown to the right of both rows (vertically centered) so it never takes its own line.
+    var html = next ? '<div class="aug-next"><span class="aug-next-label">' + esc(t('aug_next_label')) +
+      '</span><span class="aug-next-turns">' + esc(t('aug_next_turns').replace('{n}', next)) + '</span></div>' : '';
+    html += '<div class="aug-row mine"><span class="aug-row-label">' + esc(t('aug_you')) + '</span><div class="aug-chips">';
+    if (!mine.owned.length) html += '<span class="aug-empty">\u2014</span>';
     var seenPools = {};
     for (var i = 0; i < mine.owned.length; i++) {
       var id = mine.owned[i];
@@ -348,24 +351,26 @@
       var interactive = st.def.kind === 'dieEdit' || st.def.kind === 'target' || st.def.kind === 'toggle';
       var cls = 'aug-chip tier-' + st.def.tier + (interactive ? ' active-kind' : '') +
         ((id === 'double' && doubleArmed) || armedInsurance === id ? ' armed' : '') + (st.left === 0 ? ' spent' : '');
+      var inner = '<span class="aug-chip-name">' + esc(augName(id)) + '</span>' + badge;
       if (interactive) {
         html += '<button class="' + cls + '" data-aug="' + id + '"' + (st.usable ? '' : ' disabled') +
-          ' title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</button>';
+          ' title="' + esc(augDesc(id)) + '">' + inner + '</button>';
       } else {
-        html += '<span class="' + cls + '" title="' + esc(augDesc(id)) + '">' + esc(augName(id)) + badge + '</span>';
+        html += '<span class="' + cls + '" title="' + esc(augDesc(id)) + '">' + inner + '</span>';
       }
     }
-    html += '<span class="aug-turn-info">' + esc(turnInfoText()) + '</span>';
-    html += '</div><div class="aug-row opp"><span class="aug-row-label">' + esc(t('aug_opp')) + '</span>';
+    html += '</div></div><div class="aug-row opp"><span class="aug-row-label">' + esc(t('aug_opp')) + '</span><div class="aug-chips">';
+    if (!theirs.owned.length) html += '<span class="aug-empty">\u2014</span>';
     for (var j = 0; j < theirs.owned.length; j++) {
       var oid = theirs.owned[j];
       var od = Aug().DEFS[oid];
       var ol = od.pool ? Aug().charge(theirs, od.pool) : null;
       html += '<span class="aug-chip opp-chip tier-' + od.tier + (ol === 0 ? ' spent' : '') + '" title="' + esc(augDesc(oid)) + '">' +
-        esc(augName(oid)) + (ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '') + '</span>';
+        '<span class="aug-chip-name">' + esc(augName(oid)) + '</span>' + (ol !== null ? '<span class="aug-badge">' + ol + '</span>' : '') + '</span>';
     }
-    html += '</div>';
+    html += '</div></div>';
     bar.innerHTML = html;
+    bar.classList.toggle('has-next', !!next);
     bar.classList.remove('hidden');
     var btns = bar.querySelectorAll('button.aug-chip');
     for (var k = 0; k < btns.length; k++) btns[k].addEventListener('click', onChip);
@@ -565,7 +570,9 @@
     room = r;
     myKey = pk;
     oppKey = pk === 'player1' ? 'player2' : 'player1';
+    var Skins = window.YachtGame.DiceSkins;
     if (!isActive() || !room.players || !room.players[myKey] || !room.players[oppKey]) {
+      if (Skins && Skins.setAscendTargets) Skins.setAscendTargets(null);
       var bar = document.getElementById('augment-bar');
       if (bar) bar.classList.add('hidden');
       return;
@@ -576,6 +583,13 @@
     }
     if (room.currentTurn !== myKey || room.status !== 'playing') { doubleArmed = false; armedInsurance = null; }
     if (room.status !== 'playing') { closeOverlay('aug-pick'); closeOverlay('aug-sheet'); }
+    // Ascend skin level per player = augments owned (the visible evolution waits for their next roll).
+    if (Skins && Skins.setAscendTargets) {
+      var levels = {};
+      levels[myKey] = augOf(room.players[myKey]).owned.length;
+      levels[oppKey] = augOf(room.players[oppKey]).owned.length;
+      Skins.setAscendTargets(levels);
+    }
     renderPickModal();
     renderReveal();
     notify(prev);
@@ -600,6 +614,7 @@
     var pb = document.getElementById('aug-peek-bar');
     if (pb) pb.classList.add('hidden');
     roomCodeGetter = getRoomCode || null;
+    if (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.setAscendTargets) window.YachtGame.DiceSkins.setAscendTargets(null);
     closeOverlay('aug-pick'); closeOverlay('aug-sheet'); closeOverlay('aug-reveal');
     var bar = document.getElementById('augment-bar');
     if (bar) { bar.classList.add('hidden'); bar.innerHTML = ''; }

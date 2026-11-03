@@ -1051,6 +1051,10 @@ exports.onGameFinished = functions.region("asia-southeast1")
           }
           return stats;
         });
+      } else if (valid && isAugmentGame && result === "win") {
+        // Augment wins are tracked separately (only for the Ascend skin unlock);
+        // they still don't touch win rate or streaks.
+        await userRef.child("stats/augmentWins").transaction((n) => (n || 0) + 1);
       }
     });
 

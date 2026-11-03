@@ -2775,7 +2775,7 @@ p.session-notice {
   }
 
   .btn-roll {
-    padding: 0 10px;
+    padding: 0 4px;
     font-size: 0.75rem;
   }
 
@@ -2791,6 +2791,17 @@ p.session-notice {
 
   .mode-options {
     flex-direction: column;
+  }
+}
+
+/* Narrow phones (Galaxy 360px, Fold cover, SE 1st gen): shrink dice a little so the
+   roll button keeps room for a one-line label and the row never overflows. */
+@media (max-width: 370px) {
+  .dice-roll-row { gap: 8px; }
+  .die {
+    width: clamp(42px, 13vw, 52px);
+    height: clamp(42px, 13vw, 52px);
+    padding: 6px;
   }
 }
 
@@ -2984,10 +2995,13 @@ button.btn-full-width { width: 100%; }
   color: var(--aug-tier3);
 }
 
+/* Two rows (나 / 상대) on a shared grid so both chip lists start at the same x. */
 .augment-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 6px;
   padding: 8px 0 0;
 }
 
@@ -2996,33 +3010,115 @@ button.btn-full-width { width: 100%; }
 }
 
 .aug-row {
+  display: contents;
+}
+
+.aug-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+}
+
+/* "다음 증강 / n턴 뒤": right column spanning both rows, centered (only until tier 3). */
+.augment-bar.has-next {
+  grid-template-columns: max-content minmax(0, 1fr) auto;
+}
+
+.aug-next {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-left: 4px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.aug-next-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.aug-next-turns {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .aug-row-label,
 .aug-empty {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-right: 2px;
 }
 
 .aug-chip {
   --tier: var(--aug-tier1);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 6px 10px;
-  min-height: 32px;
+  min-height: 30px;
   border-radius: 999px;
   border: 1.5px solid var(--tier);
   background: var(--surface);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   line-height: 1;
+  white-space: nowrap;
+}
+
+/* Last-resort squeeze on very narrow screens: truncate instead of wrapping. */
+.aug-chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aug-chip .aug-badge {
+  flex-shrink: 0;
+}
+
+/* Mobile: three chips per player must stay on one line even with the longest picks. */
+@media (max-width: 480px) {
+  .augment-bar { column-gap: 6px; }
+  .aug-chips { gap: 4px; }
+  .aug-chip {
+    gap: 4px;
+    padding: 5px 8px;
+    min-height: 28px;
+    font-size: 0.74rem;
+  }
+  .aug-chip .aug-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.64rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .augment-bar { column-gap: 5px; }
+  .aug-chip {
+    gap: 3px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+  }
+  .aug-chip .aug-badge {
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 0.6rem;
+  }
+  .aug-row-label { font-size: 0.7rem; }
 }
 
 .aug-chip.tier-2 { --tier: var(--aug-tier2); }
@@ -3059,11 +3155,7 @@ button.aug-chip.armed:not(:disabled):hover {
 }
 
 .aug-chip.opp-chip {
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  min-height: 24px;
   border-style: dashed;
-  font-weight: 500;
 }
 
 .aug-badge {
@@ -3322,10 +3414,131 @@ button.aug-chip.armed:not(:disabled):hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* Turn info at the right end of my augment row */
-.aug-turn-info {
-  margin-left: auto;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  white-space: nowrap;
+
+/* ==========================================================================
+ * Ascend skin — evolves with augment picks (Lv1 잔불 → Lv2 용암 → Lv3 태양)
+ * Level comes from #dice-area[data-ascend-level] (set by DiceSkins: the turn player's level).
+ * No attribute / non-augment games = Lv1. Same look in light & dark themes.
+ * Cracks (::before) share one shape across levels; ::after = runes / bronze
+ * brackets / gold gems. Pips sit above both layers.
+ * ========================================================================== */
+[data-dice-skin="ascend"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"] .die {
+  background: radial-gradient(circle at 25% 20%, #57524e 0%, transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(0,0,0,0.3) 0%, transparent 50%),
+    repeating-radial-gradient(circle at 37% 61%, transparent 0 3px, rgba(0,0,0,0.06) 3px 4px),
+    linear-gradient(145deg, #45413e, #2c2927 60%, #1e1c1a);
+  border: 2px solid #1f1c1a;
+  overflow: visible;
+  isolation: isolate;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -3px 0 rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.35);
 }
+[data-dice-skin="ascend"] .die::before,
+[data-dice-skin="ascend"] .die::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: center / 100% 100% no-repeat;
+}
+[data-dice-skin="ascend"] .die::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23000' stroke-opacity='.6' stroke-width='3.6'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23a8380a' stroke-width='3.5' opacity='0.9' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23c9561c' stroke-width='1.6'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23f08a4a' stroke-width='0.6'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-opacity='.45' stroke-width='1.6'%3E%3Cpath d='M7 5 v7 M4.5 8.5 h5'/%3E%3Cpath d='M89 6 l3.5 3 l-3.5 3 M87 6 v7'/%3E%3Cpath d='M6 92 l3.5 -5 l3.5 5'/%3E%3Cpath d='M88 90 h7 M91.5 86.5 v7'/%3E%3C/g%3E%3C/svg%3E");
+  animation: ascendEmber 2.8s ease-in-out infinite;
+}
+[data-dice-skin="ascend"] .die::after { background-image: none; }
+[data-dice-skin="ascend"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"] .pip {
+  position: relative;
+  z-index: 1;
+  width: 74%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8e6 0 26%, #ffd27a 42%, #ff8c2a 62%, #4a1c08 76%, #140d0a 100%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.7), 0 0 8px rgba(255,150,50,0.75);
+}
+@keyframes ascendEmber { 50% { opacity: 0.72; } }
+
+/* Lv2 — 용암: 균열이 타오르고 청동 모서리가 묶음 */
+[data-dice-skin="ascend"][data-ascend-level="2"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="2"] .die {
+  background: radial-gradient(circle at 50% 50%, rgba(255,106,26,0.16) 0%, transparent 62%),
+    radial-gradient(circle at 25% 20%, #5e4f45 0%, transparent 45%),
+    repeating-radial-gradient(circle at 37% 61%, transparent 0 3px, rgba(0,0,0,0.06) 3px 4px),
+    linear-gradient(145deg, #463a33, #2a221d 60%, #1b1512);
+  border-color: #5c3515;
+  box-shadow: inset 0 0 14px rgba(255,138,26,0.3), 0 0 12px rgba(255,138,26,0.45), 0 4px 10px rgba(0,0,0,0.4);
+}
+[data-dice-skin="ascend"][data-ascend-level="2"] .die::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23000' stroke-opacity='.6' stroke-width='3.5'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ff7a1a' stroke-width='3.5' opacity='0.75' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffb347' stroke-width='1.5'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23fff0d6' stroke-width='0.57'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); animation: none; }
+[data-dice-skin="ascend"][data-ascend-level="2"] .die::after { inset: -2px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f0bd7c'/%3E%3Cstop offset='.45' stop-color='%23a8692f'/%3E%3Cstop offset='.7' stop-color='%235c3515'/%3E%3Cstop offset='1' stop-color='%23f0bd7c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke-linejoin='round'%3E%3Cg stroke='%231d1007' stroke-width='6'%3E%3Cpath d='M4 24 V4 H24'/%3E%3Cpath d='M76 4 H96 V24'/%3E%3Cpath d='M96 76 V96 H76'/%3E%3Cpath d='M24 96 H4 V76'/%3E%3C/g%3E%3Cg stroke='url%28%23m%29' stroke-width='3.6'%3E%3Cpath d='M4 24 V4 H24'/%3E%3Cpath d='M76 4 H96 V24'/%3E%3Cpath d='M96 76 V96 H76'/%3E%3Cpath d='M24 96 H4 V76'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23f6cf98' stroke='%235c3515' stroke-width='.7'%3E%3Ccircle cx='10' cy='10' r='2.4'/%3E%3Ccircle cx='90' cy='10' r='2.4'/%3E%3Ccircle cx='90' cy='90' r='2.4'/%3E%3Ccircle cx='10' cy='90' r='2.4'/%3E%3C/g%3E%3C/svg%3E"); }
+[data-dice-skin="ascend"][data-ascend-level="2"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="2"] .pip {
+  width: 80%;
+  background: radial-gradient(circle, #fff 0 30%, #ffd9a0 42%, #ff8a1a 54%, #0b0b14 58% 62%, #f0bd7c 66%, #a8692f 82%, #5c3515 100%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 0 8px #ff8a1a, 0 2px 3px rgba(0,0,0,0.8);
+}
+
+/* Lv3 — 태양: 흑요석 속 황금빛 균열 + 황금 테두리 + 루비 */
+[data-dice-skin="ascend"][data-ascend-level="3"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .die {
+  background: radial-gradient(1px 1px at 18% 70%, rgba(255,217,160,0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 28%, rgba(255,217,160,0.7) 50%, transparent 51%),
+    radial-gradient(ellipse 70% 55% at 50% 50%, rgba(122,30,8,0.45), transparent 70%),
+    radial-gradient(circle at 50% 50%, #2e0d06, #140503 70%, #070101);
+  border-color: #fff0c0;
+  box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 12px rgba(224,169,58,0.6), 0 0 22px rgba(255,122,26,0.55), inset 0 0 14px rgba(255,122,26,0.35);
+}
+[data-dice-skin="ascend"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: ascendSun 2.6s ease-in-out infinite; }
+[data-dice-skin="ascend"][data-ascend-level="3"] .die::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffb020' stroke-width='3.7' opacity='1' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffe7a0' stroke-width='1.7'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='0.65'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); animation: none; }
+[data-dice-skin="ascend"][data-ascend-level="3"] .die::after { inset: -4px; border-radius: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='7' y='7' width='86' height='86' rx='8' fill='none' stroke='%23ffe08a' stroke-opacity='.55' stroke-width='1'/%3E%3Cpath d='M50 -2 L55 3 L50 8 L45 3 Z' fill='%23ff5a3a' stroke='%23fff3c4' stroke-width='1.1'/%3E%3Cpath d='M50 -2 L55 3 L50 3 Z' fill='%23ffd0b8'/%3E%3Cpath d='M50 92 L55 97 L50 102 L45 97 Z' fill='%23ff5a3a' stroke='%23fff3c4' stroke-width='1.1'/%3E%3Cpath d='M50 92 L55 97 L50 97 Z' fill='%23ffd0b8'/%3E%3C/svg%3E"); }
+[data-dice-skin="ascend"][data-ascend-level="3"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .pip {
+  width: 86%;
+  background: radial-gradient(circle, #fff 0 38%, #fff3c4 50%, #ffbf3d 64%, #6a4508 72%, transparent 74%);
+  box-shadow: 0 0 5px rgba(255,255,255,0.4), 0 0 10px #ffbf3d, 0 0 18px #ff7a1a;
+}
+@keyframes ascendSun {
+  50% { box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 16px rgba(224,169,58,0.8), 0 0 30px rgba(255,122,26,0.7), inset 0 0 14px rgba(255,122,26,0.45); }
+}
+
+/* Mobile: dice sit 6px apart, so keep Lv3's outer gold rings within 2.5px per side. */
+@media (max-width: 480px) {
+  [data-dice-skin="ascend"][data-ascend-level="3"] .die,
+  [data-theme="dark"] [data-dice-skin="ascend"][data-ascend-level="3"] .die {
+    box-shadow: 0 0 0 1.5px #e0a93a, 0 0 0 2.5px #6a4508, 0 0 10px rgba(224,169,58,0.55), 0 0 18px rgba(255,122,26,0.5), inset 0 0 12px rgba(255,122,26,0.35);
+  }
+  [data-dice-skin="ascend"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation-name: ascendSunSm; }
+}
+@keyframes ascendSunSm {
+  50% { box-shadow: 0 0 0 1.5px #e0a93a, 0 0 0 2.5px #6a4508, 0 0 14px rgba(224,169,58,0.75), 0 0 24px rgba(255,122,26,0.65), inset 0 0 12px rgba(255,122,26,0.45); }
+}
+
+/* Level-up burst (DiceSkins.ascendRollStopped adds .ascend-up for ~1.4s) */
+[data-dice-skin="ascend"].ascend-up .die { animation: ascendUp 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(2) { animation-delay: 0.08s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(3) { animation-delay: 0.16s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(4) { animation-delay: 0.24s; }
+[data-dice-skin="ascend"].ascend-up .die:nth-child(5) { animation-delay: 0.32s; }
+@keyframes ascendUp {
+  0% { transform: scale(1) rotate(0); }
+  35% { transform: scale(0.6) rotate(-90deg); filter: brightness(3); }
+  100% { transform: scale(1) rotate(0); filter: none; }
+}
+
+/* Preview (skin selector + header cube) shows the final Lv3 form */
+.skin-preview-die[data-dice-skin="ascend"],
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"] {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='g' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeGaussianBlur stdDeviation='1.6'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffb020' stroke-width='3.7' opacity='1' filter='url%28%23g%29'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffe7a0' stroke-width='1.7'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='0.65'%3E%3Cpath d='M0 34 L14 30 L22 38 L31 33'/%3E%3Cpath d='M100 66 L86 70 L80 62 L70 66 L64 78'/%3E%3Cpath d='M58 0 L61 9 L55 16 L60 22'/%3E%3Cpath d='M30 100 L34 90 L28 84'/%3E%3Cpath d='M100 16 L92 21 L95 28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat,
+    radial-gradient(ellipse 70% 55% at 50% 50%, rgba(122,30,8,0.45), transparent 70%),
+    radial-gradient(circle at 50% 50%, #2e0d06, #140503 70%, #070101);
+  border-color: #e0a93a;
+  box-shadow: 0 0 6px rgba(255,122,26,0.5);
+}
+.skin-preview-die[data-dice-skin="ascend"] .mini-pip,
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"] .mini-pip {
+  background: radial-gradient(circle, #fff 0 38%, #fff3c4 50%, #ffbf3d 70%, #b8860b 100%);
+  box-shadow: 0 0 3px #ffbf3d;
+}
+.skin-option.active[data-skin-id="ascend"],
+[data-theme="dark"] .skin-option.active[data-skin-id="ascend"] { border-color: #e0a93a; }
