@@ -293,7 +293,7 @@
 
   // ─── Augment bar ───
   // "Turn r/12 · next augment in n" — picks happen before turns 5 and 9.
-  // "다음 증강 - n턴 뒤" — empty while picking or once every tier is picked.
+  // Turns until the next augment pick; '' while picking or once every tier is picked.
   function nextAugmentText() {
     if (room.augmentPhase) return '';
     var n1 = filledCount(scoresOf('player1')), n2 = filledCount(scoresOf('player2'));
@@ -303,7 +303,7 @@
       var r = Aug().TIER_ROUNDS[tier] + 1;
       if (next === null && r > round) next = r;
     });
-    return next === null ? '' : t('aug_next_in').replace('{n}', next - round);
+    return next === null ? '' : String(next - round);
   }
 
   function chipState(id, aug) {
@@ -336,7 +336,9 @@
     var mine = augOf(room.players[myKey]);
     var theirs = augOf(room.players[oppKey]);
     var next = nextAugmentText();
-    var html = next ? '<div class="aug-next">' + esc(next) + '</div>' : '';
+    // Shown to the right of both rows (vertically centered) so it never takes its own line.
+    var html = next ? '<div class="aug-next"><span class="aug-next-label">' + esc(t('aug_next_label')) +
+      '</span><span class="aug-next-turns">' + esc(t('aug_next_turns').replace('{n}', next)) + '</span></div>' : '';
     html += '<div class="aug-row mine"><span class="aug-row-label">' + esc(t('aug_you')) + '</span><div class="aug-chips">';
     if (!mine.owned.length) html += '<span class="aug-empty">\u2014</span>';
     var seenPools = {};
@@ -368,6 +370,7 @@
     }
     html += '</div></div>';
     bar.innerHTML = html;
+    bar.classList.toggle('has-next', !!next);
     bar.classList.remove('hidden');
     var btns = bar.querySelectorAll('button.aug-chip');
     for (var k = 0; k < btns.length; k++) btns[k].addEventListener('click', onChip);

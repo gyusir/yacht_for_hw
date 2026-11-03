@@ -3010,12 +3010,34 @@ button.btn-full-width { width: 100%; }
   min-width: 0;
 }
 
+/* "다음 증강 / n턴 뒤": right column spanning both rows, centered (only until tier 3). */
+.augment-bar.has-next {
+  grid-template-columns: max-content minmax(0, 1fr) auto;
+}
+
 .aug-next {
-  grid-column: 1 / -1;
-  justify-self: end;
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-left: 4px;
+  text-align: center;
   white-space: nowrap;
+  line-height: 1.15;
+}
+
+.aug-next-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.aug-next-turns {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .aug-row-label,
