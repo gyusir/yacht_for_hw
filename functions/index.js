@@ -45,13 +45,12 @@ function sanitizePlayerName(name) {
   return name;
 }
 
+// 4-digit numeric code ("0000"-"9999"). Easy to type on a phone keypad; the
+// space is small, so createRoom/random rooms retry on collision (live rooms are
+// few: waiting 2h / finished 10min TTL via cleanupStaleRooms).
+const ROOM_CODE_LENGTH = 4;
 function generateRoomCode() {
-  var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  var code = "";
-  for (var i = 0; i < 6; i++) {
-    code += chars.charAt(crypto.randomInt(0, chars.length));
-  }
-  return code;
+  return String(crypto.randomInt(0, 10000)).padStart(ROOM_CODE_LENGTH, "0");
 }
 
 function buildEmptyScores(gameMode) {
@@ -98,7 +97,7 @@ async function checkRateLimit(uid, action) {
   }
 }
 
-const ROOM_CODE_MAX_RETRIES = 5;
+const ROOM_CODE_MAX_RETRIES = 10;
 
 // Same region as the RTDB instance (asia-southeast1) so every DB round trip stays
 // in-region. Callables previously ran in asia-northeast3 and paid Seoul<->Singapore

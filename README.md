@@ -19,7 +19,7 @@ A 1v1 online multiplayer dice game. Supports two game modes: **Yacht** (12 categ
 ## Features
 
 - **Two Game Modes** — Choose between Yacht and Yahtzee
-- **Real-time Multiplayer** — Play with friends via 6-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
+- **Real-time Multiplayer** — Play with friends via 4-digit room code, or find opponents with Random Match (Yahtzee / Yacht / Any mode)
 - **Google Login / Guest** — Game history saved with Google OAuth login; guest play also available
 - **History & Stats** — Win rate, recent game records (logged-in users only)
 - **Dice Skins** — 14 skins (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star, Dragon, Flower), unlocked by game count / Bot wins / win streak / special conditions

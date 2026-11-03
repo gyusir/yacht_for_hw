@@ -103,7 +103,7 @@
       <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
-          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off">
+          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
           <button id="btn-join" class="btn-secondary" disabled data-i18n="join">Join</button>
         </div>
         <p id="lobby-error" class="error-text" hidden></p>

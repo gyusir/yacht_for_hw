@@ -19,7 +19,7 @@
 ## Features
 
 - **두 가지 게임 모드** — Yacht / Yahtzee 선택
-- **실시간 멀티플레이** — 6자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
+- **실시간 멀티플레이** — 4자리 방 코드로 친구와 대전, 랜덤 매치(Yahtzee/Yacht/상관없음 모드 선택)
 - **Google 로그인 / 게스트** — Google OAuth 로그인 시 전적 저장, 게스트로도 플레이 가능
 - **전적 & 통계** — 승률, 최근 게임 기록 (로그인 유저 전용)
 - **주사위 스킨** — 14종 (Classic, Ornate, Bronze, Marble, Crimson, Hologram, Circuit, Banana, Carbon, Wave, Fire, Star, Dragon, Flower), 게임 수 / Bot 승리 / 연승 / 특수 조건 기반 잠금해제
@@ -98,7 +98,7 @@ yacht_for_hw/
 ## How to Play
 
 1. 로그인 화면에서 **Google 로그인** 또는 **게스트 이름 입력**
-2. 로비에서 **Create Room** → 게임 모드 선택 → 6자리 코드를 상대에게 공유
+2. 로비에서 **Create Room** → 게임 모드 선택 → 4자리 코드를 상대에게 공유
 3. 상대는 **Join** → 코드 입력으로 참가 (또는 **Random Match** → 게임 모드 선택 → 상대 찾기)
 4. 턴마다 주사위를 최대 3회 굴리고, 클릭(또는 1~5키)으로 홀드/해제, 스코어카드에서 카테고리 선택
 5. 모든 카테고리가 채워지면 종료 — 합산 점수가 높은 쪽이 승리
