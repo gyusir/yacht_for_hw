@@ -31,8 +31,8 @@
 | `nickname.js` | 닉네임 생성·관리. 언어별 닉네임 (ko/en) |
 | `tutorial.js` | 단계별 튜토리얼. 게임 화면 기반 인터랙티브 가이드 |
 | `ui.js` | 화면 전환, 스코어카드 렌더링(이벤트 위임), 토스트(동적 표시 시간), 오버레이 |
-| `augments.js` | 증강 15종 정의·점수 파이프라인. `functions/augments.js`의 **동일 사본** (수정은 functions 쪽에서 하고 복사. `tools/augment_sim.js --conflict`가 일치 여부 검사) |
-| `augment-ui.js` | 증강 모드 UI: 선택 모달(비공개 동시 선택)·공개, 증강 바, 능동 증강 시트(주사위 변경/봉인/교환/더블), 점수 미리보기 보정, 굴림 상한 계산 |
+| `augments.js` | 증강 24종 정의·점수 파이프라인. `functions/augments.js`의 **동일 사본** (수정은 functions 쪽에서 하고 복사. `tools/augment_sim.js --conflict`가 일치 여부 검사) |
+| `augment-ui.js` | 증강 모드 UI: 선택 모달(비공개 동시 선택)·공개, 증강 바, 능동 증강 시트(주사위 변경/봉인/교환/더블/동전/콜샷/올인), 점수 미리보기 보정, 굴림 상한 계산 |
 | `app.js` | 엔트리포인트. 모듈 연결, 이벤트 바인딩, 이모트, 키보드 단축키, 오프라인 감지, 탭 충돌 감지, ID 토큰 캐싱, App Check 토큰 캐싱 (emulator 모드에서는 App Check 토큰 캐싱 비활성화) |
 
 ### Bot AI (`data/`, `tools/`)
@@ -42,7 +42,7 @@
 | `data/dp_yacht.bin` | Yacht 모드 DP 룩업 테이블 (4,096 상태, Uint16, 8KB) |
 | `data/dp_yahtzee.bin` | Yahtzee 모드 DP 룩업 테이블 (1,048,576 상태, Uint16, 2MB) |
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
-| `tools/augment_sim.js` | 증강 시뮬레이터. `--conflict N`: 무작위 행동 퍼징 + 불변식 검사, `--balance N`: 증강별 점수 차 측정. 증강 규칙·수치를 바꾸면 둘 다 다시 돌린다 |
+| `tools/augment_sim.js` | 증강 시뮬레이터. `--conflict N`: 무작위 행동 퍼징 + 불변식 검사, `--balance N`: 증강별 점수 차 측정. 증강 규칙·수치를 바꾸면 둘 다 다시 돌린다. `tools/augment_rules_test.js`: 증강 규칙 시나리오 테스트 |
 
 ### 주사위 스킨 에셋 (`die_image/`)
 
@@ -70,7 +70,7 @@
 | 파일 | 역할 |
 | --- | --- |
 | `game-rules.js` | 게임 상태 순수 리듀서(applyRoll/applySelect/applyAction/applyPicks). Cloud Functions 트랜잭션과 시뮬레이터가 같은 코드를 사용. 검증 후 변경, 실패 시 상태 무변경 |
-| `augments.js` | 증강 정의·점수 파이프라인(기본→봉인→더블→보험 순서)·굴림 상한·강탈 계산. `js/augments.js`와 동일 |
+| `augments.js` | 증강 정의·점수 파이프라인(기본→봉인→콜샷+25→더블→올인→동전→최후의 일격→막판 스퍼트→보험 순서, 연속 득점은 rules에서 마지막에 가산)·굴림 상한·강탈 계산. `js/augments.js`와 동일 |
 | `index.js` | Cloud Functions: pickAugment, useAugment, createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함. botDifficulty로 basic/gambler/wave 지원 |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
@@ -85,8 +85,9 @@
 - 봇 게임 탭 닫기 시 `sendBeacon`으로 패배 결과 저장 (`saveBotGameResultBeacon`)
 - 무효 판정: Yacht 양쪽 ≥50점, Yahtzee 양쪽 ≥100점 미달 또는 게임 시간 2분 미만 시 `"invalid"` (전적 표시되나 승률·연승에 미반영)
 - Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
-- 증강 모드: 비공개 방 + Yacht 전용(`room.augmentMode`). 1·5·9턴 전에 초급·중급·고급 증강을 단계별 5개 중 랜덤 2개에서 선택. 선택은 `augmentPicks/{room}/{tier}`(클라이언트 접근 불가)에 저장 후 둘 다 고르면 공개. 증강 게임은 history에 `augment: true`, 통계 집계 제외. 단, 증강전 승리는 `stats.augmentWins`로 따로 센다(Ascend 스킨 해금용, 승률·연승엔 미반영). 단계 내 증강 가치 편차는 ±3점 이내로 유지(`tools/augment_sim.js --balance`)
+- 증강 모드: 비공개 방 + Yacht 전용(`room.augmentMode`). 1·5·9턴 전에 초급·중급·고급 증강을 단계별 8개 중 랜덤 2개에서 선택. 선택은 `augmentPicks/{room}/{tier}`(클라이언트 접근 불가)에 저장 후 둘 다 고르면 공개. 증강 게임은 history에 `augment: true`, 통계 집계 제외. 단, 증강전 승리는 `stats.augmentWins`로 따로 센다(Ascend 스킨 해금용, 승률·연승엔 미반영). 단계 내 증강 가치 편차는 ±3점 이내로 유지(`tools/augment_sim.js --balance`)
 - 증강 모드 1~6 보너스: 1~6 칸 합 63 이상이면 +35 (`augments.js`의 `UPPER_BONUS_HURDLE`/`UPPER_BONUS`). 현재 점수로 매번 계산하므로 강탈·교환으로 63 미만이 되면 사라진다. 달성률은 `tools/augment_sim.js --bonus`로 확인
+- 신규 증강 9종: 잭팟(요트 90)·운명의 동전(2회, ×2/×½)·지름길(보너스 기준 55) / 연속 득점(12점+ 연속 시 +6~+24, `player.streak`)·콜샷(4회, 굴리기 전 족보 예고, 성공 +25)·올인(2회, 굴리기 전 선언, 18점+ ×2 아니면 0) / 최후의 일격(마지막 2기록 ×2)·행운의 주사위(종료 시 주사위 4+면 +40, `scores.lottery`·`room.lotteryLog`)·막판 스퍼트(0 아닌 기록 +5). 선언(`turnFlags.called`/`allIn`)은 첫 굴림 전 1턴 1회. 더블·동전·올인은 한 기록에 하나만(`MULTIPLIER_CONFLICT`). 동전·행운의 주사위 결과는 selectCategory가 트랜잭션 밖에서 미리 뽑아 재시도에도 같은 결과
 - 증강 선택 제한 시간 90초(`PICK_TIME_MS`). 시간 초과 시 클라이언트가 자동 선택, 상대가 응답 없으면 `pickAugment({claimTimeout:true})`로 서버가 랜덤 선택
 
 ## Hosting & Deploy

@@ -26,7 +26,10 @@ const ERRORS = {
   ALREADY_EDITED: ["failed-precondition", "A die was already changed this turn."],
   EDIT_BLOCKED: ["failed-precondition", "Only Yacht is left; this augment cannot be used."],
   INVALID_TARGET: ["invalid-argument", "Invalid target."],
-  INVALID_ACTION: ["invalid-argument", "Invalid action."]
+  INVALID_ACTION: ["invalid-argument", "Invalid action."],
+  DECLARE_AFTER_ROLL: ["failed-precondition", "Declare before your first roll."],
+  ALREADY_DECLARED: ["failed-precondition", "Already declared this turn."],
+  MULTIPLIER_CONFLICT: ["failed-precondition", "Only one multiplier per record."]
 };
 
 function fail(code) { return { error: code }; }
@@ -65,7 +68,7 @@ function filledCount(scores, gameMode) {
 // augment=true: augment-mode total (includes the upper-section bonus).
 function total(player, gameMode, augment) {
   const s = (player && player.scores) || {};
-  return augment ? Aug.totalScore(s) : Scoring.totalScore(s, gameMode, s.yahtzeeBonus);
+  return augment ? Aug.totalScore(s, player && player.aug) : Scoring.totalScore(s, gameMode, s.yahtzeeBonus);
 }
 
 function isInt(v, lo, hi) {
@@ -182,7 +185,8 @@ function applyRoll(room, uid, randomValues) {
   room.lastActivityAt = { ".sv": "timestamp" };
 
   if (aug) {
-    if (rollCount === 0) flags = { rollCap: cap };
+    // Keep this turn's declarations (callShot / all-in), made before the first roll.
+    if (rollCount === 0) flags = { rollCap: cap, called: flags.called || null, allIn: flags.allIn === true };
     if (useExtra) {
       me.aug.charges.extraRoll -= 1;
       flags.extraUsed = (flags.extraUsed || 0) + 1;
@@ -248,6 +252,26 @@ function applyAction(room, uid, action) {
     return { ok: true, type: type, die: action.die, value: v };
   }
 
+  // Declarations: before the first roll, one per turn (callShot or all-in).
+  if (type === "call" || type === "allIn") {
+    const pool = type === "call" ? "call" : "allIn";
+    if (Aug.charge(aug, pool) < 1) return fail("NO_CHARGE");
+    if ((room.rollCount || 0) !== 0) return fail("DECLARE_AFTER_ROLL");
+    if (flags.called || flags.allIn) return fail("ALREADY_DECLARED");
+    if (type === "call") {
+      const c = action.category;
+      if (Aug.CALL_CATS.indexOf(c) === -1) return fail("INVALID_TARGET");
+      if (filled(me.scores, c) || me.sealed === c) return fail("INVALID_TARGET");
+      flags.called = c;
+    } else {
+      flags.allIn = true;
+    }
+    aug.charges[pool] -= 1;
+    room.turnFlags = flags;
+    room.lastActivityAt = { ".sv": "timestamp" };
+    return { ok: true, type: type, category: flags.called || null };
+  }
+
   if (type === "seal") {
     if (Aug.charge(aug, "seal") < 1) return fail("NO_CHARGE");
     const c = action.category;
@@ -310,7 +334,13 @@ function applySelect(room, uid, category, opts) {
       if (Aug.INSURANCE.indexOf(opts.useInsurance) === -1) return fail("INVALID_ACTION");
       if (Aug.charge(me.aug, opts.useInsurance) < 1) return fail("NO_CHARGE");
     }
-  } else if (opts.useDouble || opts.useInsurance) {
+    if (opts.useCoin) {
+      if (category === "yacht") return fail("DOUBLE_YACHT");
+      if (Aug.charge(me.aug, "coin") < 1) return fail("NO_CHARGE");
+    }
+    // One active multiplier per record: double, coin and all-in don't stack.
+    if ((opts.useDouble ? 1 : 0) + (opts.useCoin ? 1 : 0) + (flags.allIn ? 1 : 0) > 1) return fail("MULTIPLIER_CONFLICT");
+  } else if (opts.useDouble || opts.useInsurance || opts.useCoin) {
     return fail("NOT_AUGMENT");
   }
 
@@ -326,12 +356,24 @@ function applySelect(room, uid, category, opts) {
   let score;
   let effects = [];
   if (aug) {
+    // coinFlip: 0 = win, 1 = lose (server pre-draws it; falls back to rand)
+    const coinFlip = !opts.useCoin ? null : (opts.coinFlip === 0 || opts.coinFlip === 1) ? opts.coinFlip : opts.rand(2);
+    const cats = Scoring.getCategories(gameMode);
     const r = Aug.finalScore(diceValues, category, {
-      aug: me.aug, sealed: me.sealed, useDouble: !!opts.useDouble, useInsurance: opts.useInsurance || null
+      aug: me.aug, sealed: me.sealed, useDouble: !!opts.useDouble, useInsurance: opts.useInsurance || null,
+      called: flags.called || null, allIn: flags.allIn === true,
+      coin: coinFlip === null ? null : (coinFlip === 0 ? "win" : "lose"),
+      isLastStand: filledCount(myScores, gameMode) >= cats.length - Aug.LAST_STAND_RECORDS
     });
     score = r.score;
     effects = r.effects;
     for (const pool of Object.keys(r.consume)) me.aug.charges[pool] -= r.consume[pool];
+    // Hot streak: bonus for consecutive records of STREAK_MIN+ (after every other effect).
+    if (Aug.owns(me.aug, "hotStreak")) {
+      const st = Aug.streakStep(me.aug, me.streak || 0, score);
+      if (st.bonus > 0) { score += st.bonus; effects.push("hotStreak"); }
+      me.streak = st.streak;
+    }
   } else {
     score = Scoring.calculate(diceValues, category, gameMode);
   }
@@ -371,7 +413,9 @@ function applySelect(room, uid, category, opts) {
   let steals = null;
 
   if (Scoring.allFilled(me.scores, gameMode) && Scoring.allFilled(oppScores, gameMode)) {
-    if (aug) steals = applySteals(room, gameMode);
+    if (aug) {
+      steals = applySteals(room, gameMode, opts);
+    }
     const myTotal = total(me, gameMode, aug);
     const oppTotal = total(opp, gameMode, aug);
     if (myTotal > oppTotal) room.winner = pk;
@@ -395,8 +439,9 @@ function applySelect(room, uid, category, opts) {
   return { ok: true, score: score, effects: effects, yahtzeeBonus: yahtzeeBonus, playerKey: pk, steals: steals };
 }
 
-// Simultaneous: both steals are computed from pre-steal scores, then applied.
-function applySteals(room, gameMode) {
+// Game end: steals (simultaneous, from pre-steal scores), then the lottery roll.
+// opts.lotteryDice: { player1: 1-6, player2: 1-6 } pre-drawn by the server (falls back to opts.rand).
+function applySteals(room, gameMode, opts) {
   const cats = Scoring.getCategories(gameMode);
   const plan = [];
   for (const pk of ["player1", "player2"]) {
@@ -412,6 +457,21 @@ function applySteals(room, gameMode) {
     thief[s.category] += s.amount;
   }
   room.stealLog = plan.length ? plan : null;
+  // Lottery: one die per owner; LOTTERY_MIN+ wins the prize (kept apart from categories).
+  const lotto = [];
+  for (const pk of ["player1", "player2"]) {
+    const p = room.players[pk];
+    if (!Aug.owns(ensureAug(p), "lottery")) continue;
+    const pre = opts && opts.lotteryDice && opts.lotteryDice[pk];
+    let die;
+    if (isInt(pre, 1, 6)) die = pre;
+    else if (opts && typeof opts.rand === "function") die = 1 + opts.rand(6);
+    else throw new Error("applySteals: lottery dice required");
+    const prize = die >= Aug.LOTTERY_MIN ? Aug.LOTTERY_SCORE : 0;
+    p.scores.lottery = prize;
+    lotto.push({ by: pk, die: die, prize: prize });
+  }
+  room.lotteryLog = lotto.length ? lotto : null;
   return plan;
 }
 

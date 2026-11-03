@@ -3188,6 +3188,24 @@ button.aug-chip.armed:not(:disabled):hover {
   margin-left: 4px;
 }
 
+/* All-in confirm spans the sheet's two-column target grid */
+.aug-target-list .aug-allin-go { grid-column: 1 / -1; }
+
+/* An armed declaration stays readable even though it can't be pressed again */
+button.aug-chip.armed:disabled { opacity: 1; }
+
+/* Category called with Call Shot this turn */
+.scorecard .score-cell.aug-called {
+  box-shadow: inset 0 0 0 2px var(--aug-tier2);
+  position: relative;
+}
+
+.scorecard .score-cell.aug-called::after {
+  content: "\1F3AF";
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
 /* Overlays (pick / reveal / action sheets) */
 .aug-overlay .aug-sheet {
   width: min(92vw, 420px);
