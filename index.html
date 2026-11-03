@@ -16,7 +16,7 @@
   <script>
     // Force reload when app version changes (iOS Safari has no hard-refresh)
     (function(){
-      var V='5.3';
+      var V='5.4';
       var K='yacht-v';
       var prev=localStorage.getItem(K);
       localStorage.setItem(K,V);
@@ -30,12 +30,12 @@
   </script>
   <title>Yacht Dice</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <link rel="stylesheet" href="css/style.css?v=5.4">
 </head>
 <body>
   <header>
     <div class="header-top">
-      <h1><span data-i18n="title_yacht">Yacht Dice</span><span class="app-version">v5.3</span></h1>
+      <h1><span data-i18n="title_yacht">Yacht Dice</span><span class="app-version">v5.4</span></h1>
       <div class="header-top-controls">
         <button id="lang-toggle" class="btn-icon" title="Language" aria-label="Toggle language">KO</button>
         <button id="bgm-toggle" aria-label="Toggle music" aria-pressed="false">&#9834;</button>
@@ -103,7 +103,7 @@
       <p data-i18n="lobby_desc">Create a new room or join an existing one.</p>
       <div class="lobby-actions">
         <div class="join-section">
-          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="6" autocomplete="off">
+          <input type="text" id="room-code-input" data-i18n-placeholder="enter_room_code" placeholder="Enter Room code" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
           <button id="btn-join" class="btn-secondary" disabled data-i18n="join">Join</button>
         </div>
         <p id="lobby-error" class="error-text" hidden></p>
@@ -425,24 +425,24 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 
   <!-- Game Scripts (query string for iOS Safari cache busting) -->
-  <script src="js/firebase-config.js?v=5.3"></script>
-  <script src="js/i18n.js?v=5.3"></script>
-  <script src="js/audio.js?v=5.3"></script>
-  <script src="js/sfx.js?v=5.3"></script>
-  <script src="js/nickname.js?v=5.3"></script>
-  <script src="js/scoring.js?v=5.3"></script>
-  <script src="js/augments.js?v=5.3"></script>
-  <script src="js/dice.js?v=5.3"></script>
-  <script src="js/dice-skins.js?v=5.3"></script>
-  <script src="js/auth.js?v=5.3"></script>
-  <script src="js/history.js?v=5.3"></script>
-  <script src="js/ui.js?v=5.3"></script>
-  <script src="js/augment-ui.js?v=5.3"></script>
-  <script src="js/lobby.js?v=5.3"></script>
-  <script src="js/bot-ai.js?v=5.3"></script>
-  <script src="js/bot-game.js?v=5.3"></script>
-  <script src="js/game.js?v=5.3"></script>
-  <script src="js/tutorial.js?v=5.3"></script>
-  <script src="js/app.js?v=5.3"></script>
+  <script src="js/firebase-config.js?v=5.4"></script>
+  <script src="js/i18n.js?v=5.4"></script>
+  <script src="js/audio.js?v=5.4"></script>
+  <script src="js/sfx.js?v=5.4"></script>
+  <script src="js/nickname.js?v=5.4"></script>
+  <script src="js/scoring.js?v=5.4"></script>
+  <script src="js/augments.js?v=5.4"></script>
+  <script src="js/dice.js?v=5.4"></script>
+  <script src="js/dice-skins.js?v=5.4"></script>
+  <script src="js/auth.js?v=5.4"></script>
+  <script src="js/history.js?v=5.4"></script>
+  <script src="js/ui.js?v=5.4"></script>
+  <script src="js/augment-ui.js?v=5.4"></script>
+  <script src="js/lobby.js?v=5.4"></script>
+  <script src="js/bot-ai.js?v=5.4"></script>
+  <script src="js/bot-game.js?v=5.4"></script>
+  <script src="js/game.js?v=5.4"></script>
+  <script src="js/tutorial.js?v=5.4"></script>
+  <script src="js/app.js?v=5.4"></script>
 </body>
 </html>

@@ -402,12 +402,16 @@
     });
   }
 
+  // Room codes are 4 digits: keep only digits so a pasted "#1234" or "12 34" still works.
+  var ROOM_CODE_LENGTH = 4;
   roomCodeInput.addEventListener('input', function () {
-    btnJoin.disabled = roomCodeInput.value.trim().length < 6;
+    var digits = roomCodeInput.value.replace(/\D/g, '').slice(0, ROOM_CODE_LENGTH);
+    if (digits !== roomCodeInput.value) roomCodeInput.value = digits;
+    btnJoin.disabled = digits.length < ROOM_CODE_LENGTH;
   });
 
   roomCodeInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && roomCodeInput.value.trim().length >= 6) {
+    if (e.key === 'Enter' && roomCodeInput.value.trim().length >= ROOM_CODE_LENGTH) {
       btnJoin.click();
     }
   });
@@ -447,7 +451,7 @@
 
   btnJoin.addEventListener('click', function () {
     var code = roomCodeInput.value.trim();
-    if (code.length < 6) return;
+    if (code.length < ROOM_CODE_LENGTH) return;
 
     var originalJoinText = btnJoin.textContent;
     btnJoin.disabled = true;
