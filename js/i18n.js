@@ -562,7 +562,7 @@
       shortcut_title: 'PC \ub2e8\ucd95\ud0a4',
       rule_title: '\uaddc\uce59',
       leave_title: '\ub098\uac00\uae30',
-      lets_roll: '\uad74\ub9ac\uae30!',
+      lets_roll: '\uad74\ub824!',
       roll_end: '\uad74\ub9bc \ub05d',
       foes_turn: '\uc0c1\ub300 \ud134',
       category: '\uce74\ud14c\uace0\ub9ac',
