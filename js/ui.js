@@ -154,7 +154,7 @@
     } else if (count >= cap || (info && info.locked)) {
       btn.innerHTML = I18n ? I18n.t('roll_end') : 'Roll End';
     } else {
-      btn.innerHTML = (I18n ? I18n.t('lets_roll') : "Let's Roll!") + '<br><small>(' + count + '/' + cap + ')</small>';
+      btn.innerHTML = (I18n ? I18n.t('lets_roll') : 'Roll!') + '<br><small>(' + count + '/' + cap + ')</small>';
     }
   }
 
@@ -166,7 +166,7 @@
     if (!isMyTurn) {
       var rc = rollCount || 0;
       var cap = (info && info.cap) || 3;
-      btn.innerHTML = (I18n ? I18n.t('foes_turn') : "Foe's turn") + '<br><small>(' + rc + '/' + cap + ')</small>';
+      btn.innerHTML = (I18n ? I18n.t('foes_turn') : 'Wait') + '<br><small>(' + rc + '/' + cap + ')</small>';
     }
   }
 

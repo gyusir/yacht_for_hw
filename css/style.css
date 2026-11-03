@@ -2794,6 +2794,18 @@ p.session-notice {
   }
 }
 
+/* Narrow phones (Galaxy 360px, Fold cover, SE 1st gen): shrink dice a little so the
+   roll button keeps room for a one-line label and the row never overflows. */
+@media (max-width: 370px) {
+  .dice-roll-row { gap: 8px; }
+  .dice-area { gap: 5px; }
+  .die {
+    width: clamp(42px, 13vw, 52px);
+    height: clamp(42px, 13vw, 52px);
+    padding: 6px;
+  }
+}
+
 /* ---- Scorecard header 3D mini dice ---- */
 .header-die-wrap {
   display: inline-block;
