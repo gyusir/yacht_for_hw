@@ -3332,7 +3332,7 @@ button.aug-chip.armed:not(:disabled):hover {
 
 /* ==========================================================================
  * Ascend skin — evolves with augment picks (Lv1 잔불 → Lv2 용암 → Lv3 태양)
- * Level comes from #dice-area[data-ascend-level] (set by DiceSkins.setAscendLevel).
+ * Level comes from #dice-area[data-ascend-level] (set by DiceSkins: the turn player's level).
  * No attribute / non-augment games = Lv1. Same look in light & dark themes.
  * Cracks (::before) share one shape across levels; ::after = runes / bronze
  * brackets / gold gems. Pips sit above both layers.
@@ -3417,7 +3417,7 @@ button.aug-chip.armed:not(:disabled):hover {
   50% { box-shadow: 0 0 0 2px #e0a93a, 0 0 0 3.5px #6a4508, 0 0 16px rgba(224,169,58,0.8), 0 0 30px rgba(255,122,26,0.7), inset 0 0 14px rgba(255,122,26,0.45); }
 }
 
-/* Level-up burst (DiceSkins.setAscendLevel adds .ascend-up for ~1.4s) */
+/* Level-up burst (DiceSkins.ascendRollStopped adds .ascend-up for ~1.4s) */
 [data-dice-skin="ascend"].ascend-up .die { animation: ascendUp 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
 [data-dice-skin="ascend"].ascend-up .die:nth-child(2) { animation-delay: 0.08s; }
 [data-dice-skin="ascend"].ascend-up .die:nth-child(3) { animation-delay: 0.16s; }

@@ -567,7 +567,7 @@
     oppKey = pk === 'player1' ? 'player2' : 'player1';
     var Skins = window.YachtGame.DiceSkins;
     if (!isActive() || !room.players || !room.players[myKey] || !room.players[oppKey]) {
-      if (Skins && Skins.setAscendLevel) Skins.setAscendLevel(1, false);
+      if (Skins && Skins.setAscendTargets) Skins.setAscendTargets(null);
       var bar = document.getElementById('augment-bar');
       if (bar) bar.classList.add('hidden');
       return;
@@ -578,8 +578,13 @@
     }
     if (room.currentTurn !== myKey || room.status !== 'playing') { doubleArmed = false; armedInsurance = null; }
     if (room.status !== 'playing') { closeOverlay('aug-pick'); closeOverlay('aug-sheet'); }
-    // Ascend skin evolves with each augment I own (animate only on live picks, not on rejoin).
-    if (Skins && Skins.setAscendLevel) Skins.setAscendLevel(augOf(room.players[myKey]).owned.length, initialized);
+    // Ascend skin level per player = augments owned (the visible evolution waits for their next roll).
+    if (Skins && Skins.setAscendTargets) {
+      var levels = {};
+      levels[myKey] = augOf(room.players[myKey]).owned.length;
+      levels[oppKey] = augOf(room.players[oppKey]).owned.length;
+      Skins.setAscendTargets(levels);
+    }
     renderPickModal();
     renderReveal();
     notify(prev);
@@ -604,7 +609,7 @@
     var pb = document.getElementById('aug-peek-bar');
     if (pb) pb.classList.add('hidden');
     roomCodeGetter = getRoomCode || null;
-    if (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.setAscendLevel) window.YachtGame.DiceSkins.setAscendLevel(1, false);
+    if (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.setAscendTargets) window.YachtGame.DiceSkins.setAscendTargets(null);
     closeOverlay('aug-pick'); closeOverlay('aug-sheet'); closeOverlay('aug-reveal');
     var bar = document.getElementById('augment-bar');
     if (bar) { bar.classList.add('hidden'); bar.innerHTML = ''; }

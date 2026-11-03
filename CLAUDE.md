@@ -54,7 +54,7 @@
 | `die_image/dragon/` | Dragon 스킨 이미지 |
 | `die_image/flower/` | Flower 스킨 이미지 |
 
-**Ascend 스킨**(이미지 없음, CSS만): 증강전 5승 해금. 증강 게임에서 내가 가진 증강 수(1~3)에 따라 Lv1 잔불 → Lv2 용암 → Lv3 태양으로 진화한다. `augment-ui.js`가 `DiceSkins.setAscendLevel()`로 `#dice-area[data-ascend-level]`을 설정하고 CSS가 단계별 모양을 고른다. 증강전이 아니면 Lv1. 라이트·다크 모드 공통 외관.
+**Ascend 스킨**(이미지 없음, CSS만): 증강전 5승 해금. 증강 게임에서 턴 플레이어가 가진 증강 수(1~3)에 따라 Lv1 잔불 → Lv2 용암 → Lv3 태양으로 진화한다. 증강 선택 시점엔 주사위가 classic이라, 진화 연출은 그 플레이어의 선택 후 첫 굴림이 멈출 때 재생된다(양쪽 화면 모두). `augment-ui.js`가 `DiceSkins.setAscendTargets()`로 플레이어별 목표 단계를, `game.js`가 `setAscendTurn()`/`ascendRollStopped()`로 표시 단계를 갱신해 `#dice-area[data-ascend-level]`에 반영한다. 증강전이 아니면 Lv1. 라이트·다크 모드 공통 외관.
 
 ### 오디오 에셋 (`assets/audio/`)
 

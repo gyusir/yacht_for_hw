@@ -349,24 +349,59 @@
     return html;
   }
 
-  // Ascend skin level (1-3) = number of augments picked in the current augment game.
-  // Stored on #dice-area as data-ascend-level; CSS picks the look. Non-augment games stay at 1.
-  var ascendLevel = 1;
+  // Ascend skin level (1-3) per player = augments that player has picked this game.
+  // Picks happen before anyone rolls (dice show classic then), so the visible level
+  // only catches up when that player's first roll after the pick stops — both
+  // players see the dice evolve. Stored on #dice-area as data-ascend-level.
+  var ascendTarget = {}; // playerKey -> level earned
+  var ascendShown = {};  // playerKey -> level currently displayed
+  var ascendTurn = null;
   var ascendUpTimer = null;
-  function setAscendLevel(level, animate) {
-    level = Math.max(1, Math.min(3, level || 1));
+
+  function clampAscend(level) { return Math.max(1, Math.min(3, level || 1)); }
+
+  function paintAscend() {
     var diceArea = document.getElementById('dice-area');
-    var prev = ascendLevel;
-    ascendLevel = level;
     if (!diceArea) return;
+    var level = (ascendTurn && ascendShown[ascendTurn]) || 1;
     diceArea.setAttribute('data-ascend-level', String(level));
-    if (animate && level > prev && currentSkinId === 'ascend') {
-      diceArea.classList.remove('ascend-up');
-      void diceArea.offsetWidth; // restart the animation
-      diceArea.classList.add('ascend-up');
-      clearTimeout(ascendUpTimer);
-      ascendUpTimer = setTimeout(function () { diceArea.classList.remove('ascend-up'); }, 1400);
+  }
+
+  // levels: { player1: n, player2: m } owned-augment counts, or null to reset (non-augment game).
+  function setAscendTargets(levels) {
+    if (!levels) {
+      ascendTarget = {}; ascendShown = {}; ascendTurn = null;
+      var diceArea = document.getElementById('dice-area');
+      if (diceArea) diceArea.classList.remove('ascend-up');
+      paintAscend();
+      return;
     }
+    for (var pk in levels) {
+      if (!levels.hasOwnProperty(pk)) continue;
+      ascendTarget[pk] = clampAscend(levels[pk]);
+      // First sighting (game start / rejoin): show the earned level without animation.
+      if (ascendShown[pk] == null) ascendShown[pk] = ascendTarget[pk];
+    }
+    paintAscend();
+  }
+
+  function setAscendTurn(playerKey) {
+    ascendTurn = playerKey || null;
+    paintAscend();
+  }
+
+  // Called when a player's roll animation finishes: evolve if they earned a new level.
+  function ascendRollStopped(playerKey) {
+    if (!playerKey || !ascendTarget[playerKey] || ascendShown[playerKey] >= ascendTarget[playerKey]) return;
+    ascendShown[playerKey] = ascendTarget[playerKey];
+    paintAscend();
+    var diceArea = document.getElementById('dice-area');
+    if (!diceArea || currentSkinId !== 'ascend' || ascendTurn !== playerKey) return;
+    diceArea.classList.remove('ascend-up');
+    void diceArea.offsetWidth; // restart the animation
+    diceArea.classList.add('ascend-up');
+    clearTimeout(ascendUpTimer);
+    ascendUpTimer = setTimeout(function () { diceArea.classList.remove('ascend-up'); }, 1400);
   }
 
   function getCurrentSkin() {
@@ -384,7 +419,9 @@
     renderSkinSelector: renderSkinSelector,
     renderMiniDieHTML: renderMiniDieHTML,
     getCurrentSkin: getCurrentSkin,
-    setAscendLevel: setAscendLevel,
+    setAscendTargets: setAscendTargets,
+    setAscendTurn: setAscendTurn,
+    ascendRollStopped: ascendRollStopped,
     getCrimsonChar: getCrimsonChar,
     SKIN_DEFS: SKIN_DEFS
   };

@@ -273,6 +273,7 @@
       } else {
         DiceSkins.applySkin('classic');
       }
+      if (DiceSkins.setAscendTurn) DiceSkins.setAscendTurn(room.currentTurn);
     }
 
     // Update turn indicator
@@ -311,10 +312,12 @@
       var oppFinalValues = [];
       for (var fi = 0; fi < 5; fi++) oppFinalValues.push(diceState[fi].value);
       var oppDiceState = diceState;
+      var oppRollerKey = room.currentTurn;
       setTimeout(function () {
         Dice.staggerStop(oppSpinTimers, dieEls, oppFinalValues, function () {
           Dice.renderAll(oppDiceState);
           isRolling = false;
+          if (DiceSkins && DiceSkins.ascendRollStopped) DiceSkins.ascendRollStopped(oppRollerKey);
           checkCelebration(oppFinalValues);
           // Render scorecard now that all dice have stopped
           if (lastRoomData) {
@@ -427,6 +430,7 @@
     if (DiceSkins) {
       var myData = room.players[localPlayerKey];
       DiceSkins.applySkin((myData && myData.diceSkin) || 'classic');
+      if (DiceSkins.setAscendTurn) DiceSkins.setAscendTurn(localPlayerKey);
     }
 
     // Determine which dice are held (for animation: skip held dice)
@@ -506,6 +510,7 @@
       window.YachtGame.Dice.staggerStop(spinTimers, dieEls, finalValues, function () {
         window.YachtGame.Dice.renderAll(finalState);
         isRolling = false;
+        if (DiceSkins && DiceSkins.ascendRollStopped) DiceSkins.ascendRollStopped(localPlayerKey);
         checkCelebration(finalValues);
       // Re-enable roll button and re-render scorecard so focus logic runs correctly
       if (lastRoomData) {
