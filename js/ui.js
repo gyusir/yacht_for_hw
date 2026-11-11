@@ -1085,6 +1085,168 @@
         }
       },
       maxFrames: 200
+    },
+
+    // Ascend: embers rise from the bottom while a shockwave bursts from the dice.
+    // Scales with the displayed ascend level: Lv1 ember, Lv2 + lava spray, Lv3 + sun rays.
+    ascend: {
+      animate: function(canvas, ctx) {
+        var diceArea = document.getElementById('dice-area');
+        var level = parseInt(diceArea && diceArea.getAttribute('data-ascend-level'), 10) || 1;
+        var cx = canvas.width / 2;
+        var cy = canvas.height / 2;
+        var rect = diceArea && diceArea.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.bottom > 0 && rect.top < canvas.height) {
+          cx = rect.left + rect.width / 2;
+          cy = rect.top + rect.height / 2;
+        }
+        var PALETTES = {
+          1: { ember: ['#ff4a1c', '#ff6a2b', '#ff8a3d', '#ffb35c'], ring: '255,110,40' },
+          2: { ember: ['#ff3d0a', '#ff6a00', '#ff9a1f', '#ffc04d'], ring: '255,90,10' },
+          3: { ember: ['#ffb020', '#ffd24a', '#ffe9a0', '#ffffff'], ring: '255,215,110' }
+        };
+        var pal = PALETTES[level] || PALETTES[1];
+        var maxR = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) * 0.6;
+        var totalFrames = 160;
+        var frame = 0;
+
+        var embers = [];
+        var emberCount = 90 + level * 30;
+        for (var i = 0; i < emberCount; i++) {
+          embers.push({
+            x: Math.random() * canvas.width,
+            y: canvas.height + 10 + Math.random() * canvas.height * 0.4,
+            size: 4 + Math.random() * (5 + level * 2),
+            color: pal.ember[Math.floor(Math.random() * pal.ember.length)],
+            vy: -(4 + Math.random() * 5 + level),
+            phase: Math.random() * Math.PI * 2,
+            sway: 0.6 + Math.random() * 1.4,
+            delay: Math.floor(Math.random() * 40)
+          });
+        }
+
+        var drops = [];
+        if (level >= 2) {
+          for (var d = 0; d < 46; d++) {
+            var ang = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.6;
+            var spd = 6 + Math.random() * 8;
+            drops.push({
+              x: cx, y: cy,
+              vx: Math.cos(ang) * spd,
+              vy: Math.sin(ang) * spd,
+              size: 5 + Math.random() * 7,
+              color: pal.ember[Math.floor(Math.random() * 2)]
+            });
+          }
+        }
+
+        function ring(start, dur, width) {
+          var t = (frame - start) / dur;
+          if (t <= 0 || t >= 1) return;
+          var ease = 1 - Math.pow(1 - t, 3);
+          ctx.beginPath();
+          ctx.arc(cx, cy, 10 + ease * maxR, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(' + pal.ring + ',' + (1 - t) * 0.9 + ')';
+          ctx.lineWidth = width * (1 - t) + 1;
+          ctx.stroke();
+        }
+
+        function animate() {
+          frame++;
+          if (frame > totalFrames) {
+            if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+            return;
+          }
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          var baseAlpha = frame > totalFrames - 30 ? (totalFrames - frame) / 30 : 1;
+          ctx.globalAlpha = baseAlpha;
+          ctx.globalCompositeOperation = 'lighter';
+
+          // Core flash at the dice
+          if (frame <= 50) {
+            var ft = frame / 50;
+            var fr = 60 + ft * 220 * (0.7 + level * 0.15);
+            var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, fr);
+            g.addColorStop(0, 'rgba(255,255,255,' + (1 - ft) * 0.9 + ')');
+            g.addColorStop(0.35, 'rgba(' + pal.ring + ',' + (1 - ft) * 0.7 + ')');
+            g.addColorStop(1, 'rgba(' + pal.ring + ',0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(cx, cy, fr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Sun rays (Lv3)
+          if (level >= 3 && frame > 8 && frame < 120) {
+            var rt = (frame - 8) / 112;
+            var rayA = Math.sin(rt * Math.PI) * 0.55;
+            var rays = 12;
+            var len = maxR * 0.55 * Math.min(1, rt * 3);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(frame * 0.012);
+            for (var r = 0; r < rays; r++) {
+              ctx.rotate(Math.PI * 2 / rays);
+              var rg = ctx.createLinearGradient(0, 0, len, 0);
+              rg.addColorStop(0, 'rgba(255,240,190,' + rayA + ')');
+              rg.addColorStop(1, 'rgba(255,200,80,0)');
+              ctx.fillStyle = rg;
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.lineTo(len, -len * 0.07);
+              ctx.lineTo(len, len * 0.07);
+              ctx.closePath();
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+
+          // Shockwaves (one more per level)
+          ring(4, 60, 14);
+          if (level >= 2) ring(18, 60, 10);
+          if (level >= 3) ring(32, 60, 8);
+
+          // Lava spray (Lv2+)
+          for (var k = 0; k < drops.length; k++) {
+            var dp = drops[k];
+            dp.x += dp.vx;
+            dp.y += dp.vy;
+            dp.vy += 0.32;
+            dp.vx *= 0.99;
+            dp.size *= 0.985;
+            if (dp.size < 0.4) continue;
+            ctx.beginPath();
+            ctx.arc(dp.x, dp.y, dp.size, 0, Math.PI * 2);
+            ctx.fillStyle = dp.color;
+            ctx.fill();
+          }
+
+          // Rising embers
+          for (var e = 0; e < embers.length; e++) {
+            var p = embers[e];
+            if (frame < p.delay) continue;
+            var age = frame - p.delay;
+            p.y += p.vy;
+            p.vy *= 0.995;
+            p.x += Math.sin(age * 0.07 + p.phase) * p.sway;
+            var flicker = 0.6 + Math.random() * 0.4;
+            var sz = p.size * Math.max(0.25, 1 - age / 160);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, sz * 2.6, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = baseAlpha * 0.3 * flicker;
+            ctx.fill();
+            ctx.globalAlpha = baseAlpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, sz, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.globalCompositeOperation = 'source-over';
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
     }
   };
 
