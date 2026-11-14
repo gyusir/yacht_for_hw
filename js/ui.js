@@ -1261,8 +1261,15 @@
     canvas.height = window.innerHeight;
     var ctx = canvas.getContext('2d');
 
-    var skinId = overrideSkinId || (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
+    var DS = window.YachtGame.DiceSkins;
+    var skinToken = overrideSkinId || (DS && DS.getSkinToken ? DS.getSkinToken() : DS && DS.getCurrentSkin()) || 'classic';
+    var skinId = DS && DS.parseSkin ? DS.parseSkin(skinToken).id : skinToken;
     var effect = CELEBRATION_EFFECTS[skinId];
+    // Ascend colors (blue, red, Claude, ...) reuse the gold effect, hue-shifted.
+    if (skinId === 'ascend' && DS && DS.getAscendHue) {
+      var hue = DS.getAscendHue(skinToken);
+      if (hue) canvas.style.filter = 'hue-rotate(' + hue + 'deg)';
+    }
 
     // Dragon: fully custom animation
     if (effect && effect.animate) {

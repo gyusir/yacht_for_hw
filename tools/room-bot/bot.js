@@ -59,7 +59,7 @@ function freshRoom() {
     type: "private", gameMode: "yacht", augmentMode: true, status: "waiting",
     createdAt: TS, lastActivityAt: TS, currentTurn: "player1", rollCount: 0, dice: dice,
     players: { player1: { name: NAME, nicknameKo: NAME, nicknameEn: NAME, uid: UID, connected: true,
-      scores: { _init: true }, diceSkin: "classic", bot: true } },
+      scores: { _init: true }, diceSkin: "ascend.claude", bot: true } },
     winner: "", hostBot: true
   };
 }

@@ -71,6 +71,8 @@
 
 **Ascend 스킨**(이미지 없음, CSS만): 증강전 5승 해금. 증강 게임에서 턴 플레이어가 가진 증강 수(1~3)에 따라 Lv1 잔불 → Lv2 용암 → Lv3 태양으로 진화한다. 증강 선택 시점엔 주사위가 classic이라, 진화 연출은 그 플레이어의 선택 후 첫 굴림이 멈출 때 재생된다(양쪽 화면 모두). `augment-ui.js`가 `DiceSkins.setAscendTargets()`로 플레이어별 목표 단계를, `game.js`가 `setAscendTurn()`/`ascendRollStopped()`로 표시 단계를 갱신해 `#dice-area[data-ascend-level]`에 반영한다. 증강전이 아니면 Lv1. 라이트·다크 모드 공통 외관.
 
+**Ascend 색상 / Claude Ascend**: 저장·동기화되는 스킨 값은 토큰이다 — `'<skin id>'` 또는 `'ascend.<color>'`(`DiceSkins.parseSkin()`). `applySkin(token)`이 `data-dice-skin`과 `data-dice-color`를 붙이고, 방에 보낼 때는 `getSkinToken()`, 스킨별 로직·효과에는 `getCurrentSkin()`(기본 id)을 쓴다. 로비에서 선택된 Ascend 타일을 다시 누르면 골드 → 블루 → 레드 → 바이올렛 → 그린 순환(CSS `--ascend-hue` hue-rotate, 고정 배지는 역회전, 축하 캔버스도 같은 hue). `ascend.claude`는 별도 타일로, 7777 방 봇(`bot-claude`)이 쓰고 그 봇에게 증강전 5승(`stats/claudeWins`, onGameFinished)하면 해금된다. 아이보리 → 피치 → 테라코타 바탕에 스파크 모양 눈(CSS mask).
+
 ### 오디오 에셋 (`assets/audio/`)
 
 | 파일 | 출처 | 라이선스 |
