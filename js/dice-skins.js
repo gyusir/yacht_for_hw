@@ -34,13 +34,44 @@
     { id: 'flower',    name: 'Flower',    unlockAt: -1, unlockAtYachtStreak: 3 },
     { id: 'siru',      name: 'Siru',      unlockAt: -1, unlockAtWins: 1500 },
     // Ascend: evolves with augment picks in augment games (Lv1 → Lv3). Unlocked by augment-mode wins.
-    { id: 'ascend',    name: 'Ascend',    unlockAt: -1, unlockAtAugmentWins: 5 }
+    { id: 'ascend',    name: 'Ascend',    unlockAt: -1, unlockAtAugmentWins: 5 },
+    // Claude Ascend: Ascend in Claude colors (ivory + terracotta, spark pips). Worn by the room bot;
+    // unlocked by beating it (room 7777) 5 times. The id is a skin token: base skin + '.' + color.
+    { id: 'ascend.claude', name: 'Claude', unlockAt: -1, unlockAtClaudeWins: 5 }
   ];
+
+  // ─── Skin tokens ───
+  // A stored/synced skin value is a token: '<skin id>' or 'ascend.<color>'. Only Ascend has colors.
+  // #dice-area and preview dice get data-dice-skin="<id>" plus data-dice-color="<color>".
+  // Clicking the selected Ascend tile again cycles ASCEND_COLORS ('gold' = plain 'ascend').
+  var ASCEND_COLORS = ['gold', 'blue', 'red', 'violet', 'green'];
+  // Hue shift from the gold original, also used to tint the Ascend celebration canvas.
+  var ASCEND_HUE = { gold: 0, blue: 180, red: -40, violet: -110, green: 85, claude: -22 };
+
+  function parseSkin(token) {
+    token = String(token || 'classic');
+    var dot = token.indexOf('.');
+    if (dot === -1) return { id: token, color: null };
+    var id = token.slice(0, dot);
+    var color = token.slice(dot + 1);
+    if (id !== 'ascend' || !ASCEND_HUE.hasOwnProperty(color) || color === 'gold') return { id: id, color: null };
+    return { id: id, color: color };
+  }
+
+  function skinToken(id, color) {
+    return (id === 'ascend' && color && color !== 'gold') ? 'ascend.' + color : id;
+  }
+
+  function skinAttrs(token) {
+    var s = parseSkin(token);
+    return 'data-dice-skin="' + s.id + '"' + (s.color ? ' data-dice-color="' + s.color + '"' : '');
+  }
 
   // Calligraphy characters for Crimson skin
   var CRIMSON_CHARS = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六' };
 
   var currentSkinId = 'classic';
+  var currentSkinColor = null;
 
   function getSkinDef(skinId) {
     for (var i = 0; i < SKIN_DEFS.length; i++) {
@@ -49,17 +80,20 @@
     return SKIN_DEFS[0];
   }
 
-  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
+  function getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins) {
     var count = 0;
     for (var i = 0; i < SKIN_DEFS.length; i++) {
-      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak, achievements, augmentWins)) count++;
+      if (isSkinUnlocked(SKIN_DEFS[i], totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins)) count++;
     }
     return count;
   }
 
-  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
+  function isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins) {
     if (def.unlockAtAugmentWins) {
       return (augmentWins || 0) >= def.unlockAtAugmentWins;
+    }
+    if (def.unlockAtClaudeWins) {
+      return (claudeWins || 0) >= def.unlockAtClaudeWins;
     }
     if (def.unlockBy) {
       var wins = (botWins && botWins[def.unlockBy]) || 0;
@@ -85,17 +119,22 @@
     return totalGames >= def.unlockAt;
   }
 
-  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins) {
+  function isUnlocked(skinId, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins) {
     var def = getSkinDef(skinId);
-    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
+    return isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins);
   }
 
-  function applySkin(skinId) {
+  // Accepts a skin token ('ascend.blue' etc.), see parseSkin().
+  function applySkin(token) {
     var diceArea = document.getElementById('dice-area');
     if (!diceArea) return;
 
-    currentSkinId = skinId || 'classic';
-    diceArea.setAttribute('data-dice-skin', currentSkinId);
+    var s = parseSkin(token);
+    currentSkinId = s.id;
+    currentSkinColor = s.color;
+    diceArea.setAttribute('data-dice-skin', s.id);
+    if (s.color) diceArea.setAttribute('data-dice-color', s.color);
+    else diceArea.removeAttribute('data-dice-color');
   }
 
   function saveSkin(skinId) {
@@ -142,7 +181,7 @@
     if (callback) callback(cached || 'classic');
   }
 
-  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements, augmentWins) {
+  function renderSkinSelector(containerEl, totalGames, botWins, totalWins, maxStreak, currentStreak, achievements, augmentWins, claudeWins) {
     if (!containerEl) return;
     totalGames = totalGames || 0;
     totalWins = totalWins || 0;
@@ -151,6 +190,7 @@
     currentStreak = currentStreak || 0;
     achievements = achievements || {};
     augmentWins = augmentWins || 0;
+    claudeWins = claudeWins || 0;
 
     var playContainer = document.getElementById('skin-options-play');
     var botContainer = document.getElementById('skin-options-bot');
@@ -160,28 +200,35 @@
     playContainer.innerHTML = '';
     botContainer.innerHTML = '';
 
-    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
+    var unlockedCount = getUnlockedCount(totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins);
     var countEl = document.getElementById('skin-unlock-count');
     if (countEl) {
       var I18n = window.YachtGame.I18n;
-      countEl.textContent = (unlockedCount - 1) + '/15 ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
+      countEl.textContent = (unlockedCount - 1) + '/' + (SKIN_DEFS.length - 1) + ' ' + (I18n ? I18n.t('skin_unlocked_count') : 'unlocked');
     }
 
     for (var i = 0; i < SKIN_DEFS.length; i++) {
       var def = SKIN_DEFS[i];
-      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins);
+      var unlocked = isSkinUnlocked(def, totalGames, botWins, totalWins, maxStreak, achievements, augmentWins, claudeWins);
       var targetContainer = (def.unlockBy || def.unlockAtBotWinsTotal) ? botContainer : playContainer;
 
       var option = document.createElement('div');
       option.className = 'skin-option';
       if (!unlocked) option.classList.add('locked');
-      if (def.id === currentSkinId) option.classList.add('active');
-      option.setAttribute('data-skin-id', def.id);
+      var defSkin = parseSkin(def.id);
+      // The Ascend tile stands for every non-Claude color; the Claude tile only for itself.
+      var isActive = def.id === 'ascend'
+        ? (currentSkinId === 'ascend' && currentSkinColor !== 'claude')
+        : (defSkin.id === currentSkinId && defSkin.color === currentSkinColor);
+      if (isActive) option.classList.add('active');
+      option.setAttribute('data-skin-id', defSkin.id);
 
-      // Mini die preview showing value 5
+      // Mini die preview showing value 5 (the Ascend tile shows the chosen color)
       var miniDie = document.createElement('div');
       miniDie.className = 'skin-preview-die';
-      miniDie.setAttribute('data-dice-skin', def.id);
+      miniDie.setAttribute('data-dice-skin', defSkin.id);
+      var previewColor = def.id === 'ascend' ? (isActive ? currentSkinColor : null) : defSkin.color;
+      if (previewColor) miniDie.setAttribute('data-dice-color', previewColor);
       miniDie.setAttribute('data-value', '5');
 
       // For crimson, show calligraphy character
@@ -254,7 +301,9 @@
         var progressEl = document.createElement('span');
         progressEl.className = 'lock-progress';
         var I18n = window.YachtGame.I18n;
-        if (def.unlockAtAugmentWins) {
+        if (def.unlockAtClaudeWins) {
+          progressEl.textContent = (I18n ? I18n.t('skin_vs_claude') : 'vs Claude') + ' ' + claudeWins + '/' + def.unlockAtClaudeWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
+        } else if (def.unlockAtAugmentWins) {
           progressEl.textContent = (I18n ? I18n.t('skin_aug_wins') : 'Augment') + ' ' + augmentWins + '/' + def.unlockAtAugmentWins + ' ' + (I18n ? I18n.t('skin_wins_count') : 'wins');
         } else if (def.unlockBy) {
           var wins = (botWins[def.unlockBy]) || 0;
@@ -278,25 +327,51 @@
         option.appendChild(progressEl);
       }
 
+      // Ascend tile: current color name + cycle hint
+      var colorEl = null;
+      if (def.id === 'ascend' && unlocked) {
+        colorEl = document.createElement('span');
+        colorEl.className = 'lock-progress skin-color';
+        colorEl.textContent = colorLabel(isActive ? (currentSkinColor || 'gold') : 'gold');
+        option.appendChild(colorEl);
+      }
+
       // Click handler
       var SPECIAL_EFFECT_SKINS = { banana: 1, fire: 1, dragon: 1, flower: 1, wave: 1, star: 1, siru: 1, ascend: 1 };
-      (function (skinDef, skinUnlocked, optionEl) {
+      (function (skinDef, skinUnlocked, optionEl, previewEl, labelEl) {
         optionEl.addEventListener('click', function () {
           if (!skinUnlocked) return;
-          var allOptions = containerEl.querySelectorAll('.skin-option.active');
+          var token = skinDef.id;
+          // Selected Ascend tile clicked again: next color
+          if (skinDef.id === 'ascend' && optionEl.classList.contains('active')) {
+            var cur = ASCEND_COLORS.indexOf(currentSkinColor || 'gold');
+            token = skinToken('ascend', ASCEND_COLORS[(cur + 1) % ASCEND_COLORS.length]);
+          }
+          var allOptions = document.querySelectorAll('.skin-option.active');
           for (var j = 0; j < allOptions.length; j++) allOptions[j].classList.remove('active');
           optionEl.classList.add('active');
-          applySkin(skinDef.id);
-          saveSkin(skinDef.id);
+          applySkin(token);
+          saveSkin(token);
+          if (skinDef.id === 'ascend') {
+            if (currentSkinColor) previewEl.setAttribute('data-dice-color', currentSkinColor);
+            else previewEl.removeAttribute('data-dice-color');
+            if (labelEl) labelEl.textContent = colorLabel(currentSkinColor || 'gold');
+          }
           // Play celebration effect preview for special skins
-          if (SPECIAL_EFFECT_SKINS[skinDef.id] && window.YachtGame.UI && window.YachtGame.UI.showConfetti) {
+          if (SPECIAL_EFFECT_SKINS[parseSkin(skinDef.id).id] && window.YachtGame.UI && window.YachtGame.UI.showConfetti) {
             window.YachtGame.UI.showConfetti();
           }
         });
-      })(def, unlocked, option);
+      })(def, unlocked, option, miniDie, colorEl);
 
       targetContainer.appendChild(option);
     }
+  }
+
+  function colorLabel(color) {
+    var I18n = window.YachtGame.I18n;
+    var name = I18n ? I18n.t('skin_color_' + color) : color;
+    return name + ' \u21bb';
   }
 
   // Pip layouts for mini dice faces: maps value → array of visible pip positions (1-9 grid)
@@ -309,8 +384,9 @@
     6: [1, 3, 4, 6, 7, 9]
   };
 
-  function renderMiniFaceHTML(skinId, value) {
-    var html = '<div class="cube-face skin-preview-die" data-dice-skin="' + skinId + '" data-value="' + value + '">';
+  function renderMiniFaceHTML(token, value) {
+    var skinId = parseSkin(token).id;
+    var html = '<div class="cube-face skin-preview-die" ' + skinAttrs(token) + ' data-value="' + value + '">';
     if (skinId === 'crimson') {
       html += '<span class="crimson-char">' + (CRIMSON_CHARS[value] || '') + '</span>';
     } else if (skinId === 'banana') {
@@ -338,7 +414,7 @@
   function renderMiniDieHTML(skinId) {
     skinId = skinId || 'classic';
     var html = '<span class="header-die-cube">';
-    html += '<span class="cube-inner" data-dice-skin="' + skinId + '">';
+    html += '<span class="cube-inner" ' + skinAttrs(skinId) + '>';
     html += renderMiniFaceHTML(skinId, 1);  // front
     html += renderMiniFaceHTML(skinId, 6);  // back
     html += renderMiniFaceHTML(skinId, 2);  // right
@@ -404,8 +480,19 @@
     ascendUpTimer = setTimeout(function () { diceArea.classList.remove('ascend-up'); }, 1400);
   }
 
+  // Base skin id (for effects and per-skin logic). Use getSkinToken() when storing/syncing.
   function getCurrentSkin() {
     return currentSkinId;
+  }
+
+  function getSkinToken() {
+    return skinToken(currentSkinId, currentSkinColor);
+  }
+
+  // Hue shift (deg) of an Ascend token's color, for tinting the celebration canvas.
+  function getAscendHue(token) {
+    var s = token ? parseSkin(token) : { color: currentSkinColor };
+    return ASCEND_HUE[s.color || 'gold'] || 0;
   }
 
   function getCrimsonChar(value) {
@@ -419,6 +506,9 @@
     renderSkinSelector: renderSkinSelector,
     renderMiniDieHTML: renderMiniDieHTML,
     getCurrentSkin: getCurrentSkin,
+    getSkinToken: getSkinToken,
+    parseSkin: parseSkin,
+    getAscendHue: getAscendHue,
     setAscendTargets: setAscendTargets,
     setAscendTurn: setAscendTurn,
     ascendRollStopped: ascendRollStopped,

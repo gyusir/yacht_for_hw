@@ -79,7 +79,7 @@
 
   function createRoom(playerName, gameMode, callback) {
     getFunctions();
-    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getSkinToken()) || 'classic';
 
     var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     var sm = splitMode(gameMode);
@@ -113,7 +113,7 @@
   function joinRoom(playerName, roomCode, callback) {
     getFunctions();
     roomCode = roomCode.toUpperCase().trim();
-    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getSkinToken()) || 'classic';
 
     var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     joinRoomFn({
@@ -290,7 +290,7 @@
 
   function findRandomRoom(playerName, gameMode, callback) {
     getFunctions();
-    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getCurrentSkin()) || 'classic';
+    var diceSkin = (window.YachtGame.DiceSkins && window.YachtGame.DiceSkins.getSkinToken()) || 'classic';
 
     var nicks = (window.YachtGame.Auth && window.YachtGame.Auth.getNicknames()) || null;
     findOrCreateRandomRoomFn({

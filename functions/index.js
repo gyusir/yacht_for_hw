@@ -49,6 +49,7 @@ function sanitizePlayerName(name) {
 // space is small, so createRoom/random rooms retry on collision (live rooms are
 // few: waiting 2h / finished 10min TTL via cleanupStaleRooms).
 const ROOM_CODE_LENGTH = 4;
+const CLAUDE_BOT_UID = "bot-claude"; // must match BOT_UID in tools/room-bot/bot.js
 function generateRoomCode() {
   return String(crypto.randomInt(0, 10000)).padStart(ROOM_CODE_LENGTH, "0");
 }
@@ -1062,6 +1063,10 @@ exports.onGameFinished = functions.region("asia-southeast1")
         // Augment wins are tracked separately (only for the Ascend skin unlock);
         // they still don't touch win rate or streaks.
         await userRef.child("stats/augmentWins").transaction((n) => (n || 0) + 1);
+        // Wins against the Claude room bot (tools/room-bot) unlock the Claude Ascend dice.
+        if (opponent.uid === CLAUDE_BOT_UID) {
+          await userRef.child("stats/claudeWins").transaction((n) => (n || 0) + 1);
+        }
       }
     });
 

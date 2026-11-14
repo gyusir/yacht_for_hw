@@ -829,7 +829,7 @@
     var Auth = window.YachtGame.Auth;
     var DiceSkins = window.YachtGame.DiceSkins;
     var uid = Auth ? Auth.getPlayerUid() : 'guest';
-    var diceSkin = DiceSkins ? DiceSkins.getCurrentSkin() : 'classic';
+    var diceSkin = DiceSkins ? DiceSkins.getSkinToken() : 'classic';
 
     var I18n = window.YachtGame.I18n;
     var botName;

@@ -3477,7 +3477,7 @@ button.aug-chip.armed:disabled { opacity: 1; }
 }
 @keyframes ascendEmber { 50% { opacity: 0.72; } }
 /* Dark mode Lv1: the basalt body is ~1.3:1 against the dark page, so add a thin ember rim (>=3:1). */
-[data-theme="dark"] [data-dice-skin="ascend"]:not([data-ascend-level="2"]):not([data-ascend-level="3"]) .die {
+[data-theme="dark"] [data-dice-skin="ascend"]:not([data-dice-color="claude"]):not([data-ascend-level="2"]):not([data-ascend-level="3"]) .die {
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 0 1px #9a5e2c, 0 4px 10px rgba(0,0,0,0.35);
 }
 
@@ -3543,8 +3543,8 @@ button.aug-chip.armed:disabled { opacity: 1; }
 [data-dice-skin="ascend"].ascend-up .die:nth-child(5) { animation-delay: 0.32s; }
 @keyframes ascendUp {
   0% { transform: scale(1) rotate(0); }
-  35% { transform: scale(0.6) rotate(-90deg); filter: brightness(3); }
-  100% { transform: scale(1) rotate(0); filter: none; }
+  35% { transform: scale(0.6) rotate(-90deg); filter: brightness(3) hue-rotate(var(--ascend-hue, 0deg)); }
+  100% { transform: scale(1) rotate(0); filter: hue-rotate(var(--ascend-hue, 0deg)); }
 }
 
 /* Reduced motion: no endless ember/sun loops, and the level-up becomes a soft fade instead of a spin + flash. */
@@ -3571,3 +3571,80 @@ button.aug-chip.armed:disabled { opacity: 1; }
 }
 .skin-option.active[data-skin-id="ascend"],
 [data-theme="dark"] .skin-option.active[data-skin-id="ascend"] { border-color: #e0a93a; }
+
+/* ─── Ascend colors (DiceSkins token 'ascend.<color>', set as data-dice-color) ───
+ * blue / red / violet / green hue-rotate the whole gold die (body, cracks, glow, pips).
+ * The held badge counter-rotates so it stays the app accent blue. */
+[data-dice-color="blue"]   { --ascend-hue: 180deg; }
+[data-dice-color="red"]    { --ascend-hue: -40deg; }
+[data-dice-color="violet"] { --ascend-hue: -110deg; }
+[data-dice-color="green"]  { --ascend-hue: 85deg; }
+[data-dice-skin="ascend"][data-dice-color] .die,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color] { filter: hue-rotate(var(--ascend-hue, 0deg)); }
+[data-dice-skin="ascend"][data-dice-color] .die .held-check { filter: hue-rotate(calc(-1 * var(--ascend-hue, 0deg))); }
+
+/* Claude Ascend (room bot's dice; unlock = beat it 5 times): ivory clay → peach → terracotta,
+ * terracotta / ivory spark pips. Cracks are hidden; Lv2 brackets and Lv3 gems stay. */
+[data-dice-skin="ascend"][data-dice-color="claude"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"] .die {
+  background: radial-gradient(circle at 28% 22%, #fffdf8 0%, transparent 50%),
+    linear-gradient(145deg, #f4efe6, #e9e1d3 60%, #ddd1be);
+  border: 2px solid #c96442;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.7), inset 0 -3px 0 rgba(120,70,40,0.15), 0 4px 10px rgba(0,0,0,0.22);
+}
+[data-dice-skin="ascend"][data-dice-color="claude"] .die::before { display: none; }
+[data-dice-skin="ascend"][data-dice-color="claude"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"] .pip,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip,
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip {
+  width: 112%;
+  height: auto;
+  aspect-ratio: 1;
+  justify-self: center;
+  align-self: center;
+  border-radius: 0;
+  background: #d97757;
+  box-shadow: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='black'%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(0 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(45 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(90 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(135 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(180 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(225 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(270 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(315 50 50)'/%3E%3Ccircle cx='50' cy='50' r='14'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='black'%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(0 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(45 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(90 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(135 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(180 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(225 50 50)'/%3E%3Cellipse cx='50' cy='27' rx='10' ry='25' transform='rotate(270 50 50)'/%3E%3Cellipse cx='50' cy='33' rx='8' ry='19' transform='rotate(315 50 50)'/%3E%3Ccircle cx='50' cy='50' r='14'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+}
+[data-dice-skin="ascend"][data-dice-color="claude"] .pip.hidden,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip.hidden { visibility: hidden; }
+[data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="2"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="2"] .die {
+  background: radial-gradient(circle at 28% 22%, #fff6ee 0%, transparent 50%),
+    linear-gradient(145deg, #f7e4d6, #efcdb6 60%, #e3b597);
+  border-color: #b85a3c;
+  box-shadow: inset 0 0 12px rgba(217,119,87,0.25), 0 0 12px rgba(217,119,87,0.5), 0 4px 10px rgba(0,0,0,0.25);
+}
+[data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="2"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="2"] .pip { background: #c15f3c; }
+[data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .die,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .die,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"],
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] {
+  background: radial-gradient(circle at 30% 24%, #ec9a78 0%, transparent 55%),
+    linear-gradient(145deg, #d97757, #c4613f 60%, #a84e2e);
+  border-color: #fbf3ea;
+  box-shadow: 0 0 0 2px #f4e6d6, 0 0 0 3.5px #7a3520, 0 0 12px rgba(217,119,87,0.65), 0 0 22px rgba(217,119,87,0.45);
+}
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] { box-shadow: 0 0 6px rgba(217,119,87,0.55); }
+[data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .pip,
+[data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .pip,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip,
+[data-theme="dark"] .skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip { background: #fdf6ec; }
+[data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: ascendClaude 2.6s ease-in-out infinite; }
+@keyframes ascendClaude {
+  50% { box-shadow: 0 0 0 2px #f4e6d6, 0 0 0 3.5px #7a3520, 0 0 16px rgba(217,119,87,0.85), 0 0 30px rgba(217,119,87,0.6); }
+}
+@media (max-width: 480px) {
+  [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .die,
+  [data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"] .die {
+    box-shadow: 0 0 0 1.5px #f4e6d6, 0 0 0 2.5px #7a3520, 0 0 10px rgba(217,119,87,0.6), 0 0 18px rgba(217,119,87,0.4);
+  }
+  [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-dice-skin="ascend"][data-dice-color="claude"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: none; }
+}
+.skin-option.active[data-skin-id="ascend"] .skin-preview-die[data-dice-color="claude"] { border-color: #fbf3ea; }
