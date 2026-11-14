@@ -424,7 +424,7 @@
       skin_games_count: '\ud310',
       skin_wins_count: '\uc2b9',
       skin_aug_wins: '\uc99d\uac15\uc804',
-      skin_vs_claude: 'Claude \uc0c1\ub300',
+      skin_vs_claude: 'Claude',
       skin_color_gold: '\uace8\ub4dc',
       skin_color_blue: '\ube14\ub8e8',
       skin_color_red: '\ub808\ub4dc',

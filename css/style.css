@@ -1718,7 +1718,8 @@ input[type="text"]::placeholder {
 
 .skin-options {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0, 1fr): a long label must not widen its column (keeps the 4 columns equal on phones) */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1752,6 +1753,7 @@ input[type="text"]::placeholder {
   border: 2px solid transparent;
   transition: border-color 0.2s, opacity 0.2s;
   position: relative;
+  min-width: 0;
 }
 
 .skin-option:hover:not(.locked) {
@@ -1847,7 +1849,7 @@ input[type="text"]::placeholder {
   text-align: center;
   line-height: 1.2;
   margin-top: 1px;
-  white-space: nowrap;
+  white-space: nowrap; /* one line; may overhang into the grid gap (centered) without widening the column */
 }
 
 /* Mini die preview in skin selector */

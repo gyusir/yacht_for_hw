@@ -30,6 +30,7 @@ const STEP_MS = Number(process.env.BOT_STEP_MS || 600);
 const RESET_AFTER_MS = 20000;            // finished -> fresh waiting room (results already saved by onGameFinished)
 const KEEPALIVE_MS = 30 * 60 * 1000;     // cleanupStaleRooms drops waiting rooms idle for 2h
 const IDLE_FORFEIT_MS = 15 * 60 * 1000;  // opponent idle on their turn this long -> bot wins
+const DICE_SKIN = "ascend.claude";        // Claude Ascend (beat this bot 5 times to unlock it)
 const DISCONNECT_WIN_MS = 60 * 1000;     // opponent disconnected this long -> bot wins
 const PICK_GRACE_MS = 3000;
 
@@ -59,7 +60,7 @@ function freshRoom() {
     type: "private", gameMode: "yacht", augmentMode: true, status: "waiting",
     createdAt: TS, lastActivityAt: TS, currentTurn: "player1", rollCount: 0, dice: dice,
     players: { player1: { name: NAME, nicknameKo: NAME, nicknameEn: NAME, uid: UID, connected: true,
-      scores: { _init: true }, diceSkin: "ascend.claude", bot: true } },
+      scores: { _init: true }, diceSkin: DICE_SKIN, bot: true } },
     winner: "", hostBot: true
   };
 }
@@ -276,6 +277,8 @@ async function main() {
   if (ours(latest)) {
     await roomRef.child("players/player1/connected").set(true);
     roomRef.child("players/player1/connected").onDisconnect().set(false);
+    // A room opened by an older bot version keeps its skin otherwise.
+    if (latest.status === "waiting") await roomRef.child("players/player1/diceSkin").set(DICE_SKIN);
   }
   for (;;) {
     try { await step(); } catch (e) { log("error: " + (e.stack || e.message)); await sleep(3000); }
