@@ -44,6 +44,21 @@
 | `tools/generate_dp.py` | Expectimax 알고리즘으로 DP 테이블 생성 (Python/NumPy/Numba) |
 | `tools/augment_sim.js` | 증강 시뮬레이터. `--conflict N`: 무작위 행동 퍼징 + 불변식 검사, `--balance N`: 증강별 점수 차 측정. 증강 규칙·수치를 바꾸면 둘 다 다시 돌린다. `tools/augment_rules_test.js`: 증강 규칙 시나리오 테스트 |
 
+### 방 봇 (`tools/room-bot/`)
+
+맥에서 상시 실행하는 증강전 상대 봇. 고정 방 코드(기본 `7777`)에 증강 모드 Yacht 대기방을 항상 열어 두고, 누가 들어오면 player1("Claude")로 대전한다. 끝나면 20초 뒤 같은 코드로 새 대기방을 연다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `bot.js` | 데몬. firebase-admin으로 방을 관리하고, 모든 수는 `functions/game-rules.js` 리듀서를 RTDB 트랜잭션으로 적용(서버와 같은 검증). 상대 이탈(연결 끊김 60초·자기 턴 15분 무응답) 시 봇 승리 처리, 무승부 제안은 거절, 대기방은 30분마다 `lastActivityAt` 갱신(2시간 정리 회피) |
+| `brain.js` | 규칙 기반 판단: 주사위 멀티셋 기대값 탐색으로 홀드·굴림 중단·칸 선택, Claude에게 넘길 합법 후보 목록 생성 |
+| `advisor.js` | Claude 판단: `claude -p`(도구 없음)로 증강 선택·굴리기 전 봉인/교환/콜샷/올인·기록 시 주사위 변경/더블/동전/보험 사용을 고른다. 실패·타임아웃·불법 답이면 규칙 기반 기본값. 고민 중 🤔, 결정 후 한 줄 멘트를 이모트 말풍선으로 보낸다 |
+| `install-launchd.sh` | LaunchAgent 설치/제거 (`uninstall`). 로그 `~/Library/Logs/yacht-room-bot.log` |
+
+- 로컬 테스트: `BOT_EMULATOR=1 node tools/room-bot/bot.js` (에뮬레이터 RTDB). `BOT_NO_CLAUDE=1`이면 규칙 기반만. 단, 에뮬레이터에서는 App Check 토큰이 없어 브라우저의 callable이 모두 실패하므로 사람 쪽 참가·선택은 admin 스크립트로 대신해야 한다
+- 운영: ADC(`gcloud auth application-default login`) 권한으로 운영 RTDB에 접속한다. 봇 uid는 `bot-claude`(전적이 `users/bot-claude`에 쌓임)
+- 방 코드가 이미 다른 방에 쓰이고 있으면 비워질 때까지 1분마다 다시 확인한다
+
 ### 주사위 스킨 에셋 (`die_image/`)
 
 | 디렉토리 | 내용 |
