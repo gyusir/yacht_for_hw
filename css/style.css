@@ -3476,6 +3476,10 @@ button.aug-chip.armed:disabled { opacity: 1; }
   box-shadow: 0 0 0 1px rgba(0,0,0,0.7), 0 0 8px rgba(255,150,50,0.75);
 }
 @keyframes ascendEmber { 50% { opacity: 0.72; } }
+/* Dark mode Lv1: the basalt body is ~1.3:1 against the dark page, so add a thin ember rim (>=3:1). */
+[data-theme="dark"] [data-dice-skin="ascend"]:not([data-ascend-level="2"]):not([data-ascend-level="3"]) .die {
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 0 1px #9a5e2c, 0 4px 10px rgba(0,0,0,0.35);
+}
 
 /* Lv2 — 용암: 균열이 타오르고 청동 모서리가 묶음 */
 [data-dice-skin="ascend"][data-ascend-level="2"] .die,
@@ -3542,6 +3546,14 @@ button.aug-chip.armed:disabled { opacity: 1; }
   35% { transform: scale(0.6) rotate(-90deg); filter: brightness(3); }
   100% { transform: scale(1) rotate(0); filter: none; }
 }
+
+/* Reduced motion: no endless ember/sun loops, and the level-up becomes a soft fade instead of a spin + flash. */
+@media (prefers-reduced-motion: reduce) {
+  [data-dice-skin="ascend"] .die::before { animation: none; }
+  [data-dice-skin="ascend"][data-ascend-level="3"]:not(.ascend-up) .die:not(.rolling) { animation: none; }
+  [data-dice-skin="ascend"].ascend-up .die { animation: ascendUpCalm 0.6s ease-out both; }
+}
+@keyframes ascendUpCalm { 0% { opacity: 0.35; } 100% { opacity: 1; } }
 
 /* Preview (skin selector + header cube) shows the final Lv3 form */
 .skin-preview-die[data-dice-skin="ascend"],
