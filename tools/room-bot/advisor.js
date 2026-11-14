@@ -12,6 +12,7 @@ const Brain = require("./brain");
 
 const CLAUDE_BIN = process.env.CLAUDE_BIN || "claude";
 const MODEL = process.env.BOT_MODEL || "sonnet";
+const EFFORT = process.env.BOT_EFFORT || "low";
 const TIMEOUT_MS = Number(process.env.BOT_CLAUDE_TIMEOUT_MS || 45000);
 const DISABLED = process.env.BOT_NO_CLAUDE === "1";
 
@@ -44,8 +45,8 @@ function callClaude(prompt) {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "yacht-bot-"));
   return new Promise((resolve) => {
     const started = Date.now();
-    execFile(CLAUDE_BIN, ["-p", prompt, "--model", MODEL, "--tools", "", "--no-session-persistence",
-      "--strict-mcp-config", "--setting-sources", ""],
+    const child = execFile(CLAUDE_BIN, ["-p", prompt, "--model", MODEL, "--effort", EFFORT, "--tools", "",
+      "--no-session-persistence", "--strict-mcp-config", "--setting-sources", ""],
     { cwd: cwd, timeout: TIMEOUT_MS, maxBuffer: 1 << 20, env: process.env }, (err, stdout) => {
       fs.rmSync(cwd, { recursive: true, force: true });
       const ms = Date.now() - started;
@@ -58,6 +59,7 @@ function callClaude(prompt) {
         resolve(obj);
       } catch (e) { log("claude: bad JSON: " + m[0].slice(0, 200)); resolve(null); }
     });
+    child.stdin.end(); // an open stdin makes `claude -p` wait 3s for piped input
   });
 }
 

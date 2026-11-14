@@ -30,6 +30,8 @@
   var celebratedBonuses = {};
   var emoteListener = null;
   var lastSeenEmoteTs = 0;
+  var heldEmotes = [];       // opponent emotes that arrived while the augment pick/reveal overlay covered the board
+  var heldEmoteTimer = null;
   var isOnline = true;
   var connectedRef = null;
   var connectedCallback = null;
@@ -125,9 +127,32 @@
       var data = snap.val();
       if (data.ts && data.ts > lastSeenEmoteTs) {
         lastSeenEmoteTs = data.ts;
-        window.YachtGame.UI.showEmoteBubble('opp', data.msg);
+        showOppEmote(data.msg);
       }
     });
+  }
+
+  // ─── Opponent emotes: hold them while an augment overlay hides the board, replay after it closes ───
+  function augOverlayOpen() {
+    return !!document.querySelector('#aug-pick:not(.hidden), #aug-reveal:not(.hidden)');
+  }
+
+  function showOppEmote(msg) {
+    if (!heldEmotes.length && !augOverlayOpen()) {
+      window.YachtGame.UI.showEmoteBubble('opp', msg);
+      return;
+    }
+    heldEmotes.push(msg);
+    if (heldEmotes.length > 3) heldEmotes.shift();
+    if (!heldEmoteTimer) heldEmoteTimer = setTimeout(flushHeldEmotes, 300);
+  }
+
+  function flushHeldEmotes() {
+    heldEmoteTimer = null;
+    if (!heldEmotes.length) return;
+    if (augOverlayOpen()) { heldEmoteTimer = setTimeout(flushHeldEmotes, 300); return; }
+    window.YachtGame.UI.showEmoteBubble('opp', heldEmotes.shift());
+    if (heldEmotes.length) heldEmoteTimer = setTimeout(flushHeldEmotes, 2600);
   }
 
   function checkCelebration(diceVals) {
@@ -744,6 +769,9 @@
     roomListener = null;
     emoteListener = null;
     lastSeenEmoteTs = 0;
+    heldEmotes = [];
+    clearTimeout(heldEmoteTimer);
+    heldEmoteTimer = null;
     lastCelebrationTs = 0;
     celebratedBonuses = {};
     clearDisconnectTimer();

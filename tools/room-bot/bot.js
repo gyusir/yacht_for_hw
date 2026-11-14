@@ -26,7 +26,7 @@ const NAME = (process.env.BOT_NAME || "Claude").slice(0, 12);
 const UID = process.env.BOT_UID || "bot-claude";
 const PK = "player1";
 const OPP = "player2";
-const STEP_MS = Number(process.env.BOT_STEP_MS || 900);
+const STEP_MS = Number(process.env.BOT_STEP_MS || 600);
 const RESET_AFTER_MS = 20000;            // finished -> fresh waiting room (results already saved by onGameFinished)
 const KEEPALIVE_MS = 30 * 60 * 1000;     // cleanupStaleRooms drops waiting rooms idle for 2h
 const IDLE_FORFEIT_MS = 15 * 60 * 1000;  // opponent idle on their turn this long -> bot wins
@@ -174,7 +174,10 @@ async function playTurn() {
   const opts = Brain.finalOptions(room, PK);
   const fallback = Brain.defaultFinal(room, PK, opts);
   let choice;
-  if (opts.some(Brain.usesCharge)) {
+  // Ask Claude only when spending a charge would actually beat the best plain record.
+  const plainU = Math.max.apply(null, opts.filter((o) => !Brain.usesCharge(o)).map((o) => o.u).concat(-Infinity));
+  const chargedU = Math.max.apply(null, opts.filter(Brain.usesCharge).map((o) => o.u).concat(-Infinity));
+  if (chargedU > plainU + 1) {
     await emote("🤔");
     choice = await Advisor.finalChoice(room, PK, opts, fallback);
     if (Brain.usesCharge(choice)) await emote(choice.say);
