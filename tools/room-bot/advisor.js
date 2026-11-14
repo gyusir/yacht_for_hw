@@ -29,8 +29,9 @@ const DESC = (function () {
 
 const RULES = [
   "Game: Yacht dice, augment mode, 1:1. 12 categories: ones..sixes (sum of that face), choice (sum of all),",
-  "fourOfAKind (sum of all dice if 4+ same), fullHouse (sum of all if 3+2), smallStraight (4 in a row: 15),",
-  "largeStraight (5 in a row: 30), yacht (5 same: 50). Upper bonus: ones..sixes sum >= 63 gives +35.",
+  "fourOfAKind (sum of the 4 matching dice only, e.g. 5,5,5,5,2 = 20), fullHouse (sum of all if 3+2),",
+  "smallStraight (exactly 1-2-3-4-5: 30), largeStraight (exactly 2-3-4-5-6: 30), yacht (5 same: 50).",
+  "Upper bonus: ones..sixes sum >= 63 gives +35 (some augments change the hurdle).",
   "Each turn: up to 3 rolls (holding dice between rolls), then record one empty category. 12 turns each.",
   "Augments are picked before turns 1, 5 and 9 (tier 1/2/3), 2 random offers each; picks are hidden until both choose."
 ].join("\n");

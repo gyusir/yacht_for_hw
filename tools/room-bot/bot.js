@@ -35,6 +35,7 @@ const PICK_GRACE_MS = 3000;
 
 function log(msg) { console.log(new Date().toISOString() + " [" + ROOM + "] " + msg); }
 Advisor.setLogger(log);
+const EDIT_LABEL = { adjust: "정밀 조정", nudge: "미세 조정", copy: "복제", wild: "와일드" };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (n) => crypto.randomInt(0, n);
 
@@ -179,8 +180,16 @@ async function playTurn() {
     if (Brain.usesCharge(choice)) await emote(choice.say);
   } else choice = Object.assign({ by: "rule" }, fallback);
   if (choice.edit) {
-    await act(choice.edit).catch((e) => log("edit failed: " + e.message));
-    await sleep(STEP_MS);
+    // Say exactly which die changed and pause, so the opponent can follow the edit before the record lands.
+    const before = Brain.diceOf(room);
+    const ok = await act(choice.edit).then(() => true, (e) => { log("edit failed: " + e.message); return false; });
+    if (ok) {
+      const after = Brain.diceOf(latest);
+      const i = after.findIndex((v, k) => v !== before[k]);
+      const label = EDIT_LABEL[choice.edit.type] || choice.edit.type;
+      await emote(i === -1 ? label : label + ": " + (i + 1) + "번 주사위 " + before[i] + " → " + after[i]);
+      await sleep(3000);
+    }
   }
   const coinFlip = rand(2);
   const lotteryDice = { player1: 1 + rand(6), player2: 1 + rand(6) };
