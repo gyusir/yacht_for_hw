@@ -144,23 +144,58 @@ test("lastStand: only the last two records are doubled", () => {
   roll(r, "u1", [6, 6, 5, 5, 4]);
   assert.strictEqual(select(r, "u1", "choice").score, 52);
 });
-test("lottery: rolled once at game end, prize counted in the total", () => {
+test("lottery: owner rolls it after the last record, prize counted in the total", () => {
   const r = room(["lottery"], ["steal"], filledExcept(["choice"]), filledExcept(["choice"]));
   roll(r, "u1", [6, 6, 6, 6, 6]); select(r, "u1", "choice");
   assert.strictEqual(r.players.player1.scores.lottery, undefined);
   roll(r, "u2", [1, 1, 1, 1, 2]);
-  const x = select(r, "u2", "choice", { lotteryDice: { player1: 4, player2: 1 } });
+  const x = select(r, "u2", "choice", { now: 1000 });
   assert(!x.error, x.error);
+  assert.strictEqual(x.lottery, true);
+  assert.strictEqual(r.status, "playing", "game waits for the lucky die");
+  assert.deepStrictEqual(r.lotteryPhase, { pending: { player1: true }, deadline: 1000 + Rules.LOTTERY_TIME_MS });
+  // nothing else can happen meanwhile; only the owner can roll
+  assert.strictEqual(Rules.applyRoll(r, r.currentTurn === "player1" ? "u1" : "u2", [1, 2, 3, 4, 5]).error, "LOTTERY_PHASE");
+  assert.strictEqual(Rules.applyLottery(r, "u2", 5).error, "NO_LOTTERY");
+  assert.strictEqual(Rules.applyLottery(r, "u1", 7).error, "INVALID_DICE");
+  const y = Rules.applyLottery(r, "u1", 4);
+  assert(!y.error, y.error);
+  assert.strictEqual(y.finished, true);
   assert.strictEqual(r.status, "finished");
+  assert.strictEqual(r.lotteryPhase, null);
   assert.strictEqual(r.players.player1.scores.lottery, 40);
   assert.strictEqual(r.players.player2.scores.lottery, undefined, "only owners roll");
   assert.deepStrictEqual(r.lotteryLog, [{ by: "player1", die: 4, prize: 40 }]);
   assert.strictEqual(Rules.total(r.players.player1, "yacht", true), Aug.totalScore(r.players.player1.scores, r.players.player1.aug));
   assert.strictEqual(r.winner, "player1");
+  assert.strictEqual(Rules.applyLottery(r, "u1", 4).error, "NOT_PLAYING", "no second roll");
   const r2 = room(["lottery"], ["extraRoll"], filledExcept(["choice"]), filledExcept(["choice"]));
   roll(r2, "u1", [6, 6, 6, 6, 6]); select(r2, "u1", "choice");
-  roll(r2, "u2", [1, 1, 1, 1, 2]); select(r2, "u2", "choice", { lotteryDice: { player1: 3, player2: 6 } });
+  roll(r2, "u2", [1, 1, 1, 1, 2]); select(r2, "u2", "choice");
+  Rules.applyLottery(r2, "u1", 3);
   assert.strictEqual(r2.players.player1.scores.lottery, 0);
+});
+test("lottery: both owners roll, game ends after the second; timeout claim rolls for the idle one", () => {
+  const r = room(["lottery"], ["lottery"], filledExcept(["choice"]), filledExcept(["choice"]));
+  roll(r, "u1", [6, 6, 6, 6, 6]); select(r, "u1", "choice");
+  roll(r, "u2", [1, 1, 1, 1, 2]); select(r, "u2", "choice", { now: 0 });
+  assert.deepStrictEqual(Object.keys(r.lotteryPhase.pending).sort(), ["player1", "player2"]);
+  assert(!Rules.applyLottery(r, "u2", 6).error);
+  assert.strictEqual(r.status, "playing");
+  assert.strictEqual(Rules.claimLotteryTimeout(r, "u2", { player1: 5, player2: 5 }, Rules.LOTTERY_TIME_MS).error, "NOT_TIMED_OUT");
+  const c = Rules.claimLotteryTimeout(r, "u2", { player1: 2, player2: 5 }, Rules.LOTTERY_TIME_MS + Rules.LOTTERY_GRACE_MS);
+  assert(!c.error, c.error);
+  assert.strictEqual(r.status, "finished");
+  assert.deepStrictEqual(r.lotteryLog, [{ by: "player2", die: 6, prize: 40 }, { by: "player1", die: 2, prize: 0 }]);
+});
+test("no lucky die owner: the game ends right at the last record", () => {
+  const r = room(["extraRoll"], ["steal"], filledExcept(["choice"]), filledExcept(["choice"]));
+  roll(r, "u1", [6, 6, 6, 6, 6]); select(r, "u1", "choice");
+  roll(r, "u2", [1, 1, 1, 1, 2]);
+  const x = select(r, "u2", "choice");
+  assert.strictEqual(x.lottery, false);
+  assert.strictEqual(r.status, "finished");
+  assert(!r.lotteryPhase);
 });
 test("finalSprint: +5 on non-zero records only", () => {
   const r = room(["finalSprint"], ["extraRoll"]);

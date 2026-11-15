@@ -41,6 +41,7 @@ const PACE = Number(process.env.BOT_PACE || 1);
 const between = (lo, hi) => Math.round((lo + rand(hi - lo + 1)) * PACE);
 // Client roll animation (js/game.js + Dice.staggerStop): 0.4s spin, then the spinning dice stop 0.5s apart.
 const rollAnimMs = (spinning) => 400 + Math.max(0, spinning - 1) * 500;
+const LOTTERY_REVEAL_MS = 1300;          // js/augment-ui.js spins a lucky die at least 1.2s before revealing it
 
 function log(msg) { console.log(new Date().toISOString() + " [" + ROOM + "] " + msg); }
 Advisor.setLogger(log);
@@ -219,18 +220,17 @@ async function playTurn() {
     }
   }
   const coinFlip = rand(2);
-  const lotteryDice = { player1: 1 + rand(6), player2: 1 + rand(6) };
   let r;
   try {
     r = await tx((rm) => Rules.applySelect(rm, UID, choice.category, {
       useDouble: choice.useDouble, useInsurance: choice.useInsurance, useCoin: choice.useCoin,
-      coinFlip: coinFlip, lotteryDice: lotteryDice, rand: rand, now: Date.now() }));
+      coinFlip: coinFlip, rand: rand, now: Date.now() }));
   } catch (e) {
     // Last resort: best plain category for the current dice.
     log("select failed (" + e.message + "), falling back");
     const rm = latest;
     const b = Brain.bestChoice(Brain.diceOf(rm), rm.players[PK], rm.turnFlags || {}, !!(rm.turnFlags && rm.turnFlags.noYacht));
-    r = await tx((x) => Rules.applySelect(x, UID, b.c, { rand: rand, now: Date.now(), coinFlip: coinFlip, lotteryDice: lotteryDice }));
+    r = await tx((x) => Rules.applySelect(x, UID, b.c, { rand: rand, now: Date.now(), coinFlip: coinFlip }));
     choice.category = b.c;
   }
   log("record " + choice.category + " = " + r.score + " (" + choice.by + ")" + (r.effects && r.effects.length ? " " + r.effects.join(",") : "") + (choice.why ? " — " + choice.why : ""));
@@ -279,6 +279,27 @@ async function step() {
   if ((oppGoneSince && now - oppGoneSince > DISCONNECT_WIN_MS) || idle) {
     log("opponent gone -> bot wins");
     await tx((rm) => { if (rm.status !== "playing") return { error: "NOT_PLAYING" }; rm.status = "finished"; rm.winner = PK; return {}; }).catch(() => {});
+    return;
+  }
+
+  // Lucky die at game end: roll ours like a player would, and roll for an opponent who never does.
+  const lot = room.lotteryPhase;
+  if (lot) {
+    const pending = lot.pending || {};
+    if (pending[PK]) {
+      await sleep(between(1500, 2200));
+      const die = 1 + rand(6);
+      const r = await tx((rm) => Rules.applyLottery(rm, UID, die)).catch((e) => { log("lottery: " + e.message); return null; });
+      if (r) {
+        log("lucky die " + r.die + " -> " + (r.prize ? "+" + r.prize : "miss"));
+        await sleep(LOTTERY_REVEAL_MS);  // the opponent's screen spins it ~1.2s before showing the face
+        await emote("🎲 " + r.die + (r.prize ? "! +" + r.prize : " … 꽝"));
+      }
+    } else if (pending[OPP] && now >= (lot.deadline || 0) + Rules.LOTTERY_GRACE_MS + 2000) {
+      log("opponent lucky die timed out -> rolled for them");
+      const dice = { player1: 1 + rand(6), player2: 1 + rand(6) };
+      await tx((rm) => Rules.claimLotteryTimeout(rm, UID, dice, Date.now())).catch((e) => log("lottery claim: " + e.message));
+    }
     return;
   }
 

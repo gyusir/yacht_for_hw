@@ -474,15 +474,13 @@ exports.selectCategory = regionFn.https.onCall(async (data, context) => {
   const useDouble = data.useDouble === true;
   const useInsurance = (data.useInsurance === "safetyNet" || data.useInsurance === "bigInsurance") ? data.useInsurance : null;
   const useCoin = data.useCoin === true;
-  // Coin flip / lottery dice are drawn outside the transaction so a retried
-  // transaction keeps the same outcome.
+  // The coin flip is drawn outside the transaction so a retried transaction keeps the same outcome.
   const coinFlip = cryptoRand(2);
-  const lotteryDice = { player1: 1 + cryptoRand(6), player2: 1 + cryptoRand(6) };
 
   const { out, room } = await runRoomTransaction(roomCode, (r) =>
     Rules.applySelect(r, uid, category, {
       useDouble: useDouble, useInsurance: useInsurance, useCoin: useCoin,
-      coinFlip: coinFlip, lotteryDice: lotteryDice, rand: cryptoRand, now: Date.now()
+      coinFlip: coinFlip, rand: cryptoRand, now: Date.now()
     }));
 
   const winner = room.winner || null;
@@ -572,6 +570,24 @@ exports.useAugment = regionFn.https.onCall(async (data, context) => {
   const action = { type: a.type, die: a.die, from: a.from, delta: a.delta, value: a.value, category: a.category };
 
   const { out } = await runRoomTransaction(roomCode, (room) => Rules.applyAction(room, uid, action));
+  return out;
+});
+
+// ─── rollLottery (augment mode: lucky die at game end) ───
+// { roomCode } rolls the caller's own lucky die; { roomCode, claimTimeout: true } rolls for an owner
+// who let the deadline pass. Dice are drawn outside the transaction so retries keep the result.
+
+exports.rollLottery = regionFn.https.onCall(async (data, context) => {
+  requireAppCheck(context);
+  const uid = requireAuth(context);
+  const roomCode = requireRoomCode(data);
+  const dice = { player1: 1 + cryptoRand(6), player2: 1 + cryptoRand(6) };
+  const claimTimeout = data.claimTimeout === true;
+  const { out } = await runRoomTransaction(roomCode, (room) => {
+    if (claimTimeout) return Rules.claimLotteryTimeout(room, uid, dice, Date.now());
+    const pk = Rules.findPlayerKey(room.players || {}, uid);
+    return Rules.applyLottery(room, uid, pk ? dice[pk] : 0);
+  });
   return out;
 });
 

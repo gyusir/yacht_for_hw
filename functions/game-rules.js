@@ -29,8 +29,16 @@ const ERRORS = {
   INVALID_ACTION: ["invalid-argument", "Invalid action."],
   DECLARE_AFTER_ROLL: ["failed-precondition", "Declare before your first roll."],
   ALREADY_DECLARED: ["failed-precondition", "Already declared this turn."],
-  MULTIPLIER_CONFLICT: ["failed-precondition", "Only one multiplier per record."]
+  MULTIPLIER_CONFLICT: ["failed-precondition", "Only one multiplier per record."],
+  LOTTERY_PHASE: ["failed-precondition", "Lucky die roll in progress."],
+  NO_LOTTERY: ["failed-precondition", "No lucky die to roll."],
+  NOT_TIMED_OUT: ["failed-precondition", "Time is not up yet."]
 };
+
+// Lucky die: after the last record each owner rolls it themselves (room.lotteryPhase), then the game ends.
+// Anyone in the room may ask the server to roll for an idle owner once the deadline (+ grace) has passed.
+const LOTTERY_TIME_MS = 30 * 1000;
+const LOTTERY_GRACE_MS = 3000;
 
 function fail(code) { return { error: code }; }
 
@@ -144,6 +152,7 @@ function applyPicks(room, picks, tier, now) {
 
 function applyRoll(room, uid, randomValues) {
   if (room.status !== "playing") return fail("NOT_PLAYING");
+  if (room.lotteryPhase) return fail("LOTTERY_PHASE");
   const pk = findPlayerKey(room.players || {}, uid);
   if (!pk) return fail("NOT_PLAYER");
   if (room.currentTurn !== pk) return fail("NOT_YOUR_TURN");
@@ -200,6 +209,7 @@ function applyRoll(room, uid, randomValues) {
 
 function applyAction(room, uid, action) {
   if (room.status !== "playing") return fail("NOT_PLAYING");
+  if (room.lotteryPhase) return fail("LOTTERY_PHASE");
   const pk = findPlayerKey(room.players || {}, uid);
   if (!pk) return fail("NOT_PLAYER");
   if (!isAugment(room)) return fail("NOT_AUGMENT");
@@ -307,6 +317,7 @@ function applyAction(room, uid, action) {
 function applySelect(room, uid, category, opts) {
   opts = opts || {};
   if (room.status !== "playing") return fail("NOT_PLAYING");
+  if (room.lotteryPhase) return fail("LOTTERY_PHASE");
   const pk = findPlayerKey(room.players || {}, uid);
   if (!pk) return fail("NOT_PLAYER");
   if (room.currentTurn !== pk) return fail("NOT_YOUR_TURN");
@@ -412,16 +423,13 @@ function applySelect(room, uid, category, opts) {
   const oppScores = opp.scores || {};
   let steals = null;
 
+  let lottery = false;
   if (Scoring.allFilled(me.scores, gameMode) && Scoring.allFilled(oppScores, gameMode)) {
     if (aug) {
-      steals = applySteals(room, gameMode, opts);
+      steals = applySteals(room, gameMode);
+      lottery = openLotteryPhase(room, opts.now);
     }
-    const myTotal = total(me, gameMode, aug);
-    const oppTotal = total(opp, gameMode, aug);
-    if (myTotal > oppTotal) room.winner = pk;
-    else if (oppTotal > myTotal) room.winner = oppKey;
-    else room.winner = "tie";
-    room.status = "finished";
+    if (!lottery) finishGame(room);
   } else if (aug) {
     // Open the next augment pick when both players have completed the tier's round.
     const mine = filledCount(me.scores, gameMode);
@@ -436,12 +444,76 @@ function applySelect(room, uid, category, opts) {
     }
   }
 
-  return { ok: true, score: score, effects: effects, yahtzeeBonus: yahtzeeBonus, playerKey: pk, steals: steals };
+  return { ok: true, score: score, effects: effects, yahtzeeBonus: yahtzeeBonus, playerKey: pk, steals: steals, lottery: lottery };
 }
 
-// Game end: steals (simultaneous, from pre-steal scores), then the lottery roll.
-// opts.lotteryDice: { player1: 1-6, player2: 1-6 } pre-drawn by the server (falls back to opts.rand).
-function applySteals(room, gameMode, opts) {
+// Decide the winner from the current totals and end the game.
+function finishGame(room) {
+  const aug = isAugment(room);
+  const t1 = total(room.players.player1, room.gameMode, aug);
+  const t2 = total(room.players.player2, room.gameMode, aug);
+  room.winner = t1 > t2 ? "player1" : t2 > t1 ? "player2" : "tie";
+  room.status = "finished";
+  room.lotteryPhase = null;
+}
+
+// Open the lucky-die phase for every owner; false when nobody owns it.
+function openLotteryPhase(room, now) {
+  const pending = {};
+  for (const pk of ["player1", "player2"]) {
+    if (Aug.owns(ensureAug(room.players[pk]), "lottery")) pending[pk] = true;
+  }
+  if (!Object.keys(pending).length) return false;
+  room.lotteryPhase = { pending: pending, deadline: (typeof now === "number" ? now : Date.now()) + LOTTERY_TIME_MS };
+  room.lotteryLog = null;
+  return true;
+}
+
+function lotteryPending(room) {
+  return Object.keys((room.lotteryPhase && room.lotteryPhase.pending) || {}).filter((k) => room.lotteryPhase.pending[k] === true);
+}
+
+function rollLotteryFor(room, pk, die) {
+  const prize = die >= Aug.LOTTERY_MIN ? Aug.LOTTERY_SCORE : 0;
+  room.players[pk].scores.lottery = prize;
+  const log = room.lotteryLog ? Object.keys(room.lotteryLog).map((k) => room.lotteryLog[k]) : [];
+  log.push({ by: pk, die: die, prize: prize });
+  room.lotteryLog = log;
+  delete room.lotteryPhase.pending[pk];
+  return prize;
+}
+
+// The owner rolls their own lucky die. die: 1-6, drawn by the server.
+function applyLottery(room, uid, die) {
+  if (room.status !== "playing") return fail("NOT_PLAYING");
+  const pk = findPlayerKey(room.players || {}, uid);
+  if (!pk) return fail("NOT_PLAYER");
+  if (!room.lotteryPhase || lotteryPending(room).indexOf(pk) === -1) return fail("NO_LOTTERY");
+  if (!isInt(die, 1, 6)) return fail("INVALID_DICE");
+  const prize = rollLotteryFor(room, pk, die);
+  room.lastActivityAt = { ".sv": "timestamp" };
+  const finished = lotteryPending(room).length === 0;
+  if (finished) finishGame(room);
+  return { ok: true, playerKey: pk, die: die, prize: prize, finished: finished };
+}
+
+// Deadline passed: roll for every owner who hasn't. dice: { player1: 1-6, player2: 1-6 }.
+function claimLotteryTimeout(room, uid, dice, now) {
+  if (room.status !== "playing") return fail("NOT_PLAYING");
+  if (!findPlayerKey(room.players || {}, uid)) return fail("NOT_PLAYER");
+  const pending = lotteryPending(room);
+  if (!pending.length) return fail("NO_LOTTERY");
+  if (!(now >= room.lotteryPhase.deadline + LOTTERY_GRACE_MS)) return fail("NOT_TIMED_OUT");
+  for (const pk of pending) {
+    if (!isInt(dice && dice[pk], 1, 6)) return fail("INVALID_DICE");
+  }
+  const rolled = pending.map((pk) => ({ playerKey: pk, die: dice[pk], prize: rollLotteryFor(room, pk, dice[pk]) }));
+  finishGame(room);
+  return { ok: true, rolled: rolled, finished: true };
+}
+
+// Game end: steals (simultaneous, from pre-steal scores). The lucky die comes after (openLotteryPhase).
+function applySteals(room, gameMode) {
   const cats = Scoring.getCategories(gameMode);
   const plan = [];
   for (const pk of ["player1", "player2"]) {
@@ -457,21 +529,6 @@ function applySteals(room, gameMode, opts) {
     thief[s.category] += s.amount;
   }
   room.stealLog = plan.length ? plan : null;
-  // Lottery: one die per owner; LOTTERY_MIN+ wins the prize (kept apart from categories).
-  const lotto = [];
-  for (const pk of ["player1", "player2"]) {
-    const p = room.players[pk];
-    if (!Aug.owns(ensureAug(p), "lottery")) continue;
-    const pre = opts && opts.lotteryDice && opts.lotteryDice[pk];
-    let die;
-    if (isInt(pre, 1, 6)) die = pre;
-    else if (opts && typeof opts.rand === "function") die = 1 + opts.rand(6);
-    else throw new Error("applySteals: lottery dice required");
-    const prize = die >= Aug.LOTTERY_MIN ? Aug.LOTTERY_SCORE : 0;
-    p.scores.lottery = prize;
-    lotto.push({ by: pk, die: die, prize: prize });
-  }
-  room.lotteryLog = lotto.length ? lotto : null;
   return plan;
 }
 
@@ -505,5 +562,9 @@ module.exports = {
   fillMissingPicks,
   applyRoll,
   applyAction,
-  applySelect
+  applySelect,
+  applyLottery,
+  claimLotteryTimeout,
+  LOTTERY_TIME_MS,
+  LOTTERY_GRACE_MS
 };

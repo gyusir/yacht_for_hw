@@ -3316,6 +3316,56 @@ button.aug-chip.armed:disabled { opacity: 1; }
   font-weight: 600;
 }
 
+/* Lucky die (game end): one big die per owner, rolled by its owner */
+.aug-lottery-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 6px 0 4px;
+}
+.aug-lottery-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+}
+/* Same look as a board die, but not .die: Dice.renderAll() repaints every .die on the page. */
+.aug-lottery-die {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  padding: 8px;
+  background: var(--die-bg);
+  border: 2px solid var(--die-border);
+  border-radius: var(--radius-sm);
+}
+.aug-lottery-die.rolling { animation: diceShake 0.4s ease infinite; }
+.aug-lottery-q {
+  grid-row: 1 / 4;
+  grid-column: 1 / 4;
+  align-self: center;
+  justify-self: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.aug-lottery-result {
+  min-height: 1.3em;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.aug-lottery-cell.hit .aug-lottery-result { color: var(--success, #2e9d5b); }
+.aug-lottery-cell.hit .aug-lottery-die {
+  border-color: #e0a93a;
+  box-shadow: 0 0 0 3px rgba(224, 169, 58, 0.35), 0 0 16px rgba(224, 169, 58, 0.5);
+}
+.aug-lottery-cell.miss .aug-lottery-die { opacity: 0.7; }
+.aug-lottery-roll { min-width: 160px; }
+
 .aug-choice-row {
   display: flex;
   flex-wrap: wrap;

@@ -142,7 +142,7 @@
 
   // ─── Opponent emotes: hold them while an augment overlay hides the board, replay after it closes ───
   function augOverlayOpen() {
-    return !!document.querySelector('#aug-pick:not(.hidden), #aug-reveal:not(.hidden)');
+    return !!document.querySelector('#aug-pick:not(.hidden), #aug-reveal:not(.hidden), #aug-lottery:not(.hidden)');
   }
 
   function showOppEmote(msg) {
