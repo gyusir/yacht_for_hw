@@ -53,6 +53,7 @@
 | `bot.js` | 데몬. firebase-admin으로 방을 관리하고, 모든 수는 `functions/game-rules.js` 리듀서를 RTDB 트랜잭션으로 적용(서버와 같은 검증). 상대 이탈(연결 끊김 60초·자기 턴 15분 무응답) 시 봇 승리 처리, 무승부 제안은 거절, 대기방은 30분마다 `lastActivityAt` 갱신(2시간 정리 회피) |
 | `brain.js` | 규칙 기반 판단: 주사위 멀티셋 기대값 탐색으로 홀드·굴림 중단·칸 선택, Claude에게 넘길 합법 후보 목록 생성 |
 | `advisor.js` | Claude 판단: `claude -p`(도구 없음)로 증강 선택·굴리기 전 봉인/교환/콜샷/올인·기록 시 주사위 변경/더블/동전/보험 사용을 고른다. 실패·타임아웃·불법 답이면 규칙 기반 기본값. 고민 중 🤔, 결정 후 한 줄 멘트를 이모트 말풍선으로 보낸다 |
+| `taunts.js` | 상황별 대사: 봇 대전(`bot-game.js` `EMOTE_TRIGGERS`)과 같은 트리거·대사 풀(확률은 Gambler 기준). 매 루프 방 상태를 보고 새 기록(상대 0점·요트·연속 저득점, 봇 고득점·연속)·점수차(±30, 역전)·상대 대기(10초/25초)·게임 시작/종료에 말풍선. 쿨다운 4초(종료 대사는 예외), 직전 봇 말풍선 2.5초 안엔 미룸, 재시작 시 진행 중 게임은 조용히 이어받음 |
 | `install-launchd.sh` | LaunchAgent 설치/제거 (`uninstall`). 로그 `~/Library/Logs/yacht-room-bot.log` |
 
 - 로컬 테스트: `BOT_EMULATOR=1 node tools/room-bot/bot.js` (에뮬레이터 RTDB). `BOT_NO_CLAUDE=1`이면 규칙 기반만. 단, 에뮬레이터에서는 App Check 토큰이 없어 브라우저의 callable이 모두 실패하므로 사람 쪽 참가·선택은 admin 스크립트로 대신해야 한다

@@ -20,6 +20,7 @@ const Rules = require("../../functions/game-rules");
 const Aug = require("../../functions/augments");
 const Brain = require("./brain");
 const Advisor = require("./advisor");
+const Taunts = require("./taunts");
 
 const ROOM = process.env.BOT_ROOM || "7777";
 const NAME = (process.env.BOT_NAME || "Claude").slice(0, 12);
@@ -99,6 +100,9 @@ async function emote(msg) {
   await roomRef.child("emotes/" + PK).set({ msg: String(msg).slice(0, 90), name: NAME, ts: ts }).catch(() => {});
 }
 
+// Situational lines (records, score gap, idling), like the in-browser bots.
+const taunts = Taunts.create({ say: emote, rand: rand, me: PK, opp: OPP, log: log, lastSaid: () => lastEmote });
+
 // ── Augment pick (mirrors the pickAugment callable) ──
 async function pick(room) {
   const phase = room.augmentPhase;
@@ -160,6 +164,7 @@ async function playTurn() {
         await sleep(STEP_MS);
       }
     }
+    taunts.gameStart();
     await sleep(STEP_MS);
     await roll(null);
   }
@@ -221,6 +226,7 @@ async function step() {
   if (room === null) return setupRoom();
   if (!ours(room)) { log("code " + ROOM + " is taken by another room; waiting"); return sleep(60000); }
   const now = Date.now();
+  taunts.observe(room);
 
   if (room.status === "waiting") {
     finishedAt = 0;
