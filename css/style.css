@@ -3595,6 +3595,12 @@ button.aug-chip.armed:disabled { opacity: 1; }
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.7), inset 0 -3px 0 rgba(120,70,40,0.15), 0 4px 10px rgba(0,0,0,0.22);
 }
 [data-dice-skin="ascend"][data-dice-color="claude"] .die::before { display: none; }
+/* Spark pips are 112% of a cell; minmax(0,1fr) keeps the rows from growing (otherwise pips sit ~2-3px low). */
+[data-dice-skin="ascend"][data-dice-color="claude"] .die,
+.skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 [data-dice-skin="ascend"][data-dice-color="claude"] .pip,
 [data-theme="dark"] [data-dice-skin="ascend"][data-dice-color="claude"] .pip,
 .skin-preview-die[data-dice-skin="ascend"][data-dice-color="claude"] .mini-pip,
