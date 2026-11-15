@@ -34,6 +34,13 @@ const IDLE_FORFEIT_MS = 15 * 60 * 1000;  // opponent idle on their turn this lon
 const DICE_SKIN = "ascend.claude";        // Claude Ascend (beat this bot 5 times to unlock it)
 const DISCONNECT_WIN_MS = 60 * 1000;     // opponent disconnected this long -> bot wins
 const PICK_GRACE_MS = 3000;
+// Turn pacing copied from the Hail (wave) bot in js/bot-game.js, so the human can follow every hold and roll:
+// think 1.5-2.2s -> roll -> wait for the roll animation, then 1.0-1.5s -> hold dice one by one (150ms apart)
+// -> 0.8-1.2s -> roll ... -> 1.2-1.8s -> record. BOT_PACE scales it (e.g. 0.3 for quick local tests).
+const PACE = Number(process.env.BOT_PACE || 1);
+const between = (lo, hi) => Math.round((lo + rand(hi - lo + 1)) * PACE);
+// Client roll animation (js/game.js + Dice.staggerStop): 0.4s spin, then the spinning dice stop 0.5s apart.
+const rollAnimMs = (spinning) => 400 + Math.max(0, spinning - 1) * 500;
 
 function log(msg) { console.log(new Date().toISOString() + " [" + ROOM + "] " + msg); }
 Advisor.setLogger(log);
@@ -135,10 +142,19 @@ async function act(action) {
 }
 
 async function roll(hold) {
-  if (hold && hold.length) {
-    const held = {}; hold.forEach((i) => { held[i] = true; });
-    await roomRef.child("heldDice").set(held);
-    await sleep(STEP_MS / 2);
+  hold = hold || [];
+  if ((latest && latest.rollCount) > 0) {
+    // Toggle holds one die at a time like the Hail bot (each toggle plays the hold sound on the opponent's screen).
+    const cur = (latest && latest.heldDice) || {};
+    let changed = false;
+    for (let i = 0; i < 5; i++) {
+      const want = hold.indexOf(i) !== -1;
+      if (want === (cur[i] === true)) continue;
+      await sleep(Math.round(150 * PACE));
+      await roomRef.child("heldDice/" + i).set(want ? true : null);
+      changed = true;
+    }
+    if (changed || hold.length) await sleep(between(800, 1200));
   }
   const vals = [0, 1, 2, 3, 4].map(() => 1 + rand(6));
   const r = await tx((room) => {
@@ -146,6 +162,8 @@ async function roll(hold) {
     return Rules.applyRoll(room, UID, vals);
   });
   log("roll " + JSON.stringify([0, 1, 2, 3, 4].map((i) => r.dice[i].value)) + " (#" + r.rollCount + (r.extraUsed ? ", extra" : "") + ")");
+  // Wait until the dice have stopped on the opponent's screen, then "look" at them like the Hail bot does.
+  await sleep(Math.round(rollAnimMs(5 - hold.length) * PACE) + between(1000, 1500));
 }
 
 async function playTurn() {
@@ -165,17 +183,17 @@ async function playTurn() {
       }
     }
     taunts.gameStart();
-    await sleep(STEP_MS);
+    await sleep(between(1500, 2200));
     await roll(null);
   }
   for (;;) {
-    await sleep(STEP_MS);
     room = latest;
     if (!room || room.status !== "playing" || room.currentTurn !== PK) return;
     const mv = Brain.diceMove(room, PK);
     if (!mv.roll) break;
     await roll(mv.hold);
   }
+  await sleep(between(1200, 1800));
   room = latest;
   const opts = Brain.finalOptions(room, PK);
   const fallback = Brain.defaultFinal(room, PK, opts);

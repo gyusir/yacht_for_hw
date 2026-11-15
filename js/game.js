@@ -32,6 +32,14 @@
   var lastSeenEmoteTs = 0;
   var heldEmotes = [];       // opponent emotes that arrived while the augment pick/reveal overlay covered the board
   var heldEmoteTimer = null;
+  // Opponent roll animations play in order: updates that arrive while one is spinning (next roll, record,
+  // dice edit) wait in this queue, and each result stays on screen OPP_SETTLE_MS before the next one lands.
+  // Otherwise a fast opponent's later roll or record overwrites dice the player never saw settle.
+  var OPP_SETTLE_MS = 900;
+  var oppQueue = [];
+  var oppAnimating = false;
+  var oppHoldUntil = 0;
+  var oppDrainTimer = null;
   var isOnline = true;
   var connectedRef = null;
   var connectedCallback = null;
@@ -170,8 +178,28 @@
 
   function onRoomUpdate(snapshot) {
     if (!snapshot.exists()) return;
-
     var room = snapshot.val();
+    if (oppAnimating || oppQueue.length || Date.now() < oppHoldUntil) {
+      oppQueue.push(room);
+      scheduleOppDrain();
+      return;
+    }
+    processRoom(room);
+  }
+
+  function scheduleOppDrain() {
+    if (oppAnimating || oppDrainTimer) return;
+    oppDrainTimer = setTimeout(drainOppQueue, Math.max(0, oppHoldUntil - Date.now()));
+  }
+
+  function drainOppQueue() {
+    oppDrainTimer = null;
+    if (!roomRef) { oppQueue = []; return; }
+    while (oppQueue.length && !oppAnimating && Date.now() >= oppHoldUntil) processRoom(oppQueue.shift());
+    if (oppQueue.length) scheduleOppDrain();
+  }
+
+  function processRoom(room) {
     var prevRoom = lastRoomData;
     lastRoomData = room;
     gameMode = room.gameMode;
@@ -321,6 +349,7 @@
         (room.rollCount || 0) > (prevRoom.rollCount || 0);
     if (oppRolled && !isRolling) {
       isRolling = true;
+      oppAnimating = true;
       var dieEls = document.querySelectorAll('.die');
       var oppSpinTimers = [];
       for (var i = 0; i < 5; i++) {
@@ -342,6 +371,8 @@
         Dice.staggerStop(oppSpinTimers, dieEls, oppFinalValues, function () {
           Dice.renderAll(oppDiceState);
           isRolling = false;
+          oppAnimating = false;
+          oppHoldUntil = Date.now() + OPP_SETTLE_MS;
           if (DiceSkins && DiceSkins.ascendRollStopped) DiceSkins.ascendRollStopped(oppRollerKey);
           checkCelebration(oppFinalValues);
           // Render scorecard now that all dice have stopped
@@ -386,6 +417,7 @@
             UI.setRollButtonEnabled(_isMyTurn && _ri.canRoll, _isMyTurn, r.rollCount || 0, _ri);
             Dice.setInteractive(_isMyTurn && r.rollCount > 0);
           }
+          if (oppQueue.length) scheduleOppDrain();
         });
       }, 400);
     } else if (!isRolling) {
@@ -771,6 +803,11 @@
     lastSeenEmoteTs = 0;
     heldEmotes = [];
     clearTimeout(heldEmoteTimer);
+    oppQueue = [];
+    oppAnimating = false;
+    oppHoldUntil = 0;
+    clearTimeout(oppDrainTimer);
+    oppDrainTimer = null;
     heldEmoteTimer = null;
     lastCelebrationTs = 0;
     celebratedBonuses = {};
