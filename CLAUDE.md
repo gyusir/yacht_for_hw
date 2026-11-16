@@ -59,6 +59,8 @@
 - 로컬 테스트: `BOT_EMULATOR=1 node tools/room-bot/bot.js` (에뮬레이터 RTDB). `BOT_NO_CLAUDE=1`이면 규칙 기반만. 단, 에뮬레이터에서는 App Check 토큰이 없어 브라우저의 callable이 모두 실패하므로 사람 쪽 참가·선택은 admin 스크립트로 대신해야 한다
 - 운영: ADC(`gcloud auth application-default login`) 권한으로 운영 RTDB에 접속한다. 봇 uid는 `bot-claude`(전적이 `users/bot-claude`에 쌓임)
 - 방 코드가 이미 다른 방에 쓰이고 있으면 비워질 때까지 1분마다 다시 확인한다
+- 상대 기권 처리: 상대 차례에 연결이 끊긴 채 5분, 또는 접속 중이어도 상대 차례에 15분 아무 행동이 없으면 봇 승리. 시계는 `lastActivityAt`(차례 시작·마지막 행동) 기준이라 봇 차례 중 끊김은 세지 않고, 재접속하면 같은 게임을 이어서 한다(휴대폰은 앱 전환만 해도 연결이 끊김)
+- `bot.js`를 `require`하면 봇이 실제로 시작되니 문법 확인은 `node --check`로만 한다
 
 ### 주사위 스킨 에셋 (`die_image/`)
 

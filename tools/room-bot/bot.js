@@ -32,7 +32,9 @@ const RESET_AFTER_MS = 20000;            // finished -> fresh waiting room (resu
 const KEEPALIVE_MS = 30 * 60 * 1000;     // cleanupStaleRooms drops waiting rooms idle for 2h
 const IDLE_FORFEIT_MS = 15 * 60 * 1000;  // opponent idle on their turn this long -> bot wins
 const DICE_SKIN = "ascend.claude";        // Claude Ascend (beat this bot 5 times to unlock it)
-const DISCONNECT_WIN_MS = 60 * 1000;     // opponent disconnected this long -> bot wins
+// A disconnected opponent forfeits only if it is their turn and they have not come back for this long.
+// Phones drop the socket whenever the app goes to the background, so being offline alone never ends the game.
+const DISCONNECT_WIN_MS = 5 * 60 * 1000;
 const PICK_GRACE_MS = 3000;
 // Turn pacing copied from the Hail (wave) bot in js/bot-game.js, so the human can follow every hold and roll:
 // think 1.5-2.2s -> roll -> wait for the roll animation, then 1.0-1.5s -> hold dice one by one (150ms apart)
@@ -237,7 +239,7 @@ async function playTurn() {
 }
 
 // ── Main loop ──
-let finishedAt = 0, lastKeepalive = 0, oppGoneSince = 0;
+let finishedAt = 0, lastKeepalive = 0, oppOffline = false;
 
 async function step() {
   const room = latest;
@@ -272,12 +274,14 @@ async function step() {
     await roomRef.child("drawProposal").set(null);
   }
 
-  // Opponent left without leaveGame: disconnected, or idle on their turn.
+  // Opponent left without leaveGame: offline on their turn for 5 min, or idle on their turn for 15 min.
+  // The clock is lastActivityAt (their turn's start or last action), so rejoining resumes the same game.
   const opp = room.players && room.players[OPP];
-  oppGoneSince = opp && opp.connected === false ? (oppGoneSince || now) : 0;
-  const idle = room.currentTurn === OPP && typeof room.lastActivityAt === "number" && now - room.lastActivityAt > IDLE_FORFEIT_MS;
-  if ((oppGoneSince && now - oppGoneSince > DISCONNECT_WIN_MS) || idle) {
-    log("opponent gone -> bot wins");
+  const idleMs = room.currentTurn === OPP && typeof room.lastActivityAt === "number" ? now - room.lastActivityAt : 0;
+  const offline = opp && opp.connected === false;
+  if (offline !== oppOffline) { oppOffline = offline; log(offline ? "opponent offline (waiting for rejoin)" : "opponent back online"); }
+  if ((offline && idleMs > DISCONNECT_WIN_MS) || idleMs > IDLE_FORFEIT_MS) {
+    log("opponent gone -> bot wins (" + (offline ? "offline" : "idle") + " " + Math.round(idleMs / 1000) + "s on their turn)");
     await tx((rm) => { if (rm.status !== "playing") return { error: "NOT_PLAYING" }; rm.status = "finished"; rm.winner = PK; return {}; }).catch(() => {});
     return;
   }
