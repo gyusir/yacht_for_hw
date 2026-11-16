@@ -59,6 +59,8 @@
 - 로컬 테스트: `BOT_EMULATOR=1 node tools/room-bot/bot.js` (에뮬레이터 RTDB). `BOT_NO_CLAUDE=1`이면 규칙 기반만. 단, 에뮬레이터에서는 App Check 토큰이 없어 브라우저의 callable이 모두 실패하므로 사람 쪽 참가·선택은 admin 스크립트로 대신해야 한다
 - 운영: ADC(`gcloud auth application-default login`) 권한으로 운영 RTDB에 접속한다. 봇 uid는 `bot-claude`(전적이 `users/bot-claude`에 쌓임)
 - 방 코드가 이미 다른 방에 쓰이고 있으면 비워질 때까지 1분마다 다시 확인한다
+- 상대 기권 처리: 상대 차례에 연결이 끊긴 채 5분, 또는 접속 중이어도 상대 차례에 15분 아무 행동이 없으면 봇 승리. 시계는 `lastActivityAt`(차례 시작·마지막 행동) 기준이라 봇 차례 중 끊김은 세지 않고, 재접속하면 같은 게임을 이어서 한다(휴대폰은 앱 전환만 해도 연결이 끊김)
+- `bot.js`를 `require`하면 봇이 실제로 시작되니 문법 확인은 `node --check`로만 한다
 
 ### 주사위 스킨 에셋 (`die_image/`)
 
@@ -89,7 +91,7 @@
 | --- | --- |
 | `game-rules.js` | 게임 상태 순수 리듀서(applyRoll/applySelect/applyAction/applyPicks). Cloud Functions 트랜잭션과 시뮬레이터가 같은 코드를 사용. 검증 후 변경, 실패 시 상태 무변경 |
 | `augments.js` | 증강 정의·점수 파이프라인(기본→봉인→콜샷+25→더블→올인→동전→최후의 일격→막판 스퍼트→보험 순서, 연속 득점은 rules에서 마지막에 가산)·굴림 상한·강탈 계산. `js/augments.js`와 동일 |
-| `index.js` | Cloud Functions: pickAugment, useAugment, createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함. botDifficulty로 basic/gambler/wave 지원 |
+| `index.js` | Cloud Functions: pickAugment, useAugment, rollLottery, createRoom, joinRoom, findOrCreateRandomRoom, rollDice, selectCategory, leaveGame, cancelRoom, updateGameMode, proposeDraw, respondToDraw, claimDisconnectWin, saveBotGameResult, saveBotGameResultBeacon, onGameFinished. 모든 onCall에 App Check 검증 포함. botDifficulty로 basic/gambler/wave 지원 |
 | `scoring.js` | 서버사이드 점수 계산 (안티치트). 클라이언트 `scoring.js`와 로직 동일 |
 
 ### Key Constraints
@@ -105,7 +107,7 @@
 - Firebase App Check (reCAPTCHA v3): 프론트엔드에서 토큰 자동 발급, Cloud Functions에서 검증. 포크 앱의 무단 서버 사용 차단
 - 증강 모드: 비공개 방 + Yacht 전용(`room.augmentMode`). 1·5·9턴 전에 초급·중급·고급 증강을 단계별 8개 중 랜덤 2개에서 선택. 선택은 `augmentPicks/{room}/{tier}`(클라이언트 접근 불가)에 저장 후 둘 다 고르면 공개. 증강 게임은 history에 `augment: true`, 통계 집계 제외. 단, 증강전 승리는 `stats.augmentWins`로 따로 센다(Ascend 스킨 해금용, 승률·연승엔 미반영). 단계 내 증강 가치 편차는 ±3점 이내로 유지(`tools/augment_sim.js --balance`)
 - 증강 모드 1~6 보너스: 1~6 칸 합 63 이상이면 +35 (`augments.js`의 `UPPER_BONUS_HURDLE`/`UPPER_BONUS`). 현재 점수로 매번 계산하므로 강탈·교환으로 63 미만이 되면 사라진다. 달성률은 `tools/augment_sim.js --bonus`로 확인
-- 신규 증강 9종: 잭팟(요트 90)·운명의 동전(2회, ×2/×½)·지름길(보너스 기준 55) / 연속 득점(12점+ 연속 시 +6~+24, `player.streak`)·콜샷(4회, 굴리기 전 족보 예고, 성공 +25)·올인(2회, 굴리기 전 선언, 18점+ ×2 아니면 0) / 최후의 일격(마지막 2기록 ×2)·행운의 주사위(종료 시 주사위 4+면 +40, `scores.lottery`·`room.lotteryLog`)·막판 스퍼트(0 아닌 기록 +5). 선언(`turnFlags.called`/`allIn`)은 첫 굴림 전 1턴 1회. 더블·동전·올인은 한 기록에 하나만(`MULTIPLIER_CONFLICT`). 동전·행운의 주사위 결과는 selectCategory가 트랜잭션 밖에서 미리 뽑아 재시도에도 같은 결과
+- 신규 증강 9종: 잭팟(요트 90)·운명의 동전(2회, ×2/×½)·지름길(보너스 기준 55) / 연속 득점(12점+ 연속 시 +6~+24, `player.streak`)·콜샷(4회, 굴리기 전 족보 예고, 성공 +25)·올인(2회, 굴리기 전 선언, 18점+ ×2 아니면 0) / 최후의 일격(마지막 2기록 ×2)·행운의 주사위(종료 시 주사위 4+면 +40, `scores.lottery`·`room.lotteryLog`. 마지막 기록 뒤 `room.lotteryPhase`가 열리고 가진 사람이 직접 굴린다 — `rollLottery` callable, 30초(`LOTTERY_TIME_MS`) 지나면 본인 클라이언트가 자동으로 굴리고, 그래도 안 굴리면 상대가 `claimTimeout`으로 서버에 대신 굴리게 한다. 모두 굴려야 승패가 정해진다)·막판 스퍼트(0 아닌 기록 +5). 선언(`turnFlags.called`/`allIn`)은 첫 굴림 전 1턴 1회. 더블·동전·올인은 한 기록에 하나만(`MULTIPLIER_CONFLICT`). 동전 결과는 selectCategory가, 행운의 주사위 눈은 rollLottery가 트랜잭션 밖에서 미리 뽑아 재시도에도 같은 결과
 - 증강 선택 제한 시간 90초(`PICK_TIME_MS`). 시간 초과 시 클라이언트가 자동 선택, 상대가 응답 없으면 `pickAugment({claimTimeout:true})`로 서버가 랜덤 선택
 
 ## Hosting & Deploy

@@ -22,6 +22,15 @@
   var claimSentTier = null;     // tier for which a timeout claim was sent (once)
   var pickFn = null;
   var useFn = null;
+  var lotteryFn = null;
+  // Lucky die (game end): who has been shown, my roll in flight, spin timers, one-shot auto roll / claim.
+  var lotteryShown = {};        // playerKey -> true once its result was revealed here
+  var lotterySpin = {};         // playerKey -> { timer, since }
+  var lotterySent = false;
+  var lotteryAutoSent = false;
+  var lotteryClaimSent = false;
+  var lotteryTimerId = null;
+  var lotteryDone = false;      // all rolls revealed; overlay waits for OK
 
   function Aug() { return window.YachtGame.Augments; }
   function t(key, fallback) {
@@ -41,6 +50,7 @@
     if (!pickFn) {
       pickFn = window.YachtGame.functions.httpsCallable('pickAugment');
       useFn = window.YachtGame.functions.httpsCallable('useAugment');
+      lotteryFn = window.YachtGame.functions.httpsCallable('rollLottery');
     }
   }
   function toArray(v) {
@@ -62,7 +72,7 @@
     for (var i = 0; i < 5; i++) out.push((room.dice && room.dice[i] && room.dice[i].value) || 0);
     return out;
   }
-  function isMyTurn() { return room && room.status === 'playing' && room.currentTurn === myKey && !room.augmentPhase; }
+  function isMyTurn() { return room && room.status === 'playing' && room.currentTurn === myKey && !room.augmentPhase && !room.lotteryPhase; }
   function UIx() { return window.YachtGame.UI; }
   function announce(msg) { UIx().showToast(msg, { strong: true }); }
   function whoLabel(pk) { return '[' + t(pk === myKey ? 'aug_you' : 'aug_opp') + '] '; }
@@ -93,7 +103,7 @@
       : (flags.rollCap || 3);
     var extraLeft = A.charge(aug, 'extraRoll');
     var extra = rc >= cap && rc < A.MAX_ROLLS && extraLeft > 0;
-    var canRoll = !r.augmentPhase && !flags.locked && (rc < cap || extra);
+    var canRoll = !r.augmentPhase && !r.lotteryPhase && !flags.locked && (rc < cap || extra);
     return { cap: cap, canRoll: canRoll, extra: extra, extraLeft: extraLeft, locked: !!flags.locked };
   }
 
@@ -617,6 +627,153 @@
     coinArmed = false;
   }
 
+  // ─── Lucky die (game end): each owner rolls it themselves ───
+  var LOTTERY_MIN_SPIN_MS = 1200;
+
+  // The phase only counts while the game is on (leave/disconnect can end a game mid-phase).
+  function activeLottery() { return room && room.status === 'playing' ? room.lotteryPhase || null : null; }
+  function lotteryEntries() { return toArray(room && room.lotteryLog); }
+  function lotteryEntry(pk) { return lotteryEntries().filter(function (l) { return l.by === pk; })[0] || null; }
+  function lotteryOwners() {
+    return [myKey, oppKey].filter(function (pk) { return room.players[pk] && Aug().owns(augOf(room.players[pk]), 'lottery'); });
+  }
+  function lotteryPendingFor(pk) {
+    var ph = activeLottery();
+    return !!(ph && ph.pending && ph.pending[pk] === true);
+  }
+  function lotteryTimerText() {
+    var ph = activeLottery();
+    if (!ph || !ph.deadline) return '';
+    return t('aug_time_left') + ' ' + fmtTime(ph.deadline - serverNow());
+  }
+
+  function lotteryDieEl(pk) { return document.querySelector('#aug-lottery .aug-lottery-die[data-pk="' + pk + '"]'); }
+  function renderLotteryDie(el, v) {
+    if (!el) return;
+    if (v) window.YachtGame.Dice.renderDie(el, v);
+    else el.innerHTML = '<span class="aug-lottery-q">?</span>';
+  }
+  function startLotterySpin(pk) {
+    if (lotterySpin[pk]) return;
+    lotterySpin[pk] = {
+      since: Date.now(),
+      timer: setInterval(function () {
+        var el = lotteryDieEl(pk);
+        if (el) { el.classList.add('rolling'); renderLotteryDie(el, 1 + Math.floor(Math.random() * 6)); }
+      }, 80)
+    };
+    if (window.YachtGame.SFX) window.YachtGame.SFX.play('roll');
+  }
+  function stopLotterySpin(pk) {
+    var sp = lotterySpin[pk];
+    if (sp) { clearInterval(sp.timer); delete lotterySpin[pk]; }
+    var el = lotteryDieEl(pk);
+    if (el) el.classList.remove('rolling');
+  }
+
+  function rollMyLottery(auto) {
+    if (lotterySent || !lotteryPendingFor(myKey)) return;
+    fns();
+    lotterySent = true;
+    if (auto) UIx().showToast(t('aug_lottery_auto'), { strong: true });
+    startLotterySpin(myKey);
+    renderLottery();
+    lotteryFn({ roomCode: currentRoomCode() }).catch(function (err) {
+      lotterySent = false;
+      stopLotterySpin(myKey);
+      UIx().showToast(err.message || 'Error');
+      renderLottery();
+    });
+  }
+
+  // 1s ticker: countdown, auto roll at my deadline, ask the server to roll for an idle opponent.
+  function lotteryTick() {
+    var ph = activeLottery();
+    if (!ph || room.status !== 'playing') { stopLotteryTimer(); return; }
+    var tm = document.querySelector('#aug-lottery .aug-timer');
+    var left = ph.deadline - serverNow();
+    if (tm) { tm.textContent = lotteryTimerText(); tm.classList.toggle('low', left <= 10000); }
+    if (left <= 0 && lotteryPendingFor(myKey) && !lotterySent && !lotteryAutoSent) {
+      lotteryAutoSent = true;
+      rollMyLottery(true);
+    }
+    if (left <= -5000 && !lotteryPendingFor(myKey) && lotteryPendingFor(oppKey) && !lotteryClaimSent) {
+      lotteryClaimSent = true;
+      fns();
+      lotteryFn({ roomCode: currentRoomCode(), claimTimeout: true }).catch(function () { lotteryClaimSent = false; });
+    }
+  }
+  function startLotteryTimer() { if (!lotteryTimerId) lotteryTimerId = setInterval(lotteryTick, 1000); }
+  function stopLotteryTimer() { if (lotteryTimerId) { clearInterval(lotteryTimerId); lotteryTimerId = null; } }
+
+  // Spin each new result for at least LOTTERY_MIN_SPIN_MS, then reveal it.
+  function revealNewLottery() {
+    lotteryEntries().forEach(function (l) {
+      if (lotteryShown[l.by]) return;
+      startLotterySpin(l.by);
+      var wait = Math.max(0, LOTTERY_MIN_SPIN_MS - (Date.now() - lotterySpin[l.by].since));
+      lotteryShown[l.by] = 'spinning';
+      setTimeout(function () {
+        stopLotterySpin(l.by);
+        lotteryShown[l.by] = true;
+        if (l.by === myKey) lotterySent = false;
+        if (window.YachtGame.SFX) window.YachtGame.SFX.play('confirm');
+        renderLottery();
+      }, wait);
+    });
+  }
+
+  function renderLottery() {
+    var el = document.getElementById('aug-lottery');
+    var ph = activeLottery();
+    var owners = room && room.players ? lotteryOwners() : [];
+    var anyLog = lotteryEntries().length > 0;
+    // Show while the phase is open, and after it until every result was revealed and OK was pressed.
+    if (!room || !owners.length || (!ph && (!anyLog || lotteryDone))) {
+      if (el) el.classList.add('hidden');
+      if (!ph) stopLotteryTimer();
+      return;
+    }
+    if (!ph && !anyLog) return;
+    el = overlay('aug-lottery');
+    if (ph && room.status === 'playing') startLotteryTimer();
+    var allShown = owners.every(function (pk) { return lotteryShown[pk] === true; });
+    var html = '<div class="aug-tier-badge tier-3">' + esc(augName('lottery')) + '</div>';
+    html += '<h3 class="aug-title">' + esc(t('aug_lottery_title')) + '</h3>';
+    html += '<p class="aug-sub">' + esc(t('aug_lottery_sub')) + '</p>';
+    if (ph) html += '<div class="aug-timer">' + esc(lotteryTimerText()) + '</div>';
+    html += '<div class="aug-lottery-row">';
+    owners.forEach(function (pk) {
+      var e = lotteryEntry(pk), shown = lotteryShown[pk] === true;
+      var label = pk === myKey ? t('aug_you') : t('aug_opp');
+      var result = '';
+      if (e && shown) result = e.prize > 0 ? '+' + e.prize : t('aug_lottery_miss');
+      else if (lotteryPendingFor(pk) && !lotterySpin[pk]) result = pk === myKey ? '' : t('aug_lottery_wait_opp');
+      html += '<div class="aug-lottery-cell' + (e && shown ? (e.prize > 0 ? ' hit' : ' miss') : '') + '">' +
+        '<span class="aug-reveal-who">' + esc(label) + '</span>' +
+        '<div class="aug-lottery-die" data-pk="' + pk + '"></div>' +
+        '<span class="aug-lottery-result">' + esc(result) + '</span></div>';
+    });
+    html += '</div>';
+    if (lotteryPendingFor(myKey) && !lotterySent) {
+      html += '<button class="btn-primary aug-lottery-roll">' + esc(t('aug_lottery_roll')) + '</button>';
+    } else if (!ph && allShown) {
+      html += '<button class="btn-primary aug-close">' + esc(t('aug_ok')) + '</button>';
+    }
+    el.firstChild.innerHTML = html;
+    el.classList.remove('hidden');
+    owners.forEach(function (pk) {
+      var e = lotteryEntry(pk);
+      var d = lotteryDieEl(pk);
+      if (lotterySpin[pk]) d.classList.add('rolling');
+      renderLotteryDie(d, e && lotteryShown[pk] === true ? e.die : 0);
+    });
+    var btn = el.querySelector('.aug-lottery-roll');
+    if (btn) btn.addEventListener('click', function () { rollMyLottery(false); });
+    var ok = el.querySelector('.aug-close');
+    if (ok) ok.addEventListener('click', function () { lotteryDone = true; el.classList.add('hidden'); });
+  }
+
   // Lottery cell for the scorecard: null when the player doesn't own it, '' before the roll,
   // otherwise "🎲4 +40" / "🎲2 0".
   function lotteryCell(pk) {
@@ -684,6 +841,15 @@
     renderReveal();
     notify(prev);
     renderBar();
+    if (activeLottery() || room.lotteryLog) {
+      // Results that were already in the room when this client attached are shown without the spin.
+      if (!initialized) {
+        lotteryEntries().forEach(function (l) { lotteryShown[l.by] = true; });
+        if (!activeLottery()) lotteryDone = true; // finished game reopened: no popup
+      }
+      revealNewLottery();
+      renderLottery();
+    }
     initialized = true;
   }
 
@@ -691,7 +857,7 @@
   function signature(r) {
     if (!r || r.augmentMode !== true) return '';
     var p = r.players || {};
-    return JSON.stringify([r.augmentPhase || null, r.turnFlags || null,
+    return JSON.stringify([r.augmentPhase || null, r.lotteryPhase || null, r.turnFlags || null,
       p.player1 && p.player1.aug, p.player2 && p.player2.aug,
       p.player1 && p.player1.sealed, p.player2 && p.player2.sealed,
       p.player1 && p.player1.streak, p.player2 && p.player2.streak, r.lotteryLog || null]);
@@ -702,6 +868,10 @@
     doubleArmed = false; armedInsurance = null; coinArmed = false; pickPending = false; initialized = false;
     lastRevealKey = null; peeking = false; autoPickedTier = null; claimSentTier = null;
     stopTimer();
+    stopLotteryTimer();
+    Object.keys(lotterySpin).forEach(function (pk) { clearInterval(lotterySpin[pk].timer); });
+    lotterySpin = {}; lotteryShown = {}; lotterySent = false; lotteryAutoSent = false; lotteryClaimSent = false; lotteryDone = false;
+    closeOverlay('aug-lottery');
     var pb = document.getElementById('aug-peek-bar');
     if (pb) pb.classList.add('hidden');
     roomCodeGetter = getRoomCode || null;

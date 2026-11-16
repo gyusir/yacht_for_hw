@@ -64,7 +64,8 @@ function checkInvariants(room, ctx) {
     const extra = Object.keys(p.scores).filter((k) => CATS.indexOf(k) === -1 && k !== "_init" && k !== "lottery");
     if (extra.length) errs.push(pk + " unexpected score keys " + extra.join(","));
     if (p.scores.lottery !== undefined && p.scores.lottery !== 0 && p.scores.lottery !== Aug.LOTTERY_SCORE) errs.push(pk + " lottery=" + p.scores.lottery);
-    if (p.scores.lottery !== undefined && room.status !== "finished") errs.push(pk + " lottery before game end");
+    if (p.scores.lottery !== undefined && room.status !== "finished" && !room.lotteryPhase) errs.push(pk + " lottery before game end");
+    if (room.lotteryPhase && room.lotteryPhase.pending && room.lotteryPhase.pending[pk] && p.scores.lottery !== undefined) errs.push(pk + " lottery rolled twice");
     if (p.streak !== undefined && !(Number.isInteger(p.streak) && p.streak >= 0 && p.streak <= 12)) errs.push(pk + " streak=" + p.streak);
   }
   const cap = room.augmentMode ? Aug.MAX_ROLLS : Aug.BASE_ROLLS;
@@ -107,6 +108,25 @@ function checkInvariants(room, ctx) {
 
 function randomStep(room, rng) {
   // returns [description, fn(room) -> result]
+  if (room.lotteryPhase) {
+    // Lucky-die phase: an owner rolls, someone claims the timeout, or an invalid attempt (must be rejected).
+    const pending = Object.keys(room.lotteryPhase.pending || {});
+    const x = rng();
+    if (x < 0.1) {
+      const pk = ["player1", "player2"][randInt(rng, 2)];
+      const die = rng() < 0.5 ? 0 : 1 + randInt(rng, 6);
+      return ["lottery-any " + pk + " " + die, (r) => Rules.applyLottery(r, UIDS[pk], die)];
+    }
+    if (x < 0.2) {
+      const dice = { player1: 1 + randInt(rng, 6), player2: 1 + randInt(rng, 6) };
+      const late = rng() < 0.5;
+      return ["lottery-claim" + (late ? " late" : " early"), (r) => Rules.claimLotteryTimeout(r, UIDS.player1, dice,
+        r.lotteryPhase.deadline + (late ? Rules.LOTTERY_GRACE_MS : -1))];
+    }
+    const pk = pending[randInt(rng, pending.length)];
+    const die = 1 + randInt(rng, 6);
+    return ["lottery " + pk + " " + die, (r) => Rules.applyLottery(r, UIDS[pk], die)];
+  }
   if (room.augmentPhase) {
     const phase = room.augmentPhase;
     const picks = {};
@@ -187,7 +207,7 @@ function runConflict(games) {
       } else {
         stats.ok++;
         (res.effects || []).forEach((x) => { stats.effects[x] = (stats.effects[x] || 0) + 1; });
-        if (res.steals !== undefined && room.lotteryLog) room.lotteryLog.forEach((l) => { const k = "lottery" + (l.prize ? "Win" : "Lose"); stats.effects[k] = (stats.effects[k] || 0) + 1; });
+        if (room.status === "finished" && room.lotteryLog) room.lotteryLog.forEach((l) => { const k = "lottery" + (l.prize ? "Win" : "Lose"); stats.effects[k] = (stats.effects[k] || 0) + 1; });
         if (desc.startsWith("action")) {
           const t = JSON.parse(desc.slice(desc.indexOf("{"))).type;
           stats.augUses[t] = (stats.augUses[t] || 0) + 1;
@@ -279,6 +299,10 @@ function tryEdit(room, uid, me, avail) {
 }
 
 function playTurn(room, rng, pk) {
+  if (room.lotteryPhase) {
+    for (const k of Object.keys(room.lotteryPhase.pending || {})) Rules.applyLottery(room, UIDS[k], 1 + randInt(rng, 6));
+    return;
+  }
   const uid = UIDS[pk];
   const me = room.players[pk];
   const opp = room.players[Rules.opponentOf(pk)];

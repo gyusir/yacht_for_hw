@@ -32,7 +32,9 @@ const RESET_AFTER_MS = 20000;            // finished -> fresh waiting room (resu
 const KEEPALIVE_MS = 30 * 60 * 1000;     // cleanupStaleRooms drops waiting rooms idle for 2h
 const IDLE_FORFEIT_MS = 15 * 60 * 1000;  // opponent idle on their turn this long -> bot wins
 const DICE_SKIN = "ascend.claude";        // Claude Ascend (beat this bot 5 times to unlock it)
-const DISCONNECT_WIN_MS = 60 * 1000;     // opponent disconnected this long -> bot wins
+// A disconnected opponent forfeits only if it is their turn and they have not come back for this long.
+// Phones drop the socket whenever the app goes to the background, so being offline alone never ends the game.
+const DISCONNECT_WIN_MS = 5 * 60 * 1000;
 const PICK_GRACE_MS = 3000;
 // Turn pacing copied from the Hail (wave) bot in js/bot-game.js, so the human can follow every hold and roll:
 // think 1.5-2.2s -> roll -> wait for the roll animation, then 1.0-1.5s -> hold dice one by one (150ms apart)
@@ -41,6 +43,7 @@ const PACE = Number(process.env.BOT_PACE || 1);
 const between = (lo, hi) => Math.round((lo + rand(hi - lo + 1)) * PACE);
 // Client roll animation (js/game.js + Dice.staggerStop): 0.4s spin, then the spinning dice stop 0.5s apart.
 const rollAnimMs = (spinning) => 400 + Math.max(0, spinning - 1) * 500;
+const LOTTERY_REVEAL_MS = 1300;          // js/augment-ui.js spins a lucky die at least 1.2s before revealing it
 
 function log(msg) { console.log(new Date().toISOString() + " [" + ROOM + "] " + msg); }
 Advisor.setLogger(log);
@@ -219,25 +222,24 @@ async function playTurn() {
     }
   }
   const coinFlip = rand(2);
-  const lotteryDice = { player1: 1 + rand(6), player2: 1 + rand(6) };
   let r;
   try {
     r = await tx((rm) => Rules.applySelect(rm, UID, choice.category, {
       useDouble: choice.useDouble, useInsurance: choice.useInsurance, useCoin: choice.useCoin,
-      coinFlip: coinFlip, lotteryDice: lotteryDice, rand: rand, now: Date.now() }));
+      coinFlip: coinFlip, rand: rand, now: Date.now() }));
   } catch (e) {
     // Last resort: best plain category for the current dice.
     log("select failed (" + e.message + "), falling back");
     const rm = latest;
     const b = Brain.bestChoice(Brain.diceOf(rm), rm.players[PK], rm.turnFlags || {}, !!(rm.turnFlags && rm.turnFlags.noYacht));
-    r = await tx((x) => Rules.applySelect(x, UID, b.c, { rand: rand, now: Date.now(), coinFlip: coinFlip, lotteryDice: lotteryDice }));
+    r = await tx((x) => Rules.applySelect(x, UID, b.c, { rand: rand, now: Date.now(), coinFlip: coinFlip }));
     choice.category = b.c;
   }
   log("record " + choice.category + " = " + r.score + " (" + choice.by + ")" + (r.effects && r.effects.length ? " " + r.effects.join(",") : "") + (choice.why ? " — " + choice.why : ""));
 }
 
 // ── Main loop ──
-let finishedAt = 0, lastKeepalive = 0, oppGoneSince = 0;
+let finishedAt = 0, lastKeepalive = 0, oppOffline = false;
 
 async function step() {
   const room = latest;
@@ -272,13 +274,36 @@ async function step() {
     await roomRef.child("drawProposal").set(null);
   }
 
-  // Opponent left without leaveGame: disconnected, or idle on their turn.
+  // Opponent left without leaveGame: offline on their turn for 5 min, or idle on their turn for 15 min.
+  // The clock is lastActivityAt (their turn's start or last action), so rejoining resumes the same game.
   const opp = room.players && room.players[OPP];
-  oppGoneSince = opp && opp.connected === false ? (oppGoneSince || now) : 0;
-  const idle = room.currentTurn === OPP && typeof room.lastActivityAt === "number" && now - room.lastActivityAt > IDLE_FORFEIT_MS;
-  if ((oppGoneSince && now - oppGoneSince > DISCONNECT_WIN_MS) || idle) {
-    log("opponent gone -> bot wins");
+  const idleMs = room.currentTurn === OPP && typeof room.lastActivityAt === "number" ? now - room.lastActivityAt : 0;
+  const offline = opp && opp.connected === false;
+  if (offline !== oppOffline) { oppOffline = offline; log(offline ? "opponent offline (waiting for rejoin)" : "opponent back online"); }
+  if ((offline && idleMs > DISCONNECT_WIN_MS) || idleMs > IDLE_FORFEIT_MS) {
+    log("opponent gone -> bot wins (" + (offline ? "offline" : "idle") + " " + Math.round(idleMs / 1000) + "s on their turn)");
     await tx((rm) => { if (rm.status !== "playing") return { error: "NOT_PLAYING" }; rm.status = "finished"; rm.winner = PK; return {}; }).catch(() => {});
+    return;
+  }
+
+  // Lucky die at game end: roll ours like a player would, and roll for an opponent who never does.
+  const lot = room.lotteryPhase;
+  if (lot) {
+    const pending = lot.pending || {};
+    if (pending[PK]) {
+      await sleep(between(1500, 2200));
+      const die = 1 + rand(6);
+      const r = await tx((rm) => Rules.applyLottery(rm, UID, die)).catch((e) => { log("lottery: " + e.message); return null; });
+      if (r) {
+        log("lucky die " + r.die + " -> " + (r.prize ? "+" + r.prize : "miss"));
+        await sleep(LOTTERY_REVEAL_MS);  // the opponent's screen spins it ~1.2s before showing the face
+        await emote("🎲 " + r.die + (r.prize ? "! +" + r.prize : " … 꽝"));
+      }
+    } else if (pending[OPP] && now >= (lot.deadline || 0) + Rules.LOTTERY_GRACE_MS + 2000) {
+      log("opponent lucky die timed out -> rolled for them");
+      const dice = { player1: 1 + rand(6), player2: 1 + rand(6) };
+      await tx((rm) => Rules.claimLotteryTimeout(rm, UID, dice, Date.now())).catch((e) => log("lottery claim: " + e.message));
+    }
     return;
   }
 
